@@ -3,8 +3,8 @@ import { View, Dimensions, StyleSheet, ActivityIndicator } from 'react-native';
 import { CarouselPagination, ImageContainer, ListHeader, Header, NavigationBar } from '@components/Home';
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { fetchProducts } from '@api/services/generalApi';
-import { CommonContainer } from '@components/common';
 import { ProductsList } from '@components/Product';
+import { RoundedContainer, SafeAreaView } from '@components/containers';
 
 
 const { height } = Dimensions.get('window');
@@ -86,7 +86,9 @@ const HomeScreen = ({ navigation }) => {
 
 
   return (
-    <CommonContainer>
+    <SafeAreaView>
+      {/* rounded border */}
+      <RoundedContainer>
       {/* Header */}
       <Header />
       {/* Navigation Header */}
@@ -122,7 +124,8 @@ const HomeScreen = ({ navigation }) => {
           ListFooterComponent={loading && <ActivityIndicator size="large" color="#0000ff" />}
         />
       </BottomSheet>
-    </CommonContainer>
+      </RoundedContainer>
+    </SafeAreaView>
   );
 }
 
