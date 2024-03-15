@@ -23,12 +23,12 @@ const styles = StyleSheet.create({
     searchContainer: {
         backgroundColor: COLORS.primaryThemeColor,
         padding: 10,
-        marginHorizontal: 5
+        paddingHorizontal: 20
     },
     searchInput: {
         backgroundColor: COLORS.white,
-        borderRadius: 5,
-        padding: 5,
+        borderRadius: 8,
+        padding: 10,
         flexDirection: "row",
         alignItems: 'center',
     },

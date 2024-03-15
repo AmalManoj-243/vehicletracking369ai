@@ -7,7 +7,7 @@ const Loader = ({ visible, animationSource }) => {
     <AnimatedLoader
       visible={visible}
       source={animationSource}
-      overlayColor="rgba(255, 255, 255, 0.75)"
+      overlayColor="transparent"
       animationStyle={styles.lottie}
       speed={1.5}
     />

@@ -56,7 +56,7 @@ const HomeScreen = ({ navigation }) => {
       return <View style={[styles.itemStyle, styles.itemInvisible]} />
     }
     return (
-      <ProductsList item={item} onPress={() => console.log('Product selected:', item)} />
+      <ProductsList item={item} showPrice={true} onPress={() => console.log('Product selected:', item)} />
     )
   }
 
