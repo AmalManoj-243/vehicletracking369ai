@@ -10,6 +10,7 @@ import { Loader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { debounce } from 'lodash';
 import styles from './styles';
+import { EmptyState } from '@components/common';
 
 const ProductsScreen = ({ navigation, route }) => {
 
@@ -94,23 +95,42 @@ const ProductsScreen = ({ navigation, route }) => {
     return <ProductsList item={item} onPress={() => console.log('Product selected:', item)} />;
   };
 
+
+  const renderEmptyState = () => (
+    <EmptyState imageSource={require('@assets/images/EmptyData/empty_data.png')} message={'No Items Found'} />
+  );
+
+  const renderContent = () => (
+    <FlashList
+      data={formatData(products, 3)}
+      numColumns={3}
+      renderItem={renderItem}
+      keyExtractor={(item, index) => index.toString()}
+      contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
+      onEndReached={fetchMoreProducts}
+      showsVerticalScrollIndicator={false}
+      onEndReachedThreshold={0.2}
+      ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
+      estimatedItemSize={100}
+    />
+  );
+
+  // Check if categories are empty and not loading to avoid brief display of empty state during initial load
+  const renderProducts = () => {
+    if (products.length === 0 && !loading) {
+      return renderEmptyState();
+    }
+    return renderContent();
+  };
+
+
+
   return (
     <SafeAreaView>
       <NavigationHeader title="Products" onBackPress={() => navigation.goBack()} />
       <SearchContainer placeholder="Search Products" onChangeText={handleSearchTextChange} />
       <RoundedContainer>
-        <FlashList
-          data={formatData(products, 3)}
-          numColumns={3}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
-          onEndReached={fetchMoreProducts}
-          showsVerticalScrollIndicator={false}
-          onEndReachedThreshold={0.2}
-          ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
-          estimatedItemSize={100}
-        />
+        {renderProducts()}
       </RoundedContainer>
     </SafeAreaView>
   );
