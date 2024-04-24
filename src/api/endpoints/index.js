@@ -1,0 +1,2 @@
+import { API_ENDPOINTS, DETAIL_API_ENDPOINTS } from "./endpoints";
+export { API_ENDPOINTS, DETAIL_API_ENDPOINTS }

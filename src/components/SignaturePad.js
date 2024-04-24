@@ -2,13 +2,14 @@ import React, { useRef, useState } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import SignatureScreen from "react-native-signature-canvas";
 import Text from "./Text";
+import { COLORS, FONT_FAMILY } from "@constants/theme";
 import * as FileSystem from "expo-file-system";
-// import uploadApi from "../api/services/uploadApi";
+import { uploadApi } from "@api/uploads";
 
 export const CustomClearButton = ({ title, onPress }) => {
     return (
         <TouchableOpacity
-            style={[styles.button, { backgroundColor: "#ed493d", }]}
+            style={[styles.button, { backgroundColor: COLORS.orange, }]}
             onPress={onPress}
         >
             <Text style={[styles.buttonText, { color: "white", }]}>{title}</Text>
@@ -16,69 +17,66 @@ export const CustomClearButton = ({ title, onPress }) => {
     );
 };
 
-const SignaturePad = ({ onOK, setScrollEnabled, setUrl, url }) => {
+const SignaturePad = ({ setUrl, setScrollEnabled, title }) => {
 
-    const [isDraw, setDraw] = useState(false);
+    const [isSign, setSign] = useState(false);
     const ref = useRef();
 
-
-    const handleOK = (drawingData) => {
-        const path = FileSystem.cacheDirectory +  `signature_pad${Date.now()}.png`;
+    const handleOK = (signature) => {
+        const path = FileSystem.cacheDirectory + `signature${Date.now()}.png`;
         FileSystem.writeAsStringAsync(
             path,
-            drawingData.replace("data:image/png;base64,", ""),
+            signature.replace("data:image/png;base64,", ""),
             { encoding: FileSystem.EncodingType.Base64 }
         )
-            .then(() => FileSystem.getInfoAsync(path))
+            .then(() => {
+                console.log("Writing signature to file completed. Path:", path);
+                return FileSystem.getInfoAsync(path);
+            })
             .then(async () => {
                 try {
-                  console.log("Signature to file completed. Path:", path);
-        
-                  await uploadApi(path, setUrl, url);
-                  // console.log("API response---:", uploadResponse);
-                  // Handle the API response as needed
+                    const uploadUrl = await uploadApi(path);
+                    console.log("API response upload url:", uploadUrl);
+                    if (uploadUrl) {
+                        setUrl(uploadUrl)
+                    }
                 } catch (error) {
-                  console.log("API error:", error);
-                  // Log the error in the console, but don't affect the mobile screen
-                }})
-            .then(console.log)
-            .catch(console.error);
+                    console.log("API error:", error);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
     };
 
     const handleClear = () => {
         ref.current.clearSignature();
-        setDraw(null);
+        setSign(null);
+    };
+
+    const handleConfirm = () => {
+        console.log("end");
+        ref.current.readSignature();
     };
 
     const handleEnd = () => {
         ref.current.readSignature();
         setScrollEnabled(true)
-        setDraw(true); // Show the clear button when drawing
+        setSign(true);
     };
-    const style =
-        `.m-signature-pad {
-        position: absolute;
-        font-size: 10px;
-        width: 700px;
-        height: 400px;
-        top: 50%;
-        left: 50%;
-        margin-left: -350px;
-        margin-top: -200px;
-        border: 1px solid #e8e8e8;
-        background-color: #fff;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.27), 0 0 40px rgba(0, 0, 0, 0.08) inset;
-      }`
+    const style = `.m-signature-pad--footer {display: none; margin: 0px;}`;
+
     return (
         <>
+        <Text style={styles.label}>{title}</Text>
             <View style={styles.signContainer}>
-                <SignatureScreen ref={ref} onOK={handleOK} webStyle={style} onEnd={handleEnd}
+                <SignatureScreen webStyle={style} ref={ref} onOK={handleOK} 
                     onBegin={() => setScrollEnabled(false)}
-                    onDraw={() => setScrollEnabled(false)}
+                    onEnd={handleEnd}
                 />
             </View>
             <View style={{ alignSelf: 'flex-end', marginTop: 10 }}>
-                {isDraw ? (<CustomClearButton title="CLEAR" onPress={handleClear} />) : null}
+                {isSign ? (<CustomClearButton title="CLEAR" onPress={handleClear} />) : null}
             </View>
         </>
     );
@@ -89,13 +87,13 @@ export default SignaturePad;
 const styles = StyleSheet.create({
     signContainer: {
         flex: 1,
-        marginTop: 10,
+        // marginTop: 10,
         alignItems: "center",
         justifyContent: "center",
         height: 250,
         width: "100%",
-        borderWidth: 0.9,
-        borderColor: 'gray',
+        borderWidth: 1,
+        borderColor: '#BBB7B7',
         borderRadius: 5,
         overflow: 'hidden',
     },
@@ -112,7 +110,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 5,
         borderRadius: 5,
-        backgroundColor: "#ed493d",
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 1.5,
@@ -120,9 +117,15 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     buttonText: {
-        fontFamily: 'raleway_bold',
+        fontFamily: FONT_FAMILY.urbanistBold,
         textAlign: 'center',
         fontSize: 12,
-        color: "white",
+        color: COLORS.white,
+    },
+    label: {
+        marginVertical: 5,
+        fontSize: 16,
+        color: '#2e2a4f',
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
 });

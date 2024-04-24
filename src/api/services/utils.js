@@ -15,11 +15,11 @@ export const get = async (endpoint, params = {}) => {
   }
 };
 
-export const post = async (endpoint, data = {}) => {
+export const post = async (endpoint, data = {}, config ={}) => {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     console.log('API request:', url, 'with data:', data); 
-    const response = await axios.post(url, data);
+    const response = await axios.post(url, data, config);
     return response.data;
   } catch (error) {
     handleApiError(error)

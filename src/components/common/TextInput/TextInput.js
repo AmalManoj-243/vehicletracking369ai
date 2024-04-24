@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
         flex: 2 / 3,
         marginVertical: 5,
         fontSize: 16,
-        color: '#2e2a4f',
+        color: COLORS.primaryThemeColor,
         fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
     inputContainer: {
@@ -117,11 +117,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     input: {
-        color: COLORS.primaryThemeColor,
+        color: COLORS.black,
         flex: 1,
-        fontFamily: FONT_FAMILY.urbanistMedium,
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
         marginTop: 10,
         textAlignVertical: 'top',
+        // fontSize:16
     },
     errorText: {
         color: COLORS.red,

@@ -2,8 +2,8 @@ import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { COLORS } from '@constants/theme';
 
-const RoundedScrollContainer = ({ children, backgroundColor = COLORS.white, borderRadius = true, ...props }) => {
-  
+const RoundedScrollContainer = ({ children, backgroundColor = COLORS.white, borderRadius = true, scrollEnabled = true, ...props }) => {
+
   const containerStyles = {
     flex: 1,
     // marginHorizontal:20,
@@ -15,7 +15,7 @@ const RoundedScrollContainer = ({ children, backgroundColor = COLORS.white, bord
 
   return (
     <View style={containerStyles}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding:15 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 15 }} showsVerticalScrollIndicator={false} scrollEnabled={scrollEnabled}>
         {children}
       </ScrollView>
     </View>

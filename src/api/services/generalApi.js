@@ -1,7 +1,7 @@
 // api/services/generalApi.js
 
 import { get } from "./utils";
-import { API_ENDPOINTS } from "./endpoints";
+import { API_ENDPOINTS } from "@api/endpoints";
 import handleApiError from "../utils/handleApiError";
 
 export const fetchProducts = async ({ offset, limit, categoryId, searchText }) => {
