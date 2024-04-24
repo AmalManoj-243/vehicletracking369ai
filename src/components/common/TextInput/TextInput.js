@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     input: {
         color: COLORS.black,
         flex: 1,
-        fontFamily: FONT_FAMILY.urbanistSemiBold,
+        fontFamily: FONT_FAMILY.urbanistMedium,
         marginTop: 10,
         textAlignVertical: 'top',
         // fontSize:16
