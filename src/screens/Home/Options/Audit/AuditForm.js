@@ -15,6 +15,7 @@ import { formatData } from '@utils/formatters'
 import { AntDesign } from '@expo/vector-icons';
 import { post } from '@api/services/utils'
 import Toast from 'react-native-toast-message'
+import { ScreenContainer } from 'react-native-screens'
 
 const AuditForm = ({ navigation }) => {
 
@@ -115,6 +116,12 @@ const AuditForm = ({ navigation }) => {
           console.log("Bill data", billDetails);
           break;
 
+        case "E/PPAY":
+          response = await fetchBills.salaryPaymentDetails(billSequence);
+          billDetails = response[0];
+          console.log("Bill data", billDetails);
+          break;
+
         case "CUSTREC":
           response = await fetchBills.customerReceiptsDetails(billSequence);
           billDetails = response[0];
@@ -163,7 +170,7 @@ const AuditForm = ({ navigation }) => {
           console.log("Bill data", billDetails);
           break;
 
-        case "CASRET":
+        case "CASRET": //petty cash return
           response = await fetchBills.pettyCashReturnDetails(billSequence);
           billDetails = response[0];
           console.log("Bill data", billDetails);
@@ -257,7 +264,7 @@ const AuditForm = ({ navigation }) => {
     // }
     for (const field in errorMessages) {
       // Skip validation for displayName field if bill name is "Spare Issue"
-      if (field === "displayName" && splittedBillName === "Spare Issue") {
+      if (field === "displayName" && splittedBillName === "Spare Issue" || field === "displayName" && splittedBillName === 'E/PPAY') {
         continue;
       }
 
@@ -331,9 +338,9 @@ const AuditForm = ({ navigation }) => {
         case "Sales Return":
           // Handling for Sales Return 
           auditingData.register_payment_id = null,
-            auditingData.chq_type = scannedBillDetails?.chq_type ?? null;
+          auditingData.chq_type = scannedBillDetails?.chq_type ?? null;
           auditingData.register_payment_sequence_no = null,
-            auditingData.chq_no = scannedBillDetails.chq_no ?? null;
+          auditingData.chq_no = scannedBillDetails.chq_no ?? null;
           auditingData.chq_date = scannedBillDetails?.chq_date ?? null;
           auditingData.customer_id = scannedBillDetails?.customer?.customer_id;
           auditingData.customer_name = displayBillDetails?.displayName;
@@ -342,9 +349,9 @@ const AuditForm = ({ navigation }) => {
         case "Cash rec":
           auditingData.customer_id = null;
           auditingData.chq_no = scannedBillDetails?.chq_type ?? null,
-            auditingData.chq_date = scannedBillDetails?.chq_type ?? null,
-            auditingData.chq_type = scannedBillDetails?.chq_type ?? null,
-            auditingData.register_payment_sequence_no = scannedBillDetails?.register_payments[0]?.sequence_no ?? null;
+          auditingData.chq_date = scannedBillDetails?.chq_type ?? null,
+          auditingData.chq_type = scannedBillDetails?.chq_type ?? null,
+          auditingData.register_payment_sequence_no = scannedBillDetails?.register_payments[0]?.sequence_no ?? null;
           auditingData.ledger_id = ledger?.ledger_id ?? null;
           auditingData.ledger_type = ledger?.ledger_type ?? null;
           auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
@@ -358,7 +365,7 @@ const AuditForm = ({ navigation }) => {
           break;
         case "Bank rec": //BNKPAY
           auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0,
-            auditingData.ledger_id = ledger?.ledger_id ?? null;
+          auditingData.ledger_id = ledger?.ledger_id ?? null;
           auditingData.ledger_type = ledger?.ledger_type ?? null;
           auditingData.ledger_name = ledger?.ledger_name ?? null;
           auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
@@ -433,10 +440,39 @@ const AuditForm = ({ navigation }) => {
           auditingData.supplier_id = null;
           auditingData.supplier_name = null;
           auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
-          auditingData.ledger_id = ledger?.ledger_id ?? null;
-          auditingData.ledger_type = ledger?.ledger_type ?? null;
-          auditingData.ledger_name = ledger?.ledger_name ?? null;
-          auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
+          auditingData.ledger_id = scannedBillDetails?.ledger_id ?? null;
+          auditingData.ledger_type = scannedBillDetails?.ledger_display_name ?? null;
+          auditingData.ledger_name = scannedBillDetails?.ledger_name ?? null;
+          auditingData.ledger_display_name = scannedBillDetails?.ledger_display_name ?? null;
+          auditingData.employee_ledger_id = scannedBillDetails?.paid_from?.paid_from_id ?? null;
+          auditingData.warehouse_id = scannedBillDetails?.warehouse_id ?? null;
+          auditingData.warehouse_name = scannedBillDetails?.warehouse_name ?? '';
+          auditingData.employee_ledger_display_name = scannedBillDetails?.paid_from_ledger_name ?? '';
+          auditingData.employee_ledger_name = scannedBillDetails?.paid_from_ledger_name ?? '';
+          auditingData.sales_person_id = scannedBillDetails?.sales_person?.sales_person_id;
+          auditingData.sales_person_name = scannedBillDetails?.sales_person?.sales_person_name;
+          break;
+        case "CASRET": //petty cash return 
+          auditingData.supplier_id = null;
+          auditingData.supplier_name = null;
+          auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
+          auditingData.warehouse_id = scannedBillDetails?.warehouse_id ?? null;
+          auditingData.warehouse_name = scannedBillDetails?.warehouse_name ?? '';
+          auditingData.sales_person_id = scannedBillDetails?.sales_person?.sales_person_id;
+          auditingData.sales_person_name = scannedBillDetails?.sales_person?.sales_person_name;
+          break;
+        case "E/PPAY":
+          auditingData.supplier_id = null;
+          auditingData.supplier_name = null;
+          auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
+          auditingData.ledger_id = scannedBillDetails.ledger_id ?? null;
+          auditingData.ledger_type = scannedBillDetails.ledger_type ?? null;
+          auditingData.ledger_name = scannedBillDetails.ledger_name ?? null;
+          auditingData.ledger_display_name = scannedBillDetails.ledger_display_name ?? null;
+          auditingData.warehouse_id = scannedBillDetails?.warehouse_id ?? null;
+          auditingData.warehouse_name = scannedBillDetails?.warehouse_name ?? '';
+          auditingData.sales_person_id = scannedBillDetails?.sales_person?.sales_person_id;
+          auditingData.sales_person_name = scannedBillDetails?.sales_person?.sales_person_name;
           break;
         case "PETTYALLOT":
           auditingData.ledger_id = ledger?.ledger_id ?? null;
@@ -536,7 +572,6 @@ const AuditForm = ({ navigation }) => {
       </View>
     );
   };
-
 
   const renderItem = ({ index, item }) => {
     if (item.empty) {

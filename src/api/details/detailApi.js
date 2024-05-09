@@ -88,6 +88,11 @@ export const fetchBills = {
     return fetchDetails(DETAIL_API_ENDPOINTS.PETTY_CASH_EXPENSE_DETAILS, sequenceNo);
   },
 
+  salaryPaymentDetails: async (sequenceNo) => {
+    return fetchDetails(DETAIL_API_ENDPOINTS.SALARY_PAYMENT_DETAILS, sequenceNo);
+  },
+
+
   pettyCashTransferDetails: async (sequenceNo) => {
     return fetchDetails(DETAIL_API_ENDPOINTS.PETTY_CASH_TRANSFER_DETAILS, sequenceNo);
   },

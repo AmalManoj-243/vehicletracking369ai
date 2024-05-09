@@ -9,6 +9,7 @@ import { TaskManagerScreen } from "@screens/Home/Options/TaskManager";
 import { AuditForm, AuditScreen } from "@screens/Home/Options/Audit";
 import { LoginScreen, PrivacyPolicy } from "@screens/Auth";
 import { Scanner } from "@components/Scanner";
+import { InventoryForm, InventoryScreen } from "@screens/Home/Options/Inventory";
 
 const Stack = createNativeStackNavigator();
 
@@ -60,6 +61,19 @@ const StackNavigator = () => {
       <Stack.Screen
         name="AuditForm"
         component={AuditForm}
+        options={{ headerShown: false }}
+      />
+
+      {/* Inventory Screen */}
+      <Stack.Screen
+        name="InventoryScreen"
+        component={InventoryScreen}
+        options={{ headerShown: false }}
+      />
+      {/* Inventory Form */}
+      <Stack.Screen
+        name="InventoryForm"
+        component={InventoryForm}
         options={{ headerShown: false }}
       />
       <Stack.Screen
