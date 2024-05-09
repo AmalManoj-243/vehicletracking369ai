@@ -56,7 +56,7 @@ const AuditForm = ({ navigation }) => {
     setSplittedBillName(billName)
 
     resetFormState();
-    
+
     try {
       let response, billDetails;
       // console.log("Response of customer data", billDetails)
@@ -331,9 +331,9 @@ const AuditForm = ({ navigation }) => {
         case "Sales Return":
           // Handling for Sales Return 
           auditingData.register_payment_id = null,
-          auditingData.chq_type = scannedBillDetails?.chq_type ?? null;
+            auditingData.chq_type = scannedBillDetails?.chq_type ?? null;
           auditingData.register_payment_sequence_no = null,
-          auditingData.chq_no = scannedBillDetails.chq_no ?? null;
+            auditingData.chq_no = scannedBillDetails.chq_no ?? null;
           auditingData.chq_date = scannedBillDetails?.chq_date ?? null;
           auditingData.customer_id = scannedBillDetails?.customer?.customer_id;
           auditingData.customer_name = displayBillDetails?.displayName;
@@ -342,9 +342,9 @@ const AuditForm = ({ navigation }) => {
         case "Cash rec":
           auditingData.customer_id = null;
           auditingData.chq_no = scannedBillDetails?.chq_type ?? null,
-          auditingData.chq_date = scannedBillDetails?.chq_type ?? null,
-          auditingData.chq_type = scannedBillDetails?.chq_type ?? null,
-          auditingData.register_payment_sequence_no = scannedBillDetails?.register_payments[0]?.sequence_no ?? null;
+            auditingData.chq_date = scannedBillDetails?.chq_type ?? null,
+            auditingData.chq_type = scannedBillDetails?.chq_type ?? null,
+            auditingData.register_payment_sequence_no = scannedBillDetails?.register_payments[0]?.sequence_no ?? null;
           auditingData.ledger_id = ledger?.ledger_id ?? null;
           auditingData.ledger_type = ledger?.ledger_type ?? null;
           auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
@@ -358,7 +358,7 @@ const AuditForm = ({ navigation }) => {
           break;
         case "Bank rec": //BNKPAY
           auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0,
-          auditingData.ledger_id = ledger?.ledger_id ?? null;
+            auditingData.ledger_id = ledger?.ledger_id ?? null;
           auditingData.ledger_type = ledger?.ledger_type ?? null;
           auditingData.ledger_name = ledger?.ledger_name ?? null;
           auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
@@ -430,8 +430,8 @@ const AuditForm = ({ navigation }) => {
           auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
           break;
         case "PETEXP":
-          auditingData.supplier_id =  null;
-          auditingData.supplier_name =  null;
+          auditingData.supplier_id = null;
+          auditingData.supplier_name = null;
           auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
           auditingData.ledger_id = ledger?.ledger_id ?? null;
           auditingData.ledger_type = ledger?.ledger_type ?? null;
@@ -493,7 +493,7 @@ const AuditForm = ({ navigation }) => {
           text2: 'Audit created successfully',
           position: 'bottom',
         });
-        // navigation.navigate('AuditScreen');
+        navigation.navigate('AuditScreen');
       } else {
         console.error('Auditing creation failed:', response.message);
         Toast.show({

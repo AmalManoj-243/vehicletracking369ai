@@ -19,35 +19,41 @@ const HomeScreen = ({ navigation }) => {
   const [allDataLoaded, setAllDataLoaded] = useState(false);
   const [backPressCount, setBackPressCount] = useState(0);
   console.log("🚀 ~ HomeScreen ~ backPressCount:", backPressCount)
-  console.log("🚀 ~ HomeScreen ~ backPressCount:", backPressCount)
 
   useEffect(() => {
     fetchInitialProducts();
   }, []);
 
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-    return () => backHandler.remove();
-  }, [handleBackPress]);
-
   const handleBackPress = useCallback(() => {
     if (navigation.isFocused()) {
       if (backPressCount === 0) {
-        showToastMessage('Press back again to exit');
         setBackPressCount(1);
         return true;
       } else if (backPressCount === 1) {
         BackHandler.exitApp();
       }
     }
-    return false;
+    return false; // Allow default back action
   }, [backPressCount, navigation]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   useEffect(() => {
     const backPressTimer = setTimeout(() => {
       setBackPressCount(0);
     }, 2000);
+
     return () => clearTimeout(backPressTimer);
+  }, [backPressCount]);
+
+  useEffect(() => {
+    // Show toast message when backPressCount changes to 1
+    if (backPressCount === 1) {
+      showToastMessage('Press back again to exit');
+    }
   }, [backPressCount]);
 
   const fetchInitialProducts = async () => {
@@ -143,8 +149,6 @@ const HomeScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   itemInvisible: {
