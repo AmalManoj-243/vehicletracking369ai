@@ -14,12 +14,16 @@ import { fetchInventoryDetails, fetchInventoryDetailsByName } from '@api/details
 import { useDataFetching } from '@hooks';
 import { formatData } from '@utils/formatters';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
+import useAuthStore from '@stores/auth/authStore';
 
 const InventoryScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
   const [isVisibleModal, setIsVisibleModal] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchInventoryBoxRequest);
+  const currentUser = useAuthStore(state => state.user)
+  const warehouseId = currentUser?.warehouse?.warehouse_id || ''
+
 
   useEffect(() => {
     fetchData();
@@ -39,7 +43,7 @@ const InventoryScreen = ({ navigation }) => {
   };
 
   const handleModalInput = async (text) => {
-    const inventoryDetails = await fetchInventoryDetailsByName(text)
+    const inventoryDetails = await fetchInventoryDetailsByName(text, warehouseId)
     if (inventoryDetails.length > 0) {
       navigation.navigate('InventoryDetails', { inventoryDetails: inventoryDetails[0] });
     } else {
@@ -100,7 +104,7 @@ const InventoryScreen = ({ navigation }) => {
               actions={[
                 { icon: 'barcode-scan', label: 'Scan', labelStyle: { fontFamily: FONT_FAMILY.urbanistSemiBold, color: COLORS.primaryThemeColor }, onPress: () => navigation.navigate('Scanner', { onScan: handleScan }) },
                 { icon: 'pencil', label: 'Box no', labelStyle: { fontFamily: FONT_FAMILY.urbanistSemiBold, color: COLORS.primaryThemeColor }, onPress: () => setIsVisibleModal(true) },
-                { icon: 'pencil', label: 'Detail', labelStyle: { fontFamily: FONT_FAMILY.urbanistSemiBold, color: COLORS.primaryThemeColor }, onPress: () => navigation.navigate('InventoryDetails', {inventoryDetails: []}) },
+                // { icon: 'pencil', label: 'Detail', labelStyle: { fontFamily: FONT_FAMILY.urbanistSemiBold, color: COLORS.primaryThemeColor }, onPress: () => navigation.navigate('InventoryDetails', {inventoryDetails: []}) },
               ]}
               onStateChange={({ open }) => setIsFabOpen(open)}
             />

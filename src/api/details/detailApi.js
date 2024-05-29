@@ -1,6 +1,7 @@
 import { get } from "../services/utils";
 import handleApiError from "@api/utils/handleApiError";
 import { DETAIL_API_ENDPOINTS } from "@api/endpoints";
+import useAuthStore from "@stores/auth/authStore";
 
 const {
   GET_INVOICE_DETAILS,
@@ -31,6 +32,7 @@ const {
   GET_INVENTORY_DETAILS,
 } = DETAIL_API_ENDPOINTS;
 
+
 // Fetches details for a given endpoint and sequence number.
 const fetchAuditDetails = async (endpoint, sequenceNo) => {
   try {
@@ -54,9 +56,10 @@ const fetchDetails = async (endpoint, detailId) => {
 }
 
 // Fetches details for a given endpoint and search.
-const fetchDetailBySearch = async (endpoint, search) => {
+const fetchDetailBySearch = async (endpoint, search, warehouseId) => {
+  console.log("🚀 ~ fetchDetailBySearch ~ warehouseId:", warehouseId)
   try {
-    const response = await get(`${endpoint}?name=${search}`)
+    const response = await get(`${endpoint}?name=${search}&warehouse_id=${warehouseId}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -119,6 +122,6 @@ export const fetchInventoryDetails = async (detailId) => {
   return fetchDetails(GET_INVENTORY_DETAILS, detailId);
 };
 
-export const fetchInventoryDetailsByName = async (name) => {
-  return fetchDetailBySearch(GET_INVENTORY_DETAILS, name);
+export const fetchInventoryDetailsByName = async (name, warehouseId) => {
+  return fetchDetailBySearch(GET_INVENTORY_DETAILS, name, warehouseId);
 };

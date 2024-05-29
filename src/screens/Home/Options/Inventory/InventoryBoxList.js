@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     marginHorizontal: 10,
     marginVertical: 5,
-    backgroundColor:COLORS.listContainer,
+    backgroundColor:COLORS.boxTheme,
     borderRadius: 15,
     borderWidth:2,
     borderColor:'white',

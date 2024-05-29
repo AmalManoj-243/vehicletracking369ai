@@ -7,6 +7,7 @@ import { FONT_FAMILY } from '@constants/theme';
 
 const TextInput = ({
     label,
+    labelColor,
     iconName,
     error,
     onPress,
@@ -35,7 +36,7 @@ const TextInput = ({
 
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, {color: labelColor}]}>{label}</Text>
             <TouchableWithoutFeedback onPress={handlePress}>
                 <View
                     style={[

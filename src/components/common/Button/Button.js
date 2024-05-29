@@ -5,6 +5,7 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 
 const Button = ({
   title,
+  color = 'white',
   onPress = () => { },
   backgroundColor = COLORS.button,
   ...props
@@ -23,7 +24,7 @@ const Button = ({
         marginVertical:10,
         ...props
       }}>
-      <Text style={styles.title}>
+      <Text style={[styles.title, {color: color}]}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -32,7 +33,6 @@ const Button = ({
 
 const styles = StyleSheet.create({
   title: {
-    color: 'white',
     fontSize: 16,
     fontFamily: FONT_FAMILY.urbanistBold
   }

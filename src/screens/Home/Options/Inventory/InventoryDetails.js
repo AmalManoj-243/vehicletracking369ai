@@ -2,14 +2,15 @@ import React from 'react'
 import { ButtonContainer, RoundedScrollContainer, SafeAreaView } from '@components/containers'
 import { NavigationHeader } from '@components/Header'
 import Text from '@components/Text'
-import { View, StyleSheet, FlatList } from 'react-native';
-import { FONT_FAMILY } from '@constants/theme';
+import { View, FlatList } from 'react-native';
+import { COLORS } from '@constants/theme';
 import { DetailField } from '@components/common/Detail';
 import { EmptyState } from '@components/common/empty';
 import { formatDate } from '@utils/common/date';
 import InventoryBoxList from './InventoryBoxList';
 import useAuthStore from '@stores/auth/authStore';
 import { Button } from '@components/common/Button';
+import { styles } from './styles';
 
 const InventoryDetails = ({ navigation, route }) => {
 
@@ -44,7 +45,6 @@ const InventoryDetails = ({ navigation, route }) => {
       keyExtractor={(item, index) => index.toString()}
       showsVerticalScrollIndicator={false}
       estimatedItemSize={100}
-
     />
   );
   const renderInventoryRequest = () => {
@@ -60,7 +60,7 @@ const InventoryDetails = ({ navigation, route }) => {
         onBackPress={() => navigation.goBack()}
         title={'Inventory Details'}
       />
-      <RoundedScrollContainer >
+      <RoundedScrollContainer>
         <DetailField label={'Inventory Box'} value={inventoryDetails?.name} />
         <DetailField label={'Location'} value={inventoryDetails?.location_name} />
         <DetailField label={'Date'} value={formatDate(inventoryDetails?.date, "yyyy-MM-dd hh:mm a")} />
@@ -71,39 +71,33 @@ const InventoryDetails = ({ navigation, route }) => {
           currentUser && isResponsible(inventoryDetails?.responsible_person?._id)
             || inventoryDetails?.employees?.some(employee => isResponsible(employee._id)) ?
             (<ButtonContainer>
-              <Button title={'Box Opening Request'} onPress={() => navigation.navigate('InventoryForm')} />
+              <Button
+                title="Box Opening Request"
+                backgroundColor={COLORS.boxTheme}
+                onPress={() => navigation.navigate('InventoryForm', {
+                  items: inventoryDetails?.items || [],
+                  boxId: inventoryDetails?._id
+                })}
+              />
             </ButtonContainer>)
             : <Text style={styles.notification}>You do not have permission to open the box request</Text>
         }
-        {
+        {/* {
           currentUser ?
             (<ButtonContainer>
-              <Button title={'Box Opening Request'} onPress={() => navigation.navigate('InventoryForm')} />
+              <Button title={'Box Opening Request'}
+                backgroundColor={COLORS.boxTheme}
+                onPress={() => navigation.navigate('InventoryForm', {
+                  items: inventoryDetails?.items || [],
+                  boxId: inventoryDetails?._id
+                })}
+              />
             </ButtonContainer>)
             : <Text style={styles.notification}>You do not have permission to open the box request</Text>
-        }
+        } */}
       </RoundedScrollContainer>
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  label: {
-    marginVertical: 5,
-    fontSize: 16,
-    color: '#B56727',
-    fontFamily: FONT_FAMILY.urbanistBold,
-  },
-  notification: {
-    // position:'absolute',
-    marginTop: 10,
-    alignSelf: 'center',
-    bottom: 50,
-    fontSize: 16,
-    color: 'red',
-    fontFamily: FONT_FAMILY.urbanistSemiBold,
-  },
-});
-
 
 export default InventoryDetails

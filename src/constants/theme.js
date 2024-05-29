@@ -15,19 +15,20 @@ const FONT_FAMILY = {
 
 // Colors
 const COLORS = {
-  white: '#ffff',
-  black: '#000',
-  lightBlack: '#151718', // Consider renaming to maintain consistency
+  white: '#FFFFFF',
+  black: '#000000',
+  lightBlack: '#151718',
   blue: '#5D5FEE',
-  primaryThemeColor: '#2e294e',
+  primaryThemeColor: '#2E294E',
   orange: '#F37021',
   button: '#F37021',
-  red: '#ff3333',
-  lightGrey: '	#D3D3D3',
+  red: '#FF3333',
+  lightGrey: '#D3D3D3',
   grey: '#F0F0F0',
-  listText: '#ffff',
-  listContainer: '#B56727'
+  listText: '#FFFFFF',
+  boxTheme: '#B56727'
 };
+
 
 // sizes
 const SIZE = {
