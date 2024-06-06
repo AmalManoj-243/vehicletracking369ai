@@ -30,6 +30,7 @@ const {
   GET_COLLECTION_TYPE_DETAILS,
   GET_CHEQUE_LEDGER,
   GET_INVENTORY_DETAILS,
+  GET_PRODUCT_DETAILS
 } = DETAIL_API_ENDPOINTS;
 
 
@@ -120,6 +121,10 @@ export const fetchBills = {
 
 export const fetchInventoryDetails = async (detailId) => {
   return fetchDetails(GET_INVENTORY_DETAILS, detailId);
+};
+
+export const fetchProductDetails = async (detailId) => {
+  return fetchDetails(GET_PRODUCT_DETAILS, detailId);
 };
 
 export const fetchInventoryDetailsByName = async (name, warehouseId) => {

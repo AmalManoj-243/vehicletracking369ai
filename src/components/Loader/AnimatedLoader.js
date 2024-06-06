@@ -1,15 +1,15 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import AnimatedLoader from 'react-native-animated-loader';
+import Loader from 'react-native-animated-loader';
 
-const Loader = ({ visible, animationSource }) => {
+const AnimatedLoader = ({ visible, animationSource }) => {
   return (
-    <AnimatedLoader
+    <Loader
       visible={visible}
       source={animationSource}
       overlayColor="transparent"
       animationStyle={styles.lottie}
-      speed={1.3}
+      speed={2}
     />
   );
 };
@@ -21,4 +21,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Loader;
+export default AnimatedLoader;

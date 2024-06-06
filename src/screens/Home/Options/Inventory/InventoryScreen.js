@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FAB, Portal } from 'react-native-paper';
 import { RoundedContainer, SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
-import { Loader } from '@components/Loader';
+import { OverlayLoader } from '@components/Loader';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { FlashList } from '@shopify/flash-list';
 import { InputModal } from '@components/Modal';
@@ -15,7 +15,6 @@ import { useDataFetching } from '@hooks';
 import { formatData } from '@utils/formatters';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import useAuthStore from '@stores/auth/authStore';
-import { ActivityIndicator } from 'react-native-paper';
 
 const InventoryScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
@@ -34,6 +33,10 @@ const InventoryScreen = ({ navigation }) => {
   const handleLoadMore = () => {
     fetchMoreData();
   };
+
+  const renderOverlayLoader = () => (
+    <OverlayLoader visible={true} />
+  );
 
   const handleScan = async (scannedData) => {
     setScanLoading(true);
@@ -90,7 +93,6 @@ const InventoryScreen = ({ navigation }) => {
       onEndReached={handleLoadMore}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
       estimatedItemSize={100}
     />
   );
@@ -109,6 +111,7 @@ const InventoryScreen = ({ navigation }) => {
         onBackPress={() => navigation.goBack()}
       />
       <RoundedContainer>
+        {loading && renderOverlayLoader()}
         {renderInventoryRequest()}
         {isFocused && (
           <Portal>
@@ -133,13 +136,9 @@ const InventoryScreen = ({ navigation }) => {
         onClose={() => setIsVisibleModal(false)}
         onSubmit={(text) => handleModalInput(text)}
       />
+
       {(scanLoading || modalLoading) && (
-        <ActivityIndicator
-          animating={true}
-          size="large"
-          color={COLORS.primaryThemeColor}
-          style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] }}
-        />
+        <OverlayLoader visible={true} bakgroundColor={true} />
       )}
     </SafeAreaView>
   );

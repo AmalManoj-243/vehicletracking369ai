@@ -10,6 +10,7 @@ import { AuditForm, AuditScreen } from "@screens/Home/Options/Audit";
 import { LoginScreen, PrivacyPolicy } from "@screens/Auth";
 import { Scanner } from "@components/Scanner";
 import { InventoryDetails, InventoryForm, InventoryScreen } from "@screens/Home/Options/Inventory";
+import { ProductDetail } from "@components/common/Detail";
 
 const Stack = createNativeStackNavigator();
 
@@ -92,6 +93,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="Products"
         component={ProductsScreen}
+        options={{ headerShown: false }}
+      />
+       <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetail}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

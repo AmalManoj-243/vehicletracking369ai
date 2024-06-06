@@ -12,17 +12,12 @@ import useAuthStore from '@stores/auth/authStore';
 import { Button } from '@components/common/Button';
 import { styles } from './styles';
 import { reasons } from '@constants/dropdownConst';
-import { TextInput as FormInput } from '@components/common/TextInput';
-import { DropdownSheet } from '@components/common/BottomSheets';
-import { showToastMessage } from '@components/Toast';
+import { CustomListModal } from '@components/Modal';
 
 const InventoryDetails = ({ navigation, route }) => {
   const { inventoryDetails } = route?.params || {};
-  const [isVisible, setIsVisible] = useState(false);
-  const [selectedType, setSelectedType] = useState(null);
-  const [reason, setReason] = useState('');
+  const [isVisible, setIsVisible] = useState(false)
   const currentUser = useAuthStore((state) => state.user);
-
   const isResponsible = (userId) => currentUser && (userId === currentUser.related_profile._id);
 
   const renderItem = ({ item }) => {
@@ -45,37 +40,15 @@ const InventoryDetails = ({ navigation, route }) => {
     />
   );
 
-  const toggleBottomSheet = (type) => {
-    setSelectedType(type);
-    setIsVisible(!isVisible);
-  };
-
-  const renderBottomSheet = () => {
-    if (selectedType === 'Select Reason') {
-      return (
-        <DropdownSheet
-          isVisible={isVisible}
-          items={reasons}
-          title={selectedType}
-          onClose={() => setIsVisible(false)}
-          onValueChange={(value) => setReason(value)}
-        />
-      );
-    }
-    return null;
-  };
-
-  const handleBoxOpeningRequest = () => {
-    if (!reason) {
-      showToastMessage('Please select a reason before proceeding.');
-      return;
-    }
-    navigation.navigate('InventoryForm', {
-      items: inventoryDetails?.items || [],
-      boxId: inventoryDetails?._id,
-      boxName: inventoryDetails?.name,
-      reason: reason
-    });
+  const handleBoxOpeningRequest = (value) => {
+    if (value) {
+      navigation.navigate('InventoryForm', {
+        items: inventoryDetails?.items || [],
+        boxId: inventoryDetails?._id,
+        boxName: inventoryDetails?.name,
+        reason: value
+      });
+    } return null;
   };
 
   const hasPermission = () =>
@@ -88,31 +61,26 @@ const InventoryDetails = ({ navigation, route }) => {
       <NavigationHeader onBackPress={() => navigation.goBack()} title="Inventory Details" />
       <RoundedScrollContainer>
         <DetailField label="Inventory Box" value={inventoryDetails?.name} labelColor={COLORS.boxTheme} />
-        <DetailField label="Location" value={inventoryDetails?.location_name} labelColor={COLORS.boxTheme} />
+        <DetailField label="Warehouse" value={inventoryDetails?.warehouse_name} labelColor={COLORS.boxTheme} />
         <DetailField label="Date" value={formatDate(inventoryDetails?.date, 'yyyy-MM-dd hh:mm a')} labelColor={COLORS.boxTheme} />
-        <FormInput
-          labelColor={COLORS.boxTheme}
-          label="Select Reason"
-          placeholder="Select Reason"
-          dropIcon="menu-down"
-          editable={false}
-          value={reason.label}
-          multiline
-          onPress={() => toggleBottomSheet('Select Reason')}
-        />
         <View style={{ marginVertical: 10 }} />
         <Text style={styles.label}>Box Items</Text>
         {inventoryDetails?.items?.length === 0 ? renderEmptyState() : renderContent()}
         {hasPermission() ? (
           <ButtonContainer>
-            <Button title="Box Opening Request" backgroundColor={COLORS.boxTheme} onPress={handleBoxOpeningRequest} />
+            <Button title="Box Opening Request" backgroundColor={COLORS.boxTheme} onPress={() => setIsVisible(true)} />
           </ButtonContainer>
         ) : (
           <Text style={styles.notification}>You do not have permission to open the box request</Text>
         )}
-        {/* <Button title="Box Opening Request" backgroundColor={COLORS.boxTheme} onPress={handleBoxOpeningRequest} /> */}
-
-        {renderBottomSheet()}
+        {/* <Button title="Box Opening Request" backgroundColor={COLORS.boxTheme} onPress={() => setIsVisible(true)} /> */}
+        <CustomListModal
+          isVisible={isVisible}
+          items={reasons}
+          title={'Select Reason'}
+          onClose={() => setIsVisible(false)}
+          onValueChange={handleBoxOpeningRequest}
+        />
       </RoundedScrollContainer>
     </SafeAreaView>
   );

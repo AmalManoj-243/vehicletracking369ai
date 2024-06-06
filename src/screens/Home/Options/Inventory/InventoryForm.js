@@ -22,7 +22,7 @@ import { showToastMessage } from '@components/Toast';
 import { post } from '@api/services/utils';
 import useAuthStore from '@stores/auth/authStore';
 import Toast from 'react-native-toast-message';
-import Loader from '@components/Loader/Loader';
+import { OverlayLoader } from '@components/Loader';
 
 const InventoryForm = ({ navigation, route }) => {
 
@@ -46,7 +46,6 @@ const InventoryForm = ({ navigation, route }) => {
     remarks: '',
   });
 
-  console.log("🚀 ~ InventoryForm ~ formData:", formData)
   const [dropdown, setDropdown] = useState({
     invoice: [],
     service: [],
@@ -424,7 +423,7 @@ const InventoryForm = ({ navigation, route }) => {
         onBackPress={() => navigation.goBack()}
       />
       <RoundedScrollContainer>
-        <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />
+        <OverlayLoader visible={loading} backgroundColor={true}/>
         <FormInput
           label={'Inventory Box'}
           labelColor={COLORS.boxTheme}

@@ -10,7 +10,7 @@ import { COLORS, FONT_FAMILY } from "@constants/theme";
 import { LogBox } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button } from "@components/common/Button";
-import { Loader } from "@components/Loader";
+import { AnimatedLoader, OverlayLoader } from "@components/Loader";
 import { post } from "@api/services/utils";
 import { useNavigation } from "@react-navigation/native";
 import Text from "@components/Text";
@@ -110,7 +110,7 @@ const LoginScreen = () => {
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <SafeAreaView style={container}>
-        <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />
+        <OverlayLoader visible={loading} />
         {/* <ScrollView style={{ paddingHorizontal: 15, flex: 1, backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}> */}
             <View style={imageContainer}>
               <Image source={require('@assets/images/header/logo_header.png')} style={{ width: 300, height: 180, alignSelf: 'center' }} />

@@ -6,7 +6,7 @@ import { fetchProducts } from '@api/services/generalApi';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { Loader } from '@components/Loader';
+import { AnimatedLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { debounce } from 'lodash';
 import styles from './styles';
@@ -79,7 +79,7 @@ const ProductsScreen = ({ navigation, route }) => {
   const debouncedSearch = useCallback(
     debounce((text) => {
       setSearchText(text);
-    }, 1000),
+    }, 3000),
     []
   );
 
@@ -91,7 +91,7 @@ const ProductsScreen = ({ navigation, route }) => {
     if (item.empty) {
       return <View style={[styles.itemStyle, styles.itemInvisible]} />;
     }
-    return <ProductsList item={item} onPress={() => console.log('Product selected:', item)} />;
+    return <ProductsList item={item} onPress={() => navigation.navigate('ProductDetail', {detail: item})} />;
   };
 
 
@@ -109,7 +109,7 @@ const ProductsScreen = ({ navigation, route }) => {
       onEndReached={fetchMoreProducts}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
+      ListFooterComponent={loading && <AnimatedLoader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
       estimatedItemSize={100}
     />
   );

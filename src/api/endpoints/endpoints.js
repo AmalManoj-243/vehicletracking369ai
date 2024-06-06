@@ -49,4 +49,5 @@ export const DETAIL_API_ENDPOINTS = {
     GET_CHEQUE_LEDGER:'/viewChequeLedger',
     // OTHERS DETAILS
     GET_INVENTORY_DETAILS: '/viewInventoryBox',
+    GET_PRODUCT_DETAILS: '/viewProducts'
 };

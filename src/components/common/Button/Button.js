@@ -36,7 +36,7 @@ const Button = ({
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: FONT_FAMILY.urbanistBold
   }
 });

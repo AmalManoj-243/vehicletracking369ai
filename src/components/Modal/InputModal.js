@@ -58,11 +58,11 @@ const InputModal = ({ isVisible, onClose, onSubmit }) => {
                         </View>
                     ) : null}
                     <View style={styles.buttonRow}>
-                        <View style={{ flex: 1 }}>
+                        <View style={{ flex: 3 }}>
                             <Button title="CANCEL" onPress={() => onClose()} />
                         </View>
                         <View style={{ width: 10 }} />
-                        <View style={{ flex: 3 }}>
+                        <View style={{ flex: 6 }}>
                             {itemName && <Button title="Show Inventory Details" onPress={handleSave} />}
                         </View>
                     </View>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { Loader } from '@components/Loader';
+import { AnimatedLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView } from '@components/containers';
 import { debounce } from 'lodash';
 import { EmptyItem, EmptyState } from '@components/common/empty';
@@ -103,7 +103,7 @@ const AuditScreen = ({ navigation }) => {
             onEndReached={fetchMoreResponse}
             showsVerticalScrollIndicator={false}
             onEndReachedThreshold={0.2}
-            ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
+            ListFooterComponent={loading && <AnimatedLoader visible={loading} animationSource={require('@assets/animations/loading.json')} />}
             estimatedItemSize={100}
         />
     );

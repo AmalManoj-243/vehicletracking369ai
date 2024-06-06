@@ -5,7 +5,7 @@ import { fetchCategories } from '@api/services/generalApi';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { Loader } from '@components/Loader';
+import {AnimatedLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { debounce } from 'lodash';
 import styles from './styles';
@@ -98,7 +98,7 @@ const CategoriesScreen = ({ navigation }) => {
       onEndReached={fetchAdditionalCategories}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      ListFooterComponent={loading && <Loader visible={loading} animationSource={require('@assets/animations/loading_up_down.json')} />}
+      ListFooterComponent={loading && <AnimatedLoader visible={loading} animationSource={require('@assets/animations/loading_up_down.json')} />}
     />
   );
 

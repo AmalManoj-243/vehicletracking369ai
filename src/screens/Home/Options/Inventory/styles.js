@@ -9,13 +9,14 @@ export const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.urbanistBold,
   },
   notification: {
+    // flex:1,
     // position:'absolute',
     marginTop: 10,
     alignSelf: 'center',
-    bottom: 50,
-    fontSize: 16,
+    // bottom: 50,
+    fontSize: 14,
     color: 'red',
     fontFamily: FONT_FAMILY.urbanistSemiBold,
   },
-  
+
 });
