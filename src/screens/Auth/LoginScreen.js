@@ -70,12 +70,9 @@ const LoginScreen = () => {
         user_name: inputs.username,
         password: inputs.password,
       });
-      console.log("🚀 ~ login ~ response:", response)
       if (response.success === true) {
         const userData = response.data[0];
-        console.log("🚀 ~ login ~ userData:", userData)
-        console.log("🚀 ~ login ~ userData:", userData)
-        const userToken = response.token
+        // const userToken = response.token
         if (
           inputs.username === userData.username,
           inputs.password === userData.password
@@ -91,9 +88,7 @@ const LoginScreen = () => {
         showToastMessage("Error! User does not exist");
       }
     } catch (error) {
-      console.log("Axios Error:", error);
-      console.log(error.message);
-      showToastMessage("error! occurred while logging in");
+      showToastMessage(`error! occurred while logging in ${error.message}`);
     } finally {
       setLoading(false);
     }

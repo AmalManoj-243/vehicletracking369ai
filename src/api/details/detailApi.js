@@ -56,9 +56,20 @@ const fetchDetails = async (endpoint, detailId) => {
   }
 }
 
+
+// Fetches details for a given endpoint and detail ID.
+const fetchBarcodeDetails = async (endpoint, code) => {
+  try {
+    const response = await get(`${endpoint}?barcode=${code}`)
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+}
+
 // Fetches details for a given endpoint and search.
 const fetchDetailBySearch = async (endpoint, search, warehouseId) => {
-  console.log("🚀 ~ fetchDetailBySearch ~ warehouseId:", warehouseId)
   try {
     const response = await get(`${endpoint}?name=${search}&warehouse_id=${warehouseId}`);
     return response.data;
@@ -125,6 +136,11 @@ export const fetchInventoryDetails = async (detailId) => {
 
 export const fetchProductDetails = async (detailId) => {
   return fetchDetails(GET_PRODUCT_DETAILS, detailId);
+};
+
+export const fetchProductDetailsByBarcode = async (code) => {
+  console.log("🚀 ~ fetchProductDetailsByBarcode ~ code:", code)
+  return fetchBarcodeDetails(GET_PRODUCT_DETAILS, code);
 };
 
 export const fetchInventoryDetailsByName = async (name, warehouseId) => {

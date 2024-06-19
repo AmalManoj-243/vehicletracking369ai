@@ -8,9 +8,10 @@ import { OptionsScreen } from "@screens/Home/Options";
 import { TaskManagerScreen } from "@screens/Home/Options/TaskManager";
 import { AuditForm, AuditScreen } from "@screens/Home/Options/Audit";
 import { LoginScreen, PrivacyPolicy } from "@screens/Auth";
-import { Scanner } from "@components/Scanner";
+import { Barcode, Scanner } from "@components/Scanner";
 import { InventoryDetails, InventoryForm, InventoryScreen } from "@screens/Home/Options/Inventory";
 import { ProductDetail } from "@components/common/Detail";
+import { CustomerDetails, CustomerScreen } from "@screens/Home/Sections/Customer";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="Scanner"
         component={Scanner}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Barcode"
+        component={Barcode}
         options={{ headerShown: false }}
       />
       {/* Login Screen */}
@@ -71,8 +77,8 @@ const StackNavigator = () => {
         component={InventoryScreen}
         options={{ headerShown: false }}
       />
-       {/* Inventory Details */}
-       <Stack.Screen
+      {/* Inventory Details */}
+      <Stack.Screen
         name="InventoryDetails"
         component={InventoryDetails}
         options={{ headerShown: false }}
@@ -95,9 +101,20 @@ const StackNavigator = () => {
         component={ProductsScreen}
         options={{ headerShown: false }}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="ProductDetail"
         component={ProductDetail}
+        options={{ headerShown: false }}
+      />
+      {/* Customers */}
+      <Stack.Screen
+        name="CustomerScreen"
+        component={CustomerScreen}
+        options={{ headerShown: false }}
+      />
+       <Stack.Screen
+        name="CustomerDetails"
+        component={CustomerDetails}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

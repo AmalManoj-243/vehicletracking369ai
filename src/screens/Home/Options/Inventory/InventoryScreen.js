@@ -48,7 +48,6 @@ const InventoryScreen = ({ navigation }) => {
     const responsiblePersonId = inventoryDetails?.responsible_person?._id;
     const employeeIds = inventoryDetails?.employees?.map((employee) => employee._id) || [];
     const tempAssigneeIds = inventoryDetails?.temp_assignee?.map((tempAssignee) => tempAssignee._id) || [];
-    // console.log("🚀 ~ isResponsibleOrEmployee ~ tempAssigneeIds:", tempAssigneeIds)
   
     return (
       currentUser &&
@@ -66,9 +65,7 @@ const InventoryScreen = ({ navigation }) => {
           id: employee._id,
           label: employee.name,
         }));
-        // console.log("🚀 ~ extract ~ extract:", extract)
         setEmployee(extract);
-        // console.log("🚀 ~ fetchData ~ employeeDropdown:", employeeDropdown)
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
       }
@@ -97,7 +94,6 @@ const InventoryScreen = ({ navigation }) => {
     setScanLoading(true);
     try {
       const inventoryDetails = await fetchInventoryDetails(scannedData);
-      console.log("🚀 ~ handleScan ~ inventoryDetails:", inventoryDetails);
       if (inventoryDetails.length > 0) {
         const details = inventoryDetails[0];
         setGetDetail(details);
@@ -125,10 +121,6 @@ const InventoryScreen = ({ navigation }) => {
       const inventoryDetails = await fetchInventoryDetailsByName(
         text,
         warehouseId
-      );
-      console.log(
-        "🚀 ~ handleModalInput ~ inventoryDetails:",
-        inventoryDetails
       );
       if (inventoryDetails.length > 0) {
         const details = inventoryDetails[0];
@@ -171,7 +163,6 @@ const InventoryScreen = ({ navigation }) => {
   };
 
   const handleSelectTemporaryAssignee = (value) => {
-    console.log("🚀 ~ handleSelectTemporaryAssignee ~ value:", value);
   };
   const renderContent = () => (
     <FlashList

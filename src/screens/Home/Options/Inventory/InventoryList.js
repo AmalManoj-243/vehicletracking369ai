@@ -5,8 +5,6 @@ import { FONT_FAMILY } from '@constants/theme';
 import { formatDateTime } from '@utils/common/date';
 
 const InventoryList = ({ item, onPress }) => {
-// console.log("🚀 ~ InventoryList ~ item:", item)
-
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>

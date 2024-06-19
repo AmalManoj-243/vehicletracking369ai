@@ -6,7 +6,6 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { Button } from '@components/common/Button';
 
 const InventoryRequestItem = ({ item, onPress, onChoose, onQuantityChange }) => {
-    // console.log("🚀 ~ InventoryRequestItem ~ item:", item.chosen)
     return (
         <TouchableOpacity activeOpacity={1} onPress={onPress}>
             <View style={styles.itemContainer}>

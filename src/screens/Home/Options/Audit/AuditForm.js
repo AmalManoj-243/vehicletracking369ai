@@ -50,7 +50,6 @@ const AuditForm = ({ navigation }) => {
   const handleScan = async (data) => {
 
     const billParts = data.split('-')
-    console.log("🚀 ~ handleScan ~ billParts:", billParts)
     const billName = billParts[0]
     const billSequence = billParts.slice(1).join('-')
     setSplittedBillName(billName)
@@ -198,7 +197,6 @@ const AuditForm = ({ navigation }) => {
           response = await fetchBills.sparePartsIssueDetails(billSequence);
           if (response[0]) {
             const spareAuditDetail = await fetchBills.sparePartsIssueAuditDetails(response[0]?._id)
-            console.log("🚀 ~ handleScan ~ spareAuditDetail:", spareAuditDetail)
             billDetails = spareAuditDetail[0];
           }
           console.log("Bill data Spare Issue", billDetails);
@@ -230,7 +228,6 @@ const AuditForm = ({ navigation }) => {
             billDetails?.ledger_id || '',
         };
         const collectionTypeResponse = await fetchBills.collectionTypeDetails(transactionDetails.businessType, transactionDetails.paymentMethod);
-        console.log("🚀 ~ handleScan ~ collectionTypeResponse:", collectionTypeResponse)
         const collectionResponseData = collectionTypeResponse[0];
         setCollectionType(collectionResponseData);
         if (transactionDetails.ledgerId) {
@@ -592,7 +589,6 @@ const AuditForm = ({ navigation }) => {
         });
       }
     } catch (err) {
-      console.log("🚀 ~ handleSubmitAudit ~ err:", err)
     }
   }
   const handleDeleteImage = (index) => {

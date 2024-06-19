@@ -15,14 +15,15 @@ import {
 } from "@components/Home";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { fetchCategories } from "@api/services/generalApi";
-import { ProductsList } from "@components/Product";
 import { RoundedContainer, SafeAreaView } from "@components/containers";
 import { formatData } from "@utils/formatters";
 import { COLORS } from "@constants/theme";
 import { showToastMessage } from "@components/Toast";
 import { CategoryList } from "@components/Categories";
-import { useDataFetching } from "@hooks";
+import { useDataFetching, useLoader } from "@hooks";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { fetchProductDetailsByBarcode } from "@api/details/detailApi";
+import { OverlayLoader } from "@components/Loader";
 
 const { height } = Dimensions.get("window");
 
@@ -101,8 +102,35 @@ const HomeScreen = ({ navigation }) => {
 
   // Define different snap points based on screen height
   const snapPoints = useMemo(() => {
-    return height < 800 ? ["45%", "83%"] : ["50%", "85%"];
+    if (height < 700) {
+      return ["33%", "79%"];
+    } else if (height < 800) {
+      return ["45%", "83%"];
+    } else {
+      return ["50%", "85%"];
+    }
   }, [height]);
+
+
+  const [detailLoading, startLoading, stopLoading] = useLoader(false);
+
+  const handleScan = async (code) => {
+    startLoading();
+    try {
+      const productDetails = await fetchProductDetailsByBarcode(code);
+      if (productDetails.length > 0) {
+        const details = productDetails[0];
+        navigation.navigate('ProductDetail', { detail: details })
+      } else {
+        showToastMessage("No Products found for this Barcode");
+      }
+    } catch (error) {
+      showToastMessage(`Error fetching inventory details ${error.message}`);
+    } finally {
+      stopLoading();
+    }
+  };
+
 
   return (
     <SafeAreaView backgroundColor={COLORS.primaryThemeColor}>
@@ -114,7 +142,7 @@ const HomeScreen = ({ navigation }) => {
         <NavigationBar
           onSearchPress={() => navigation.navigate("")}
           onOptionsPress={() => navigation.navigate("OptionsScreen")}
-          onScannerPress={() => navigation.navigate("")}
+          onScannerPress={() =>  navigation.navigate("Scanner", {onScan: handleScan})}
         />
         {/* Carousel */}
         <CarouselPagination />
@@ -141,7 +169,7 @@ const HomeScreen = ({ navigation }) => {
           />
           <ImageContainer
             source={require("@assets/images/Home/section/customer.png")}
-            onPress={() => navigateToScreen("Customer")}
+            onPress={() => navigateToScreen("CustomerScreen")}
             backgroundColor="#f37021"
             title="Customer"
           />
@@ -166,6 +194,7 @@ const HomeScreen = ({ navigation }) => {
             }
           />
         </BottomSheet>
+        <OverlayLoader visible={detailLoading}/>
       </RoundedContainer>
     </SafeAreaView>
   );

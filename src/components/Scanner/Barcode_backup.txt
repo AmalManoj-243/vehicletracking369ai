@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Button, Animated, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 
-const Scanner = ({ route }) => {
+const Barcode = ({ route }) => {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
     const [isFlashOn, setIsFlashOn] = useState(false);
     const [requestedPermission, setRequestedPermission] = useState(false);
 
     const scaleValue = useRef(new Animated.Value(1)).current;
-    const translateYValue = useRef(new Animated.Value(0)).current;
 
     const { onScan, onClose = false } = route?.params || {};
     const navigation = useNavigation();
@@ -54,7 +53,7 @@ const Scanner = ({ route }) => {
                 }),
                 Animated.timing(scaleValue, {
                     toValue: 1.0,
-                    duration: 1000,
+                    duration: 500,
                     useNativeDriver: true,
                 }),
             ])
@@ -64,18 +63,13 @@ const Scanner = ({ route }) => {
             zoomAnimation.start();
         } else {
             zoomAnimation.stop();
-            Animated.timing(translateYValue, {
-                toValue: 1000,
-                duration: 500,
-                useNativeDriver: true,
-            }).start();
         }
         return () => zoomAnimation.stop();
-    }, [scanned, translateYValue]);
+    }, [scanned, scaleValue]);
 
     useEffect(() => {
         if (isFocused) {
-            setScanned(false); 
+            setScanned(false);
         }
     }, [isFocused]);
 
@@ -92,41 +86,38 @@ const Scanner = ({ route }) => {
     };
 
     const handleClose = () => {
-        Animated.timing(translateYValue, {
-            toValue: 1000,
-            duration: 500,
-            useNativeDriver: true,
-        }).start(() => {
-            navigation.goBack();
-        });
+        navigation.goBack();
     };
 
     return (
-        <Animated.View style={[styles.container]}>
+        <Animated.View style={styles.container}>
             {isFocused && hasPermission && (
                 <View style={styles.scannerContainer}>
                     <Camera
-                    focusable={true}
                         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-                        style={StyleSheet.absoluteFillObject}
+                        style={styles.camera}
                         flashMode={isFlashOn ? Camera.Constants.FlashMode.torch : Camera.Constants.FlashMode.off}
-                    />
-                    <View style={styles.scannerOverlay}>
-                        <Animated.Image
-                            source={require('@assets/images/scanner/scanner.png')}
-                            style={[styles.scannerImage, { transform: [{ scale: scaleValue }] }]}
-                        />
-                    </View>
+                    >
+                        <View style={styles.overlay}>
+                            <View style={styles.topOverlay} />
+                            <View style={styles.centerOverlay}>
+                                <View style={styles.sideOverlay} />
+                                <View style={styles.scannerFrame} />
+                                <View style={styles.sideOverlay} />
+                            </View>
+                            <View style={styles.bottomOverlay} />
+                        </View>
+                    </Camera>
                 </View>
             )}
             <View style={styles.bottomButtonsContainer}>
-                <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+                <TouchableOpacity style={styles.button} onPress={toggleFlash}>
                     <Ionicons name={isFlashOn ? 'flash' : 'flash-off'} size={30} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.refreshButton} onPress={() => setScanned(false)}>
+                <TouchableOpacity style={styles.button} onPress={() => setScanned(false)}>
                     <Ionicons name={'refresh'} size={30} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <TouchableOpacity style={styles.button} onPress={handleClose}>
                     <Ionicons name="close" size={30} color="white" />
                 </TouchableOpacity>
             </View>
@@ -134,33 +125,53 @@ const Scanner = ({ route }) => {
     );
 };
 
-export default Scanner;
+export default Barcode;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'black',
     },
     scannerContainer: {
         flex: 1,
-        width: '100%',
-        backgroundColor: 'black',
-    },
-    scannerOverlay: {
-        ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    scannerImage: {
-        width: 300,
-        height: 300,
-        resizeMode: 'contain',
-        tintColor: 'white',
+    camera: {
+        ...StyleSheet.absoluteFillObject,
     },
-    buttonContainer: {
-        marginTop: 20,
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    topOverlay: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    centerOverlay: {
+        flexDirection: 'row',
+    },
+    sideOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    scannerFrame: {
+        width: 250,
+        height: 250,
+        borderWidth: 2,
+        borderColor: 'white',
+        backgroundColor: 'transparent',
+    },
+    bottomOverlay: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     bottomButtonsContainer: {
         position: 'absolute',
@@ -170,18 +181,10 @@ const styles = StyleSheet.create({
         width: '100%',
         paddingHorizontal: 20,
     },
-    flashButton: {
+    button: {
         padding: 10,
         borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    closeButton: {
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    refreshButton: {
-        padding: 10,
-        borderRadius: 5,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        alignItems: 'center',
     },
 });

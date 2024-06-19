@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import Text from '@components/Text';
 import { BottomSheetModal, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { FONT_FAMILY } from '@constants/theme';
-import { BottomSheetHeader, NavigationHeader } from '@components/Header';
+import {  NavigationHeader } from '@components/Header';
 
 
 const DropdownSheet = ({
@@ -13,7 +13,6 @@ const DropdownSheet = ({
     title,
     onClose = () => { }
 }) => {
-    console.log("🚀 ~ isVisible:", isVisible)
     const bottomSheetModalRef = useRef(null);
     const snapPoints = useMemo(() => ['25%', '30%', '50%', '96%'], []);
 
@@ -26,7 +25,7 @@ const DropdownSheet = ({
     }, [isVisible]);
 
     const handleSheetChanges = useCallback((number) => {
-        console.log('handleSheetChanges', number);
+        // console.log('handleSheetChanges', number);
     }, []);
 
     const handleSelectItem = (item) => {

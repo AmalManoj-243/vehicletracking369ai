@@ -168,8 +168,6 @@ const InventoryForm = ({ navigation, route }) => {
 
   // Filter items to display only the chosen item or all items
   const displayItems = chosenItem ? [chosenItem] : itemsList;
-  // console.log("🚀 ~ InventoryForm ~ chosenItem:", chosenItem)
-
   const handleChooseItem = (item) => {
     // Toggle chosen state
     if (chosenItem === item) {
@@ -229,8 +227,6 @@ const InventoryForm = ({ navigation, route }) => {
     setLoading(true);
 
     let itemsToSubmit = displayItems.length > 0 ? displayItems : [];
-    // console.log("🚀 ~ handleInventoryBoxRequest ~ itemsToSubmit:", itemsToSubmit)
-
     // Remove the 'chosen' key from the items
     itemsToSubmit = itemsToSubmit.map(({ chosen, ...rest }) => rest);
 
@@ -521,7 +517,7 @@ const InventoryForm = ({ navigation, route }) => {
           placeholder={"Enter remarks"}
           onChangeText={(text) => handleFieldChange("remarks", text)}
         />
-        {showSubmitButton ? (
+        {/* {showSubmitButton ? ( */}
           <Button
             backgroundColor={loading ? COLORS.lightenBoxTheme : COLORS.boxTheme}
             title={"Submit"}
@@ -529,11 +525,7 @@ const InventoryForm = ({ navigation, route }) => {
             onPress={handleInventoryBoxRequest}
             style={styles.submitButton}
           />
-        ) : (
-          <Text style={styles.notification}>
-            You do not have permission to open the box request
-          </Text>
-        )}
+        {/* ) : null} */}
         <View style={{ flex: 1, marginBottom: "20%" }} />
       </RoundedScrollContainer>
       {renderBottomSheet()}

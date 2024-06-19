@@ -6,12 +6,36 @@ import { ListItem } from '@components/Options';
 import { formatData } from '@utils/formatters';
 import { EmptyItem } from '@components/common/empty';
 import { COLORS } from '@constants/theme';
+import { useLoader } from '@hooks';
+import { fetchProductDetailsByBarcode} from "@api/details/detailApi";
+import { showToastMessage } from '@components/Toast';
+import { OverlayLoader } from '@components/Loader';
 
 const OptionsScreen = ({ navigation }) => {
+
+  const [loading, startLoading, stopLoading] = useLoader(false);
+
+  const handleScan = async (code) => {
+    startLoading();
+    try {
+      const productDetails = await fetchProductDetailsByBarcode(code);
+      if (productDetails.length > 0) {
+        const details = productDetails[0];
+        navigation.navigate('ProductDetail', { detail: details })
+      } else {
+        showToastMessage("No Products found for this Barcode");
+      }
+    } catch (error) {
+      showToastMessage(`Error fetching inventory details ${error.message}`);
+    } finally {
+      stopLoading();
+    }
+  };
+
   const options =
     [
       { title: 'Search Products', image: require('@assets/images/Home/options/search_product.png'), onPress: () => navigation.navigate('Products') },
-      { title: 'Scan Barcode', image: require('@assets/images/Home/options/scan_barcode.png'), onPress: () => navigation.navigate('ScanBarcode') },
+      { title: 'Scan Barcode', image: require('@assets/images/Home/options/scan_barcode.png'), onPress: () =>   navigation.navigate("Scanner", {onScan: handleScan})},
       { title: 'Product Enquiry', image: require('@assets/images/Home/options/product_enquiry.png'), onPress: () => navigation.navigate('') },
       { title: 'Purchase Requisition', image: require('@assets/images/Home/options/product_purchase_requisition.png'), onPress: () => navigation.navigate('') },
       { title: 'Transaction Auditing', image: require('@assets/images/Home/options/transaction_auditing.png'), onPress: () => navigation.navigate('AuditScreen') },
@@ -46,7 +70,7 @@ const OptionsScreen = ({ navigation }) => {
           numColumns={2}
           keyExtractor={(item, index) => index.toString()}
         />
-
+        <OverlayLoader visible={loading}/>
       </RoundedContainer>
     </SafeAreaView>
   )

@@ -2,8 +2,6 @@ import { post } from "@api/services/utils";
 
 // Upload writing api
 const uploadApi = async (fileUri) => {
-console.log("🚀 ~ uploadApi ~ fileUri:", fileUri)
-
 
   try {
     const formData = new FormData();
@@ -19,15 +17,10 @@ console.log("🚀 ~ uploadApi ~ fileUri:", fileUri)
         'Content-Type': 'multipart/form-data',
       }
     }
-    console.log("🚀 ~ uploadApi ~ formData:", formData)
-
     const response = await post('/fileUpload?folder_name=audit', formData, config);
-    console.log("🚀 ~ uploadApi ~ response:", response.data)
-
     // Check if the response contains the expected data
     if (response && response.data) {
       const uploadUrl = response.data;
-      console.log("🚀 ~ uploadApi ~ uploadUrl:", uploadUrl)
       return uploadUrl
     } else {
       console.log('Upload failed. Unexpected API response:', response.data);

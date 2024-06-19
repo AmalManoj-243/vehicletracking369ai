@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View } from 'react-native';
 import { NavigationHeader } from '@components/Header';
 import { ProductsList } from '@components/Product';
@@ -6,7 +6,7 @@ import { fetchProducts } from '@api/services/generalApi';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { AnimatedLoader } from '@components/Loader';
+import { OverlayLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import styles from './styles';
 import { EmptyState } from '@components/common/empty';
@@ -18,7 +18,7 @@ const ProductsScreen = ({ navigation, route }) => {
 
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchProducts);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData(text, categoryId));
+  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData(text, categoryId), 500);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,14 +57,6 @@ const ProductsScreen = ({ navigation, route }) => {
       onEndReached={handleLoadMore}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      ListFooterComponent={
-        loading && (
-          <AnimatedLoader
-            visible={loading}
-            animationSource={require('@assets/animations/loading.json')}
-          />
-        )
-      }
       estimatedItemSize={100}
     />
   );
@@ -83,6 +75,7 @@ const ProductsScreen = ({ navigation, route }) => {
       <RoundedContainer>
         {renderProducts()}
       </RoundedContainer>
+      <OverlayLoader visible={loading}/>
     </SafeAreaView>
   );
 };

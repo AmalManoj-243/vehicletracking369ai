@@ -4,10 +4,10 @@ export const API_ENDPOINTS = {
     VIEW_PRODUCTS: '/viewProducts',
     VIEW_CATEGORIES: '/viewCategories',
     VIEW_WAREHOUSE: `/viewWarehouses`,
-    VIEW_CUSTOMER: '/viewCustomers',
+    VIEW_CUSTOMERS: '/viewCustomers',
     VIEW_QUOTATION: '/viewQuotation',
     VIEW_AUDITING: '/viewAuditing',
-    VIEW_INVENTORY_BOX_REQUEST: '/viewInventoryboxrequest'
+    VIEW_INVENTORY_BOX_REQUEST: '/viewInventoryboxrequest',
 };
 
 export const DROP_DOWN_API_ENDPOINTS = {
@@ -50,5 +50,5 @@ export const DETAIL_API_ENDPOINTS = {
     GET_CHEQUE_LEDGER:'/viewChequeLedger',
     // OTHERS DETAILS
     GET_INVENTORY_DETAILS: '/viewInventoryBox',
-    GET_PRODUCT_DETAILS: '/viewProducts'
+    GET_PRODUCT_DETAILS: '/viewProducts',
 };

@@ -65,7 +65,7 @@ const ProductDetail = ({ navigation, route }) => {
   };
 
   const handleSelectTemporaryAssignee = (value) => {
-    console.log("🚀 ~ handleSelectTemporaryAssignee ~ value:", value);
+    // console.log("🚀 ~ handleSelectTemporaryAssignee ~ value:", value);
   };
 
   const productDetails = async () => {

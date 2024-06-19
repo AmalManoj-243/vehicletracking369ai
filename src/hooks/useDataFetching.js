@@ -8,7 +8,7 @@ const useDataFetching = (fetchDataCallback) => {
   const [allDataLoaded, setAllDataLoaded] = useState(false);
   const [offset, setOffset] = useState(0);
 
-  const fetchData = useCallback(async (search = '', categoryId = null) => {
+  const fetchData = useCallback(async (search = '', categoryId = null,) => {
     startLoading();
     try {
       const params = { offset: 0, limit: 20, searchText: search, categoryId: categoryId };

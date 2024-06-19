@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Button, Animated, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 
-const Scanner = ({ route }) => {
+const Barcode = ({ route }) => {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
     const [isFlashOn, setIsFlashOn] = useState(false);
@@ -54,7 +54,7 @@ const Scanner = ({ route }) => {
                 }),
                 Animated.timing(scaleValue, {
                     toValue: 1.0,
-                    duration: 1000,
+                    duration: 500,
                     useNativeDriver: true,
                 }),
             ])
@@ -64,18 +64,13 @@ const Scanner = ({ route }) => {
             zoomAnimation.start();
         } else {
             zoomAnimation.stop();
-            Animated.timing(translateYValue, {
-                toValue: 1000,
-                duration: 500,
-                useNativeDriver: true,
-            }).start();
         }
         return () => zoomAnimation.stop();
-    }, [scanned, translateYValue]);
+    }, [scanned, scaleValue]);
 
     useEffect(() => {
         if (isFocused) {
-            setScanned(false); 
+            setScanned(false);
         }
     }, [isFocused]);
 
@@ -102,31 +97,24 @@ const Scanner = ({ route }) => {
     };
 
     return (
-        <Animated.View style={[styles.container]}>
+        <Animated.View style={styles.container}>
             {isFocused && hasPermission && (
                 <View style={styles.scannerContainer}>
                     <Camera
-                    focusable={true}
                         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-                        style={StyleSheet.absoluteFillObject}
+                        style={styles.scanner}
                         flashMode={isFlashOn ? Camera.Constants.FlashMode.torch : Camera.Constants.FlashMode.off}
                     />
-                    <View style={styles.scannerOverlay}>
-                        <Animated.Image
-                            source={require('@assets/images/scanner/scanner.png')}
-                            style={[styles.scannerImage, { transform: [{ scale: scaleValue }] }]}
-                        />
-                    </View>
                 </View>
             )}
             <View style={styles.bottomButtonsContainer}>
-                <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+                <TouchableOpacity style={styles.button} onPress={toggleFlash}>
                     <Ionicons name={isFlashOn ? 'flash' : 'flash-off'} size={30} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.refreshButton} onPress={() => setScanned(false)}>
+                <TouchableOpacity style={styles.button} onPress={() => setScanned(false)}>
                     <Ionicons name={'refresh'} size={30} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <TouchableOpacity style={styles.button} onPress={handleClose}>
                     <Ionicons name="close" size={30} color="white" />
                 </TouchableOpacity>
             </View>
@@ -134,33 +122,25 @@ const Scanner = ({ route }) => {
     );
 };
 
-export default Scanner;
+export default Barcode;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'black'
     },
     scannerContainer: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: 'black',
-    },
-    scannerOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
+        width: '70%', // Adjust width as needed
+        height: '30%', // Adjust height as needed
         alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        position: 'absolute',
+        top: '20%', // Adjust this value to vertically center the scanner
     },
-    scannerImage: {
-        width: 300,
-        height: 300,
-        resizeMode: 'contain',
-        tintColor: 'white',
-    },
-    buttonContainer: {
-        marginTop: 20,
+    scanner: {
+        width: '100%',
+        height: '100%',
     },
     bottomButtonsContainer: {
         position: 'absolute',
@@ -170,18 +150,10 @@ const styles = StyleSheet.create({
         width: '100%',
         paddingHorizontal: 20,
     },
-    flashButton: {
+    button: {
         padding: 10,
         borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    closeButton: {
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    refreshButton: {
-        padding: 10,
-        borderRadius: 5,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        alignItems: 'center',
     },
 });

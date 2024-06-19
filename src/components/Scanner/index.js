@@ -1,2 +1,3 @@
 import Scanner from "./Scanner";
-export { Scanner }
+import Barcode from "./Barcode";
+export { Scanner, Barcode }
