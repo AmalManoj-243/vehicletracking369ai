@@ -26,7 +26,7 @@ const ProductDetail = ({ navigation, route }) => {
     useState(false);
   const [employee, setEmployee] = useState([]);
   const currentUser = useAuthStore(state => state.user);
-  const warehouseId = currentUser?.warehouse?.warehouse_id || '';
+  // const warehouseId = currentUser?.warehouse?.warehouse_id || '';
   const addProduct = useProductStore((state) => state.addProduct);
 
   const isResponsibleOrEmployee = (inventoryDetails) => {
@@ -82,7 +82,8 @@ const ProductDetail = ({ navigation, route }) => {
   }, [detail]);
 
 
-  const handleBoxNamePress = async (boxName) => {
+  const handleBoxNamePress = async (boxName, warehouseId) => {
+    // console.log("🚀 ~ handleBoxNamePress ~ warehouseId:", warehouseId)
     setLoading(true);
     try {
       const inventoryDetails = await fetchInventoryDetailsByName(
@@ -135,7 +136,7 @@ const ProductDetail = ({ navigation, route }) => {
               <TouchableOpacity
                 key={`${index}-${idx}`}
                 style={{ marginTop: 10, borderColor: COLORS.primaryThemeColor, padding: 5, width: '40%', alignItems: 'center', borderRadius: 8, backgroundColor: COLORS.lightGrey }}
-                onPress={() => handleBoxNamePress(boxName)}
+                onPress={() => handleBoxNamePress(boxName, boxDetail?.warehouse_id ? boxDetail?.warehouse_id :'')}
               >
                 <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, color: COLORS.orange, fontSize: 14 }}>Box Name: {boxName}</Text>
               </TouchableOpacity>
@@ -191,10 +192,10 @@ const ProductDetail = ({ navigation, route }) => {
                 {details.product_description}
               </Text>
             )}
-            {details.alternate_products?.length > 0 && (
+            {details.alternateproduct?.length > 0 && (
               <View style={{ marginTop: 10 }}>
                 <Text style={{ fontFamily: FONT_FAMILY.urbanistSemiBold }}>Alternate Products:</Text>
-                {details.alternate_products.map(product => (
+                {details.alternateproduct.map(product => (
                   <Text key={product._id} style={{ fontFamily: FONT_FAMILY.urbanistSemiBold }}>
                     {product.product_name}
                   </Text>

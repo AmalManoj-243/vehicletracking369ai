@@ -9,16 +9,15 @@ import { uploadApi } from "@api/uploads";
 export const CustomClearButton = ({ title, onPress }) => {
     return (
         <TouchableOpacity
-            style={[styles.button, { backgroundColor: COLORS.orange, }]}
+            style={[styles.button, { backgroundColor: COLORS.orange }]}
             onPress={onPress}
         >
-            <Text style={[styles.buttonText, { color: "white", }]}>{title}</Text>
+            <Text style={[styles.buttonText, { color: "white" }]}>{title}</Text>
         </TouchableOpacity>
     );
 };
 
 const SignaturePad = ({ setUrl, setScrollEnabled, title }) => {
-
     const [isSign, setSign] = useState(false);
     const ref = useRef();
 
@@ -38,13 +37,13 @@ const SignaturePad = ({ setUrl, setScrollEnabled, title }) => {
                     const uploadUrl = await uploadApi(path);
                     console.log("API response upload url:", uploadUrl);
                     if (uploadUrl) {
-                        setUrl(uploadUrl)
+                        setUrl(uploadUrl);
                     }
                 } catch (error) {
                     console.log("API error:", error);
                 }
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error("Error:", error);
             });
     };
@@ -61,22 +60,26 @@ const SignaturePad = ({ setUrl, setScrollEnabled, title }) => {
 
     const handleEnd = () => {
         ref.current.readSignature();
-        setScrollEnabled(true)
+        setScrollEnabled(true);
         setSign(true);
     };
+
     const style = `.m-signature-pad--footer {display: none; margin: 0px;}`;
 
     return (
         <>
-        <Text style={styles.label}>{title}</Text>
+            <Text style={styles.label}>{title}</Text>
             <View style={styles.signContainer}>
-                <SignatureScreen webStyle={style} ref={ref} onOK={handleOK} 
+                <SignatureScreen
+                    webStyle={style}
+                    ref={ref}
+                    onOK={handleOK}
                     onBegin={() => setScrollEnabled(false)}
                     onEnd={handleEnd}
                 />
             </View>
-            <View style={{ alignSelf: 'flex-end', marginTop: 10 }}>
-                {isSign ? (<CustomClearButton title="CLEAR" onPress={handleClear} />) : null}
+            <View style={{ alignSelf: "flex-end", marginTop: 10 }}>
+                {isSign ? <CustomClearButton title="CLEAR" onPress={handleClear} /> : null}
             </View>
         </>
     );
@@ -87,15 +90,14 @@ export default SignaturePad;
 const styles = StyleSheet.create({
     signContainer: {
         flex: 1,
-        // marginTop: 10,
         alignItems: "center",
         justifyContent: "center",
         height: 250,
         width: "100%",
         borderWidth: 1,
-        borderColor: '#BBB7B7',
+        borderColor: "#BBB7B7",
         borderRadius: 5,
-        overflow: 'hidden',
+        overflow: "hidden",
     },
     row: {
         display: "flex",
@@ -107,10 +109,10 @@ const styles = StyleSheet.create({
     button: {
         width: 100,
         paddingHorizontal: 20,
-        alignItems: 'center',
+        alignItems: "center",
         paddingVertical: 5,
         borderRadius: 5,
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 1.5,
         shadowRadius: 2,
@@ -118,14 +120,14 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: FONT_FAMILY.urbanistBold,
-        textAlign: 'center',
+        textAlign: "center",
         fontSize: 12,
         color: COLORS.white,
     },
     label: {
         marginVertical: 5,
         fontSize: 16,
-        color: '#2e2a4f',
+        color: "#2e2a4f",
         fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
 });
