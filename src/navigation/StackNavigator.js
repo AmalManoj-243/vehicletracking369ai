@@ -13,7 +13,9 @@ import { InventoryDetails, InventoryForm, InventoryScreen } from "@screens/Home/
 import { ProductDetail } from "@components/common/Detail";
 import { CustomerDetails, CustomerScreen } from "@screens/Home/Sections/Customer";
 import { MarketStudyScreen } from "@screens/Home/Options/MarketStudy";
-import { VisitPlanForm, VisitsPlanScreen } from "@screens/Home/Options/VisitsPlan";
+import { VisitPlanForm, VisitsPlanScreen } from "@screens/Home/Options/VisitsPlan"; 
+import { VisitForm, VisitScreen } from "@screens/Home/Options/Visits"; //customer visit
+
 
 const Stack = createNativeStackNavigator();
 
@@ -136,6 +138,18 @@ const StackNavigator = () => {
         <Stack.Screen
         name="VisitPlanForm"
         component={VisitPlanForm}
+        options={{ headerShown: false }}
+      />
+
+       {/* Customer Visits */}
+       <Stack.Screen
+        name="VisitScreen"
+        component={VisitScreen}
+        options={{ headerShown: false }}
+      />
+        <Stack.Screen
+        name="VisitForm"
+        component={VisitForm}
         options={{ headerShown: false }}
       />
 

@@ -41,14 +41,14 @@ export const fetchCategories = async ({ offset, limit, searchText }) => {
 export const fetchInventoryBoxRequest = async ({ offset, limit, searchText }) => {
   const currentUser = useAuthStore.getState().user; // Correct usage of useAuthStore
   const salesPersonId = currentUser.related_profile._id;
-  
+
   // Debugging output for salesPersonId
   try {
     const queryParams = {
       offset,
       limit,
       ...(searchText !== undefined && { name: searchText }),
-      ...(salesPersonId !== undefined && { sales_person_id: salesPersonId})
+      ...(salesPersonId !== undefined && { sales_person_id: salesPersonId })
     };
     const response = await get(API_ENDPOINTS.VIEW_INVENTORY_BOX_REQUEST, queryParams);
     return response.data;
@@ -72,8 +72,6 @@ export const fetchAuditing = async ({ offset, limit }) => {
   }
 };
 
-
-
 export const fetchCustomers = async ({ offset, limit, searchText }) => {
   try {
     const queryParams = {
@@ -96,6 +94,26 @@ export const fetchMarketStudy = async ({ offset, limit }) => {
       limit,
     };
     const response = await get(API_ENDPOINTS.VIEW_MARKET_STUDY, queryParams);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+
+export const fetchCustomerVisitList = async ({ offset, limit, fromDate, toDate, customerId, customerName, employeeName }) => {
+  try {
+    const queryParams = {
+      offset,
+      limit,
+      ...(customerName !== undefined && { customer_name: customerName }),
+      ...(customerId !== undefined && { customer_id: customerId }),
+      ...(employeeName !== undefined && { employee_name: employeeName }),
+      ...(fromDate !== undefined && { from_date: fromDate }),
+      ...(toDate !== undefined && { to_date: toDate }),
+    };
+    const response = await get(API_ENDPOINTS.VIEW_CUSTOMER_VISIT_LIST, queryParams);
     return response.data;
   } catch (error) {
     handleApiError(error);

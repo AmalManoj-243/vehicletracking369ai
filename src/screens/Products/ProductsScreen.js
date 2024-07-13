@@ -14,27 +14,27 @@ import useDataFetching from '@hooks/useDataFetching';
 import useDebouncedSearch from '@hooks/useDebouncedSearch';
 
 const ProductsScreen = ({ navigation, route }) => {
-  const categoryId = route?.params?.id;
-  const {fromCustomerDetails} = route.params || {};
+  const categoryId = route?.params?.id || '';
+  const { fromCustomerDetails } = route.params || {};
 
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchProducts);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData(text, categoryId), 500);
+  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({ searchText: text, categoryId }), 500);
 
   useFocusEffect(
     useCallback(() => {
-      fetchData(searchText, categoryId);
+      fetchData({ searchText, categoryId });
     }, [categoryId, searchText])
   );
 
   useEffect(() => {
     if (isFocused) {
-      fetchData(searchText, categoryId);
+      fetchData({ searchText, categoryId });
     }
   }, [isFocused, categoryId, searchText]);
 
   const handleLoadMore = () => {
-    fetchMoreData(searchText, categoryId);
+    fetchMoreData({ searchText, categoryId });
   };
 
   const renderItem = ({ item }) => {
@@ -76,7 +76,7 @@ const ProductsScreen = ({ navigation, route }) => {
       <RoundedContainer>
         {renderProducts()}
       </RoundedContainer>
-      <OverlayLoader visible={loading}/>
+      <OverlayLoader visible={loading} />
     </SafeAreaView>
   );
 };

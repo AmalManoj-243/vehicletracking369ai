@@ -14,22 +14,22 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 const CustomerScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCustomers);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData(text), 500);
+  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({searchText: text}), 500);
 
   useFocusEffect(
     useCallback(() => {
-      fetchData(searchText);
+      fetchData({searchText});
     }, [searchText])
   );
 
   useEffect(() => {
     if (isFocused) {
-      fetchData(searchText);
+      fetchData({searchText});
     }
   }, [isFocused, searchText]);
 
   const handleLoadMore = () => {
-    fetchMoreData(searchText);
+    fetchMoreData({searchText});
   };
 
   const renderItem = ({ item }) => {

@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     VIEW_CUSTOMERS: '/viewCustomers',
     VIEW_QUOTATION: '/viewQuotation',
     VIEW_AUDITING: '/viewAuditing',
+    VIEW_CUSTOMER_VISIT_LIST: '/viewCustomerVisitList ',
     VIEW_MARKET_STUDY: '/viewMarketStudy',
     VIEW_INVENTORY_BOX_REQUEST: '/viewInventoryboxrequest',
 };
@@ -19,7 +20,10 @@ export const DROP_DOWN_API_ENDPOINTS = {
     STOCK_TRANSFER: '/viewStockTransfer/stock_transaction/stock_transaction_dropdown',
     SERVICE: '/viewJobRegistration/job_registration/dropdown',
     VENDOR_BILL: '/viewVendorBill/vendor_bill/vendor_bill_drop_down',
-    EMPLOYEE_DROPDOWN: '/viewEmployees/employee_list/employee_dropdown'
+    EMPLOYEE_DROPDOWN: '/viewEmployees/employee_list/employee_dropdown',
+    CUSTOMER_DROPDOWN:'/viewCustomers/customer_list/drop_down',
+    DEPARTMENT_DROPDOWN: '/viewDepartments/department_list/department_dropdown',
+    BRAND_DROPDOWN: '/viewBrands/brand_list/brand_dropdown'
 };
 
 export const DETAIL_API_ENDPOINTS = {

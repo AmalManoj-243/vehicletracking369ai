@@ -8,11 +8,13 @@ const useDataFetching = (fetchDataCallback) => {
   const [allDataLoaded, setAllDataLoaded] = useState(false);
   const [offset, setOffset] = useState(0);
 
-  const fetchData = useCallback(async (search = '', categoryId = null,) => {
+  const fetchData = useCallback(async (newFilters = {}) => {
+    console.log("🚀 ~ fetchData ~ newFilters:", newFilters)
     startLoading();
     try {
-      const params = { offset: 0, limit: 20, searchText: search, categoryId: categoryId };
+      const params = { offset: 0, limit: 20, ...newFilters };
       const fetchedData = await fetchDataCallback(params);
+      console.log("🚀 ~ fetchData ~ params:", params)
       setData(fetchedData);
       setAllDataLoaded(fetchedData.length === 0);
     } catch (error) {
@@ -22,11 +24,11 @@ const useDataFetching = (fetchDataCallback) => {
     }
   }, [fetchDataCallback, startLoading, stopLoading]);
 
-  const fetchMoreData = async (search = '', categoryId = null) => {
+  const fetchMoreData = async (newFilters = {}) => {
     if (loading || allDataLoaded) return;
     startLoading();
     try {
-      const params = { offset: offset + 1, limit: 20, searchText:search, categoryId:categoryId };
+      const params = { offset: offset + 1, limit: 20, ...newFilters };
       const fetchedData = await fetchDataCallback(params);
       if (fetchedData.length === 0) {
         setAllDataLoaded(true);

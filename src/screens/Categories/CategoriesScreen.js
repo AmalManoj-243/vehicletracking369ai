@@ -5,7 +5,7 @@ import { fetchCategories } from '@api/services/generalApi';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import {AnimatedLoader } from '@components/Loader';
+import { AnimatedLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { CategoryList } from '@components/Categories';
 import { EmptyState } from '@components/common/empty';
@@ -14,25 +14,25 @@ import styles from './styles';
 
 
 const CategoriesScreen = ({ navigation }) => {
-  
+
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCategories);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData(text));
+  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({ searchText: text }));
 
   useFocusEffect(
     useCallback(() => {
-      fetchData(searchText);
+      fetchData({ searchText });
     }, [searchText])
   );
 
   useEffect(() => {
     if (isFocused) {
-      fetchData(searchText);
+      fetchData({ searchText });
     }
   }, [isFocused, searchText]);
 
   const handleLoadMore = () => {
-    fetchMoreData(searchText);
+    fetchMoreData({ searchText });
   };
 
   const renderItem = ({ item }) => {
@@ -67,7 +67,7 @@ const CategoriesScreen = ({ navigation }) => {
     }
     return renderContent();
   };
-  
+
   return (
     <SafeAreaView>
       <NavigationHeader title="Categories" onBackPress={() => navigation.goBack()} />

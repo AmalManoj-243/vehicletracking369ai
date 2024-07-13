@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Text from '@components/Text';
 import { BottomSheetModal, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { FONT_FAMILY } from '@constants/theme';
@@ -24,8 +24,8 @@ const DropdownSheet = ({
         }
     }, [isVisible]);
 
-    const handleSheetChanges = useCallback((number) => {
-        // console.log('handleSheetChanges', number);
+    const handleSheetChanges = useCallback((index) => {
+        if (index === -1) onClose()
     }, []);
 
     const handleSelectItem = (item) => {
@@ -38,7 +38,7 @@ const DropdownSheet = ({
 
     const renderItem = ({ item }) => (
         <TouchableOpacity style={styles.item} onPress={() => handleSelectItem(item)} >
-            <Text style={styles.text}>{item.label}</Text>
+            <Text style={styles.text}>{item.label?.trim()}</Text>
         </TouchableOpacity>
     );
 

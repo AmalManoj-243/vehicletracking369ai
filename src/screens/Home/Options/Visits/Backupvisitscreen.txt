@@ -1,0 +1,160 @@
+import React, { useEffect, useCallback } from 'react';
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
+import { FlashList } from '@shopify/flash-list';
+import { formatData } from '@utils/formatters';
+import { RoundedContainer, SafeAreaView } from '@components/containers';
+import { EmptyItem, EmptyState } from '@components/common/empty';
+import { NavigationHeader } from '@components/Header';
+import { FABButton, PressableInput } from '@components/common/Button';
+import { fetchAuditing } from '@api/services/generalApi';
+import { useDataFetching } from '@hooks';
+import AnimatedLoader from '@components/Loader/AnimatedLoader';
+import Text from '@components/Text';
+import { TouchableOpacity, View, StyleSheet, TextInput } from 'react-native';
+import { COLORS, FONT_FAMILY } from '@constants/theme';
+import { FontAwesome } from '@expo/vector-icons';
+
+const VisitScreen = ({ navigation }) => {
+  const isFocused = useIsFocused();
+  const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchAuditing);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchData();
+    }
+  }, [isFocused]);
+
+  const handleLoadMore = () => {
+    fetchMoreData();
+  };
+
+  const renderItem = ({ item }) => {
+    if (item.empty) {
+      return <EmptyItem />;
+    }
+    // return <AuditList item={item} />;
+  };
+
+  const renderEmptyState = () => (
+    <EmptyState imageSource={require('@assets/images/EmptyData/transaction_empty.png')} message={''} />
+  );
+
+  const renderContent = () => (
+    <FlashList
+      data={formatData(data, 1)}
+      numColumns={1}
+      renderItem={renderItem}
+      keyExtractor={(item, index) => index.toString()}
+      contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
+      onEndReached={handleLoadMore}
+      showsVerticalScrollIndicator={false}
+      onEndReachedThreshold={0.2}
+      ListFooterComponent={
+        loading && (
+          <AnimatedLoader
+            visible={loading}
+            animationSource={require('@assets/animations/loading.json')}
+          />
+        )
+      }
+      estimatedItemSize={100}
+    />
+  );
+
+  const renderListing = () => {
+    if (data.length === 0 && !loading) {
+      return renderEmptyState();
+    }
+    return renderContent();
+  };
+
+  return (
+    <SafeAreaView>
+      <NavigationHeader
+        title="Customer Visits"
+        logo={false}
+        refreshPress={''}
+        refreshIcon
+        onBackPress={() => navigation.goBack()}
+      />
+      <View style={{ paddingHorizontal: 25, marginBottom: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={styles.label} >From</Text>
+          {/* <View style={{ backgroundColor: "white", borderRadius: 5, width: 100, height: 35 }}>
+            <TouchableOpacity
+              style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+              onPress={() => {
+                // setOpenDate(true);
+                // setSelectedDateField('fromDate');
+              }}
+            >
+              <Text style={styles.buttonText}>{'From Date'}</Text>
+            </TouchableOpacity>
+          </View> */}
+            <PressableInput
+            placeholder='From Date'
+          />
+          <Text style={styles.label}>To</Text>
+          {/* <View style={{ backgroundColor: "white", borderRadius: 5, width: 100, height: 35 }}>
+            <TouchableOpacity
+              style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+              onPress={() => {
+                // setOpenDate(true);
+                // setSelectedDateField('toDate');
+              }}
+            >
+              <Text style={styles.buttonText}>{'To Date'}</Text>
+            </TouchableOpacity>
+          </View> */}
+          
+          <PressableInput
+            placeholder='To Date'
+          />
+          <TouchableOpacity onPress={() => toggleModal('filterCalendar')}>
+            <FontAwesome name="calendar" size={28} color="white" />
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>
+          <PressableInput
+            placeholder='Employee'
+            dropIcon={"menu-down"}
+          />
+          <View style={{ width: 3 }} />
+          <PressableInput
+            placeholder='Departments'
+            dropIcon={"menu-down"}
+          />
+          <View style={{ width: 3 }} />
+          <PressableInput
+            placeholder='Brands'
+            dropIcon={"menu-down"}
+          />
+        </View>
+      </View>
+      <RoundedContainer>
+        {/* {renderListing()} */}
+        <FABButton onPress={() => navigation.navigate('AuditForm')} />
+      </RoundedContainer>
+    </SafeAreaView>
+  );
+};
+
+export default VisitScreen;
+
+
+const styles = StyleSheet.create({
+  label: {
+    fontFamily: FONT_FAMILY.urbanistSemiBold,
+    color: COLORS.white,
+    marginRight: 10
+  },
+  buttonText: {
+    fontFamily: FONT_FAMILY.urbanistMedium,
+  }
+})

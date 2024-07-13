@@ -44,3 +44,17 @@ export const fetchEmployeesDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.EMPLOYEE_DROPDOWN);
 };
 
+export const fetchCustomersDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.CUSTOMER_DROPDOWN);
+};
+
+export const fetchDepartmentsDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.DEPARTMENT_DROPDOWN);
+};
+
+export const fetchBrandsDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.BRAND_DROPDOWN);
+};
+
+
+
