@@ -114,16 +114,23 @@ const ProductDetail = ({ navigation, route }) => {
   };
 
   const renderStockDetails = () => {
+    const { inventory_ledgers = [], total_product_quantity = 0 } = details;
     return (
       <View style={{ marginTop: 10, marginLeft: 10 }}>
-        {details.total_product_quantity > 0 ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>Stock On Hand:</Text>
-            <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>{details.total_product_quantity}</Text>
-          </View>
+        {inventory_ledgers.length > 0 ? (
+          inventory_ledgers.map((ledger, index) => (
+            <View key={index} style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: COLORS.lightGrey, padding: 5, borderRadius: 5, marginBottom: 5 }}>
+              <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>{ledger?.warehouse_name}:</Text>
+              <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>{ledger?.total_warehouse_quantity}</Text>
+            </View>
+          ))
         ) : (
           <Text style={{ color: 'red', fontFamily: FONT_FAMILY.urbanistSemiBold }}>Out of Stock</Text>
         )}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 5, backgroundColor: COLORS.lightGrey, padding: 10, borderRadius: 5 }}>
+          <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>Stocks On Hand:</Text>
+          <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold }}>{total_product_quantity}</Text>
+        </View>
       </View>
     );
   };
@@ -135,13 +142,18 @@ const ProductDetail = ({ navigation, route }) => {
           <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, fontSize: 16 }}>Inventory Box Details:</Text>
           {details.inventory_box_products_details.map((boxDetail, index) => (
             boxDetail.box_name.map((boxName, idx) => (
-              <TouchableOpacity
-                key={`${index}-${idx}`}
-                style={{ marginTop: 10, borderColor: COLORS.primaryThemeColor, padding: 5, width: '40%', alignItems: 'center', borderRadius: 8, backgroundColor: COLORS.lightGrey }}
-                onPress={() => handleBoxNamePress(boxName, boxDetail?.warehouse_id ? boxDetail?.warehouse_id : '')}
-              >
-                <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, color: COLORS.orange, fontSize: 14 }}>Box Name: {boxName}</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', }}>
+                <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, color: COLORS.orange, fontSize: 14, flex: 1 }}>{boxDetail?.warehouse_name || '-'}</Text>
+                <View style={{ flex: 2 / 3 }} />
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  key={`${index}-${idx}`}
+                  style={{ marginTop: 8, borderColor: COLORS.primaryThemeColor, padding: 8, flex: 2, width: '40%', alignItems: 'center', borderRadius: 6, backgroundColor: COLORS.lightGrey }}
+                  onPress={() => handleBoxNamePress(boxName, boxDetail?.warehouse_id ? boxDetail?.warehouse_id : '')}
+                >
+                  <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, color: COLORS.orange, fontSize: 15 }}>Box Name: {boxName}</Text>
+                </TouchableOpacity>
+              </View>
             ))
           ))}
         </View>
@@ -199,7 +211,7 @@ const ProductDetail = ({ navigation, route }) => {
                 <Text style={{ fontFamily: FONT_FAMILY.urbanistSemiBold }}>Alternate Products:</Text>
                 {details.alternateproduct.map(product => (
                   <Text key={product._id} style={{ fontFamily: FONT_FAMILY.urbanistSemiBold }}>
-                    {product.product_name}
+                    {product?.product_name}
                   </Text>
                 ))}
               </View>

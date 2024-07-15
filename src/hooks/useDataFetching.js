@@ -9,12 +9,10 @@ const useDataFetching = (fetchDataCallback) => {
   const [offset, setOffset] = useState(0);
 
   const fetchData = useCallback(async (newFilters = {}) => {
-    console.log("🚀 ~ fetchData ~ newFilters:", newFilters)
     startLoading();
     try {
       const params = { offset: 0, limit: 20, ...newFilters };
       const fetchedData = await fetchDataCallback(params);
-      console.log("🚀 ~ fetchData ~ params:", params)
       setData(fetchedData);
       setAllDataLoaded(fetchedData.length === 0);
     } catch (error) {
