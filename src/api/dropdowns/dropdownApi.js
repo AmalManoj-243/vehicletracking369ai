@@ -56,6 +56,14 @@ export const fetchBrandsDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.BRAND_DROPDOWN);
 };
 
+export const fetchPurposeofVisitDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.PURPOSE_OF_VISIT_DROPDOWN);
+}
+
+export const fetchSiteLocationDropdown = async (customerId) => {
+  return fetchData(`${DROP_DOWN_API_ENDPOINTS.SITE_LOCATION_DROPDOWN}?customer_id=${customerId}`);
+}
+
 export const fetchCountryDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.VIEW_COUNTRY);
 }

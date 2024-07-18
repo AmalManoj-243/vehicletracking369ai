@@ -1,6 +1,6 @@
 import { get } from "../services/utils";
 import handleApiError from "@api/utils/handleApiError";
-import { DETAIL_API_ENDPOINTS } from "@api/endpoints";
+import { API_ENDPOINTS, DETAIL_API_ENDPOINTS } from "@api/endpoints";
 import { useAuthStore } from '@stores/auth';
 
 const {
@@ -30,7 +30,8 @@ const {
   GET_COLLECTION_TYPE_DETAILS,
   GET_CHEQUE_LEDGER,
   GET_INVENTORY_DETAILS,
-  GET_PRODUCT_DETAILS
+  GET_PRODUCT_DETAILS,
+
 } = DETAIL_API_ENDPOINTS;
 
 
@@ -139,10 +140,13 @@ export const fetchProductDetails = async (detailId) => {
 };
 
 export const fetchProductDetailsByBarcode = async (code) => {
-  console.log("🚀 ~ fetchProductDetailsByBarcode ~ code:", code)
   return fetchBarcodeDetails(GET_PRODUCT_DETAILS, code);
 };
 
 export const fetchInventoryDetailsByName = async (name, warehouseId) => {
   return fetchDetailBySearch(GET_INVENTORY_DETAILS, name, warehouseId);
+};
+
+export const fetchCustomerDetails = async (detailId) => {
+  return fetchDetails(API_ENDPOINTS.VIEW_CUSTOMERS, detailId);
 };

@@ -121,8 +121,9 @@ const styles = StyleSheet.create({
         color: COLORS.black,
         flex: 1,
         fontFamily: FONT_FAMILY.urbanistMedium,
-        marginTop: 10,
-        textAlignVertical: 'top',
+        // marginTop: 10,
+        marginVertical:5,
+        // textAlignVertical: 'center',
         // fontSize:16
     },
     errorText: {

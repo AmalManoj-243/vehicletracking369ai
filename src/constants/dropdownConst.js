@@ -19,3 +19,15 @@ export const filterCalendar = [
   { label: 'Last Month', value: 'Last Month' },
   { label: 'This Year', value: 'This Year' }
 ]
+
+export const customerTypes = [
+  { label: 'B2B', value: 'B2B' },
+  { label: 'B2C', value: 'B2C' },
+]
+
+export const customerTitles = [
+  { label: 'Mr.', value: 'Mr' },
+  { label: 'Mrs.', value: 'Mrs' },
+  { label: 'Ms.', value: 'Ms' },
+  { label: 'Miss.', value: 'Miss' },
+]

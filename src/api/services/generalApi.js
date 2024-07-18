@@ -102,11 +102,12 @@ export const fetchMarketStudy = async ({ offset, limit }) => {
 };
 
 
-export const fetchCustomerVisitList = async ({ offset, limit, fromDate, toDate, customerId, customerName, employeeName }) => {
+export const fetchCustomerVisitList = async ({ offset, limit, fromDate, toDate, customerId, customerName, employeeName, loginEmployeeId }) => {
   try {
     const queryParams = {
       offset,
       limit,
+      ...(loginEmployeeId !== undefined && { login_employee_id: loginEmployeeId }),
       ...(customerName !== undefined && { customer_name: customerName }),
       ...(customerId !== undefined && { customer_id: customerId }),
       ...(employeeName !== undefined && { employee_name: employeeName }),

@@ -18,9 +18,13 @@ import { DropdownSheet, MultiSelectDropdownSheet } from '@components/common/Bott
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
 import { filterCalendar } from '@constants/dropdownConst';
+import { useAuthStore } from '@stores/auth';
+import VisitList from './VisitList';
 
 const VisitScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserId = currentUser?.related_profile?._id || '';
   const [selectedType, setSelectedType] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -35,7 +39,6 @@ const VisitScreen = ({ navigation }) => {
     brands: []
   });
 
-  console.log("🚀 ~ VisitScreen ~ formData:", formData)
   const [dropdown, setDropdown] = useState({
     employees: [],
     departments: [],
@@ -44,16 +47,16 @@ const VisitScreen = ({ navigation }) => {
   });
 
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCustomerVisitList);
-
+  
   useFocusEffect(
     useCallback(() => {
-      fetchData();
-    }, [])
+      fetchData({loginEmployeeId: currentUserId});
+    }, [currentUserId])
   );
 
   useEffect(() => {
     if (isFocused) {
-      fetchData();
+      fetchData({loginEmployeeId: currentUserId});
     }
   }, [isFocused]);
 
@@ -91,18 +94,18 @@ const VisitScreen = ({ navigation }) => {
   }, []);
 
   const handleLoadMore = () => {
-    fetchMoreData();
+    fetchMoreData({loginEmployeeId: currentUserId});
   };
 
   const renderItem = ({ item }) => {
     if (item.empty) {
       return <EmptyItem />;
     }
-    // return <AuditList item={item} />;
+    return <VisitList item={item} />;
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/transaction_empty.png')} message={''} />
+    <EmptyState imageSource={require('@assets/images/EmptyData/transaction_empty.png')} message={'no data'} />
   );
 
   const renderContent = () => (
@@ -255,12 +258,14 @@ const VisitScreen = ({ navigation }) => {
     fetchData({
       fromDate: formData.fromDate,
       toDate: formData.toDate,
-      customerId: formData.customer ? formData.customer.id : ''
+      customerId: formData.customer ? formData.customer.id : '',
+      loginEmployeeId: currentUserId
     })
     fetchMoreData({
       fromDate: formData.fromDate,
       toDate: formData.toDate,
-      customerId: formData.customer ? formData.customer.id : ''
+      customerId: formData.customer ? formData.customer.id : '',
+      loginEmployeeId: currentUserId
     })
   }
 
@@ -361,7 +366,7 @@ const VisitScreen = ({ navigation }) => {
       </View>
       <RoundedContainer>
         {renderBottomSheet()}
-        {/* {renderListing()} */}
+        {renderListing()}
         <FABButton onPress={() => navigation.navigate('VisitForm')} />
       </RoundedContainer>
       <DateTimePickerModal

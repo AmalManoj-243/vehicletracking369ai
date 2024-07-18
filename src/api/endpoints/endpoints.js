@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
     VIEW_CUSTOMERS: '/viewCustomers',
     VIEW_QUOTATION: '/viewQuotation',
     VIEW_AUDITING: '/viewAuditing',
-    VIEW_CUSTOMER_VISIT_LIST: '/viewCustomerVisitList ',
+    VIEW_CUSTOMER_VISIT_LIST: '/viewCustomerVisitList',
     VIEW_MARKET_STUDY: '/viewMarketStudy',
     VIEW_INVENTORY_BOX_REQUEST: '/viewInventoryboxrequest',
 };
@@ -24,6 +24,8 @@ export const DROP_DOWN_API_ENDPOINTS = {
     CUSTOMER_DROPDOWN:'/viewCustomers/customer_list/drop_down',
     DEPARTMENT_DROPDOWN: '/viewDepartments/department_list/department_dropdown',
     BRAND_DROPDOWN: '/viewBrands/brand_list/brand_dropdown',
+    PURPOSE_OF_VISIT_DROPDOWN: '/viewCustomerPurposeOfVisit/customer_purpose_of_vist/customer_purpose_of_visit_dropdown',
+    SITE_LOCATION_DROPDOWN: '/viewSiteLocation/site_location_list/site_location_dropdown',
     VIEW_COUNTRY: "/viewCountry/country_list/country_dropdown",
     VIEW_STATE: "/viewState",
 };
