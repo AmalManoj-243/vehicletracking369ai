@@ -1,39 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { Keyboard } from 'react-native';
 import { RoundedScrollContainer } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import { fetchsalesPersonDropdown, fetchmopDropdown } from '@api/dropdowns/dropdownApi';
+import { customerTypes } from '@constants/customerTypes';
+import { customerTitles } from '@constants/customerTitles';
+import { LoadingButton } from '@components/common/Button';
 
-const Details = () => {
+const Details = ({ formData, setFormData }) => {
   const [errors, setErrors] = useState({});
   const [isVisible, setIsVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
-
-  const [formData, setFormData] = useState({
-    customerTypes: "",
-    customerName: "",
-    customerTitle: "",
-    emailAddress: "",
-    salesPerson: "",
-    collectionAgent: "",
-    mop: "",
-    mobileNumber: "",
-    whatsappNumber: "",
-    landlineNumber: "",
-    fax: "",
-  });
-
-  const customerTypes = [
-    { label: 'B2B', value: 'B2B' },
-    { label: 'B2C', value: 'B2C' },
-  ]
-
-  const customerTitles = [
-    { label: 'Mr.', value: 'Mr' },
-    { label: 'Mrs.', value: 'Mrs' },
-    { label: 'Ms.', value: 'Ms' },
-    { label: 'Miss.', value: 'Miss' },
-  ]
 
   const [dropdown, setDropdown] = useState({
     salesPerson: [],
@@ -138,9 +117,9 @@ const Details = () => {
     let errors = {};
 
     const requiredFields = {
-      customerType: 'Please select Customer Type',
+      customerTypes: 'Please select Customer Type',
       customerName: 'Please enter Customer Name',
-      customerTitle: 'Please select Customer Title',
+      customerTitles: 'Please select Customer Title',
       emailAddress: 'Please enter Email Address',
       salesPerson: 'Please select Sales Person',
       collectionAgent: 'Please enter Collection Agent',
@@ -162,44 +141,58 @@ const Details = () => {
     return isValid;
   };
 
+  const submit = () => {
+    if (validate()) {
+      setIsSubmitting(true);
+      // Handle form submission
+      // ...
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <RoundedScrollContainer>
       <FormInput
-        label={"Customer Type"}
+        label={"Customer Type :"}
         placeholder={"Select Customer Type"}
         dropIcon={"menu-down"}
-        editable={true}
-        validate={errors.customerType}
+        items={customerTypes}
+        editable={false}
+        validate={errors.customerTypes}
+        value={formData.customerTypes?.label}
         onPress={() => toggleBottomSheet('Customer Type')}
       />
       <FormInput
-        label={"Customer Name"}
+        label={"Customer Name :"}
         placeholder={"Enter Customer Name"}
         editable={true}
         validate={errors.customerName}
-        onChangeText={(value) => handleFieldChange('customerName', value)}
+        onValueChange={(value) => handleFieldChange('customerName', value)}
       />
       <FormInput
-        label={"Customer Title"}
+        label={"Customer Title :"}
         placeholder={"Select Customer Title"}
         dropIcon={"menu-down"}
-        editable={true}
-        validate={errors.customerTitle}
+        items={customerTitles}
+        editable={false}
+        validate={errors.customerTitles}
+        value={formData.customerTitles?.label}
         onPress={() => toggleBottomSheet('Customer Title')}
       />
       <FormInput
         label={"Email Address :"}
-        placeholder={"Enter Customer Name"}
+        placeholder={"Enter Email Address"}
         editable={true}
         validate={errors.emailAddress}
-        onChangeText={(value) => handleFieldChange('emailAddress', value)}
+        onValueChange={(value) => handleFieldChange('emailAddress', value)}
       />
       <FormInput
         label={"Sales Person :"}
         placeholder={"Select Sales Person"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.salesPerson}
+        value={formData.salesPerson?.label}
         onPress={() => toggleBottomSheet('Sales Person')}
       />
       <FormInput
@@ -207,14 +200,15 @@ const Details = () => {
         placeholder={"Enter Collection Agent"}
         editable={true}
         validate={errors.collectionAgent}
-        onChangeText={(value) => handleFieldChange('collectionAgent', value)}
+        onValueChange={(value) => handleFieldChange('collectionAgent', value)}
       />
       <FormInput
         label={"MOP (Mode Of Payment) :"}
         placeholder={"Select MOP"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.mop}
+        value={formData.mop?.label}
         onPress={() => toggleBottomSheet('MOP (Mode Of Payment)')}
       />
       <FormInput
@@ -223,7 +217,7 @@ const Details = () => {
         editable={true}
         keyboardType="numeric"
         validate={errors.mobileNumber}
-        onChangeText={(value) => handleFieldChange('mobileNumber', value)}
+        onValueChange={(value) => handleFieldChange('mobileNumber', value)}
       />
       <FormInput
         label={"Whatsapp Number :"}
@@ -231,7 +225,7 @@ const Details = () => {
         editable={true}
         keyboardType="numeric"
         validate={errors.whatsappNumber}
-        onChangeText={(value) => handleFieldChange('whatsappNumber', value)}
+        onValueChange={(value) => handleFieldChange('whatsappNumber', value)}
       />
       <FormInput
         label={"Landline Number :"}
@@ -239,18 +233,24 @@ const Details = () => {
         editable={true}
         keyboardType="numeric"
         validate={errors.landlineNumber}
-        onChangeText={(value) => handleFieldChange('landlineNumber', value)}
+        onValueChange={(value) => handleFieldChange('landlineNumber', value)}
       />
       <FormInput
         label={"Fax :"}
-        placeholder={"Enter Fax"}
+        placeholder={"Enter Fax :"}
         editable={true}
+        keyboardType="numeric"
         validate={errors.fax}
-        onChangeText={(value) => handleFieldChange('fax', value)}
+        onValueChange={(value) => handleFieldChange('fax', value)}
       />
       {renderBottomSheet()}
+      <LoadingButton
+        loading={isSubmitting}
+        title={'Submit'}
+        onPress={submit}
+      />
     </RoundedScrollContainer>
-  )
-}
+  );
+};
 
-export default Details
+export default Details;

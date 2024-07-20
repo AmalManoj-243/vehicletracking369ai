@@ -3,19 +3,13 @@ import { RoundedScrollContainer } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import { fetchCountryDropdown, fetchStateDropdown, fetchAreaDropdown } from '@api/dropdowns/dropdownApi';
 import { DropdownSheet } from '@components/common/BottomSheets';
+import { LoadingButton } from '@components/common/Button';
 
-const Address = () => {
+const Address = ({ formData, setFormData }) => {
   const [errors, setErrors] = useState({});
   const [isVisible, setIsVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
-
-  const [formData, setFormData] = useState({
-    address: "",
-    country: "",
-    state: "",
-    area: "",
-    poBox: "",
-  });
 
   const [dropdown, setDropdown] = useState({
     country: [],
@@ -85,6 +79,7 @@ const Address = () => {
   }, [formData.state]);
 
   const handleFieldChange = (field, value) => {
+    console.log("here")
     setFormData(prevFormData => ({
       ...prevFormData,
       [field]: value,
@@ -133,7 +128,6 @@ const Address = () => {
     );
   };
 
-
   const validate = () => {
     Keyboard.dismiss();
     let isValid = true;
@@ -158,47 +152,64 @@ const Address = () => {
     return isValid;
   };
 
+  const submit = () => {
+    if (validate()) {
+      setIsSubmitting(true);
+      // Handle form submission
+      // ...
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <RoundedScrollContainer>
       <FormInput
-        label="Address:"
-        placeholder="Enter Address"
+        label= {"Address :"}
+        placeholder={"Enter Address"}
         editable={true}
         validate={errors.address}
-        onChangeText={(value) => handleFieldChange('address', value)}
+        onValueChange={(value) => handleFieldChange('address', value)}
       />
       <FormInput
-        label="Country:"
+        label= "Country :"
         placeholder="Select Country"
         dropIcon="menu-down"
         editable={false}
         validate={errors.country}
+        value={formData.country?.label}
         onPress={() => toggleBottomSheet("Country")}
       />
       <FormInput
-        label="State:"
+        label= "State :"
         placeholder="Select State"
         dropIcon="menu-down"
         editable={false}
         validate={errors.state}
+        value={formData.state?.label}
         onPress={() => toggleBottomSheet("State")}
       />
       <FormInput
-        label="Area:"
+        label= "Area :"
         placeholder="Select Area"
         dropIcon="menu-down"
         editable={false}
         validate={errors.area}
+        value={formData.area?.label}
         onPress={() => toggleBottomSheet("Area")}
       />
       <FormInput
-        label="PO Box:"
+        label= {"PO Box :"}
         placeholder="Enter PO Box"
         editable={true}
         validate={errors.poBox}
-        onChangeText={(value) => handleFieldChange('poBox', value)}
+        onValueChange={(value) => handleFieldChange('poBox', value)}
       />
       {renderBottomSheet()}
+      <LoadingButton
+          loading={isSubmitting}
+          title={'Submit'}
+          onPress={submit}
+        />
     </RoundedScrollContainer>
   );
 };

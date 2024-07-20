@@ -5,21 +5,15 @@ import { TextInput as FormInput } from '@components/common/TextInput';
 import { CheckBox } from '@components/common/CheckBox';
 import { fetchCustomerBehaviourDropdown, fetchLanguageDropdown, fetchCurrencyDropdown } from '@api/dropdowns/dropdownApi';
 import { DropdownSheet } from '@components/common/BottomSheets';
+import { LoadingButton } from '@components/common/Button';
 
-const OtherDetails = () => {
+const OtherDetails = ({ formData, setFormData }) => {
   const [errors, setErrors] = useState({});
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [isSupplier, setIsSupplier] = useState(false);
-
-  const [formData, setFormData] = useState({
-    trn:"",
-    customerBehaviour: "",
-    customerAttitude: "",
-    language: "",
-    currency: "",
-  });
 
   const [dropdown, setDropdown] = useState({
     customerBehaviour: [],
@@ -162,6 +156,15 @@ const OtherDetails = () => {
     return isValid;
   };
 
+  const submit = () => {
+    if (validate()) {
+      setIsSubmitting(true);
+      // Handle form submission
+      // ...
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <RoundedScrollContainer>
       <FormInput
@@ -169,14 +172,15 @@ const OtherDetails = () => {
         placeholder={"Enter TRN"}
         editable={true}
         validate={errors.trn}
-        onPress={() => toggleBottomSheet()}
+        onValueChange={(value) => handleFieldChange('TRN', value)}
       />
       <FormInput
         label={"Customer Behaviour"}
         placeholder={"Select Customer Behaviour"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.customerBehaviour}
+        value={formData.customerBehaviour?.label}
         onPress={() => toggleBottomSheet('Customer Behaviour')}
       />
       <CheckBox
@@ -188,24 +192,27 @@ const OtherDetails = () => {
         label={"Customer Attitude :"}
         placeholder={"Enter Customer Attitude"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.customerAttitude}
+        value={formData.customerAttitude?.label}
         onPress={() => toggleBottomSheet('Customer Attitude')}
       />
       <FormInput
         label={"Language :"}
         placeholder={"Select Language"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.language}
+        value={formData.language?.label}
         onPress={() => toggleBottomSheet('Language')}
       />
       <FormInput
         label={"Currency :"}
         placeholder={"Select Currency"}
         dropIcon={"menu-down"}
-        editable={true}
+        editable={false}
         validate={errors.currency}
+        value={formData.currency?.label}
         onPress={() => toggleBottomSheet('Currency')}
       />
       <CheckBox
@@ -214,6 +221,11 @@ const OtherDetails = () => {
         onPress={() => setIsSupplier(!isSupplier)}
       />
       {renderBottomSheet()}
+      <LoadingButton
+          loading={isSubmitting}
+          title={'Submit'}
+          onPress={submit}
+        />
     </RoundedScrollContainer>
   )
 }

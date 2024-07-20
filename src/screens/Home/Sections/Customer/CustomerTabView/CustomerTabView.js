@@ -1,20 +1,14 @@
 import * as React from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { useState } from 'react';
 import Details from './Details';
 import OtherDetails from './OtherDetails';
-import { RoundedContainer, RoundedScrollContainer, SafeAreaView } from '@components/containers';
-import { NavigationHeader } from '@components/Header';
 import Address from './Address';
 import ContactPerson from './ContactPerson';
+import { RoundedContainer, RoundedScrollContainer, SafeAreaView } from '@components/containers';
+import { NavigationHeader } from '@components/Header';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
-
-const renderScene = SceneMap({
-  first: Details,
-  second: OtherDetails,
-  third: Address,
-  fourth: ContactPerson,
-});
 
 const CustomTabBar = (props) => {
   return (
@@ -23,7 +17,7 @@ const CustomTabBar = (props) => {
       {...props}
       style={{
         backgroundColor: COLORS.orange,
-        justifyContent: 'center'
+        justifyContent: 'center',
       }}
       indicatorStyle={{ backgroundColor: COLORS.primaryThemeColor, height: 3 }}
       labelStyle={{ color: COLORS.white, fontFamily: FONT_FAMILY.urbanistBold, fontSize: 13, textTransform: 'capitalize' }}
@@ -36,8 +30,39 @@ const CustomTabBar = (props) => {
 const CustomerTabView = ({ navigation }) => {
   const layout = useWindowDimensions();
 
-  const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
+  const [formData, setFormData] = useState({
+    address: "",
+    country: "",
+    state: "",
+    area: "",
+    poBox: "",
+    customerTypes: "",
+    customerName: "",
+    customerTitles: "",
+    emailAddress: "",
+    salesPerson: "",
+    collectionAgent: "",
+    mop: "",
+    mobileNumber: "",
+    whatsappNumber: "",
+    landlineNumber: "",
+    fax: "",
+    trn: "",
+    customerBehaviour: "",
+    customerAttitude: "",
+    language: "",
+    currency: "",
+  });
+
+  const renderScene = SceneMap({
+    first: () => <Details formData={formData} setFormData={setFormData} />,
+    second: () => <OtherDetails formData={formData} setFormData={setFormData} />,
+    third: () => <Address formData={formData} setFormData={setFormData} />,
+    fourth: () => <ContactPerson formData={formData} setFormData={setFormData} />,
+  });
+
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
     { key: 'first', title: 'Details' },
     { key: 'second', title: 'Other Details' },
     { key: 'third', title: 'Address' },
@@ -57,11 +82,8 @@ const CustomerTabView = ({ navigation }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
       />
-
-
     </SafeAreaView>
-
   );
-}
+};
 
 export default CustomerTabView;
