@@ -150,58 +150,59 @@ const CustomerTabView = ({ navigation }) => {
       const customerData = {
         customer_type: formData.customerTypes.label,
         name: formData.customerName,
-        customer_title: formData.customerTitles, 
+        customer_title: formData.customerTitles.label,
         customer_email: formData.emailAddress,
-        sales_person_id: formData.salesPerson,
+        sales_person_id: formData.salesPerson.id,
         collection_agent_id: formData.collectionAgent,
         mode_of_payment: formData.mop,
         customer_mobile: formData.mobileNumber,
         whatsapp_no: formData.whatsappNumber,
         land_phone_no: formData.landlineNumber,
-        fax: formData.fax,  
+        fax: formData.fax,
         is_active: formData.isActive,
-        is_supplier: formData.isSupplier,  
-        trn_no: formData.trn, 
+        is_supplier: formData.isSupplier,
+        trn_no: formData.trn,
         customer_behaviour: formData.customerBehaviour,
         customer_atitude: formData.customerAttitude,
-        language_id: formData.language, 
-        currency_id: formData.currency,
-        address: formData.address,  
-        country_id: formData.country, 
-        state_id: formData.state,
-        area_id: formData.area,  
+        language_id: formData.language.id,
+        currency_id: formData.currency.id,
+        address: formData.address,
+        country_id: formData.country.id,
+        state_id: formData.state.id,
+        area_id: formData.area.id,
         po_box: formData.poBox,
       }
-    };
-
-    console.log("🚀 ~ submit ~ customerData:", JSON.stringify(customerData, null, 2))
-    try {
-      const response = await post("/createCustomer", customerData);
-      if (response.success) {
-        showToast({
-          type: "success",
-          title: "Success",
-          message: response.message || "Customer created successfully",
-        });
-        navigation.navigate("CustomerScreen");
-      } else {
-        console.error("Customer Failed:", response.message);
+      console.log("🚀 ~ submit ~ customerData:", JSON.stringify(customerData, null, 2))
+      try {
+        const response = await post("/createCustomer", customerData);
+        console.log("🚀 ~ submit ~ response:", response)
+        if (response.success === 'true') {
+          showToast({
+            type: "success",
+            title: "Success",
+            message: response.message || "Customer created successfully",
+          });
+          navigation.navigate("CustomerScreen");
+        } else {
+          console.error("Customer Failed:", response.message);
+          showToast({
+            type: "error",
+            title: "ERROR",
+            message: response.message || "Customer creation failed",
+          });
+        }
+      } catch (error) {
+        console.error("Error creating Customer Failed:", error);
         showToast({
           type: "error",
           title: "ERROR",
-          message: response.message || "Customer creation failed",
+          message: "An unexpected error occurred. Please try again later.",
         });
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Error creating Customer Failed:", error);
-      showToast({
-        type: "error",
-        title: "ERROR",
-        message: "An unexpected error occurred. Please try again later.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    };
+
   }
   return (
     <SafeAreaView>
@@ -218,7 +219,7 @@ const CustomerTabView = ({ navigation }) => {
           initialLayout={{ width: layout.width }}
         />
       </KeyboardAvoidingView>
-  
+
       <View style={{ backgroundColor: 'white', paddingHorizontal: 50 }}>
         <LoadingButton onPress={submit} title={'Submit'} loading={isSubmitting} />
       </View>
