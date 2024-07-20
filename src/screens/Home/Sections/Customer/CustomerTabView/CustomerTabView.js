@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useWindowDimensions } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { useState } from 'react';
 import Details from './Details';
 import OtherDetails from './OtherDetails';
@@ -11,7 +11,6 @@ import { NavigationHeader } from '@components/Header';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 
 const CustomTabBar = (props) => {
-
   return (
     <TabBar
       scrollEnabled={true}
@@ -71,32 +70,21 @@ const CustomerTabView = ({ navigation }) => {
   };
 
   console.log("🚀 ~ CustomerTabView ~ formData:", formData)
-  const renderScene = SceneMap({
-    first: () => (
-      <Details
-        formData={formData}
-        onFieldChange={handleFieldChange}
-      />
-    ),
-    second: () => (
-      <OtherDetails
-        formData={formData}
-        onFieldChange={handleFieldChange}
-      />
-    ),
-    third: () => (
-      <Address
-        formData={formData}
-        onFieldChange={handleFieldChange}
-      />
-    ),
-    fourth: () => (
-      <ContactPerson
-        formData={formData}
-        onFieldChange={handleFieldChange}
-      />
-    )
-  });
+
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case 'first':
+        return <Details formData={formData} onFieldChange={handleFieldChange} />;
+      case 'second':
+        return <OtherDetails formData={formData} onFieldChange={handleFieldChange} />;
+      case 'third':
+        return <Address formData={formData} onFieldChange={handleFieldChange} />;
+      case 'fourth':
+        return <ContactPerson formData={formData} onFieldChange={handleFieldChange} />;
+      default:
+        return null;
+    }
+  };
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -112,13 +100,15 @@ const CustomerTabView = ({ navigation }) => {
         title="Add Customer"
         onBackPress={() => navigation.goBack()}
       />
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        renderTabBar={CustomTabBar}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-      />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={{ flex: 1 }}>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          renderTabBar={CustomTabBar}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
