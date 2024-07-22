@@ -111,24 +111,9 @@ const CustomerTabView = ({ navigation }) => {
       customerTypes: 'Please select Customer Type',
       customerName: 'Please enter Customer Name',
       customerTitles: 'Please select Customer Title',
-      emailAddress: 'Please enter Email Address',
-      salesPerson: 'Please select Sales Person',
-      collectionAgent: 'Please enter Collection Agent',
       modeOfPayment: 'Please select Mode Of Payment',
       mobileNumber: "Please enter Mobile Number",
-      whatsappNumber: 'Please enter Whatsapp Number',
-      landlineNumber: 'Please enter Landline Number',
-      fax: 'Please enter Fax',
-      trn: 'Please enter TRN Number',
-      // customerBehaviour: 'Please select Customer Behaviour',
-      // customerAttitude: 'Please select Customer Attitude',
-      language: 'Please select Language',
-      currency: 'Please select Currency',
       address: 'Please enter the Address',
-      country: 'Please select a country',
-      state: 'Please select a state',
-      area: 'Please select a area',
-      poBox: 'Please enter PO Box',
     };
 
     Object.keys(requiredFields).forEach(field => {
@@ -192,7 +177,7 @@ const CustomerTabView = ({ navigation }) => {
           });
         }
       } catch (error) {
-        console.error("Error creating Customer Failed:", error);
+        console.error("Error Creating Customer Failed:", error);
         showToast({
           type: "error",
           title: "ERROR",
