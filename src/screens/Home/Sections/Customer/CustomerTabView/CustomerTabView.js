@@ -12,7 +12,6 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { LoadingButton } from '@components/common/Button';
 import { showToast } from '@utils/common';
 import { post } from '@api/services/utils';
-import { formatDuration } from 'date-fns';
 
 const CustomTabBar = (props) => {
   return (
@@ -111,24 +110,9 @@ const CustomerTabView = ({ navigation }) => {
       customerTypes: 'Please select Customer Type',
       customerName: 'Please enter Customer Name',
       customerTitles: 'Please select Customer Title',
-      emailAddress: 'Please enter Email Address',
-      salesPerson: 'Please select Sales Person',
-      collectionAgent: 'Please enter Collection Agent',
       modeOfPayment: 'Please select Mode Of Payment',
       mobileNumber: "Please enter Mobile Number",
-      whatsappNumber: 'Please enter Whatsapp Number',
-      landlineNumber: 'Please enter Landline Number',
-      fax: 'Please enter Fax',
-      trn: 'Please enter TRN Number',
-      // customerBehaviour: 'Please select Customer Behaviour',
-      // customerAttitude: 'Please select Customer Attitude',
-      language: 'Please select Language',
-      currency: 'Please select Currency',
       address: 'Please enter the Address',
-      country: 'Please select a country',
-      state: 'Please select a state',
-      area: 'Please select a area',
-      poBox: 'Please enter PO Box',
     };
 
     Object.keys(requiredFields).forEach(field => {
@@ -153,8 +137,8 @@ const CustomerTabView = ({ navigation }) => {
         customer_title: formData.customerTitles.label,
         customer_email: formData.emailAddress,
         sales_person_id: formData.salesPerson.id,
-        collection_agent_id: formData.collectionAgent,
-        mode_of_payment: formData.modeOfPayment,
+        collection_agent_id: null,
+        mode_of_payment: formData.modeOfPayment?.value,
         customer_mobile: formData.mobileNumber,
         whatsapp_no: formData.whatsappNumber,
         land_phone_no: formData.landlineNumber,
@@ -192,7 +176,7 @@ const CustomerTabView = ({ navigation }) => {
           });
         }
       } catch (error) {
-        console.error("Error creating Customer Failed:", error);
+        console.error("Error Creating Customer Failed:", error);
         showToast({
           type: "error",
           title: "ERROR",
