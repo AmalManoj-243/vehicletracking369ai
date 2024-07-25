@@ -4,7 +4,7 @@ import React from 'react'
 const FollowUp = () => {
   return (
     <View>
-      <Text>FollowUp</Text>
+      <Text>Working on It</Text>
     </View>
   )
 }
