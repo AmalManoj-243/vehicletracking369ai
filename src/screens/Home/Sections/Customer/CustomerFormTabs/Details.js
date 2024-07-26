@@ -103,42 +103,45 @@ const Details = ({ formData, onFieldChange, errors }) => {
   return (
     <RoundedScrollContainer>
       <FormInput
-        label={"Customer Type :"}
+        label={"Customer Type "}
         placeholder={"Select Customer Type"}
         dropIcon={"menu-down"}
         items={customerTypes}
         editable={false}
+        required
         validate={errors.customerTypes}
         value={formData.customerTypes?.label}
         onPress={() => toggleBottomSheet('Customer Type')}
       />
       <FormInput
-        label={"Customer Name :"}
+        label={"Customer Name "}
         placeholder={"Enter Customer Name"}
         editable={true}
+        required
         value={formData.customerName}
         validate={errors.customerName}
         onChangeText={(value) => onFieldChange('customerName', value)}
       />
       <FormInput
-        label={"Customer Title :"}
+        label={"Customer Title "}
         placeholder={"Select Customer Title"}
         dropIcon={"menu-down"}
         items={customerTitles}
         editable={false}
+        required
         validate={errors.customerTitles}
         value={formData.customerTitles?.label}
         onPress={() => toggleBottomSheet('Customer Title')}
       />
       <FormInput
-        label={"Email Address :"}
+        label={"Email Address "}
         placeholder={"Enter Email Address"}
         editable={true}
         validate={errors.emailAddress}
         onChangeText={(value) => onFieldChange('emailAddress', value)}
       />
       <FormInput
-        label={"Sales Person :"}
+        label={"Sales Person "}
         placeholder={"Select Sales Person"}
         dropIcon={"menu-down"}
         editable={false}
@@ -147,7 +150,7 @@ const Details = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet('Sales Person')}
       />
       <FormInput
-        label={"Collection Agent :"}
+        label={"Collection Agent "}
         placeholder={"Enter Collection Agent"}
         dropIcon={"menu-down"}
         editable={false}
@@ -156,24 +159,26 @@ const Details = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet('Collection Agent')}
       />
       <FormInput
-        label={"MOP (Mode Of Payment) :"}
+        label={"MOP (Mode Of Payment) "}
         placeholder={"Select MOP"}
         dropIcon={"menu-down"}
         editable={false}
+        required
         validate={errors.modeOfPayment}
         value={formData.modeOfPayment?.label}
         onPress={() => toggleBottomSheet('MOP (Mode Of Payment)')}
       />
       <FormInput
-        label={"Mobile Number :"}
+        label={"Mobile Number "}
         placeholder={"Enter Mobile Number"}
         editable={true}
         keyboardType="numeric"
+        required
         validate={errors.mobileNumber}
         onChangeText={(value) => onFieldChange('mobileNumber', value)}
       />
       <FormInput
-        label={"Whatsapp Number :"}
+        label={"Whatsapp Number "}
         placeholder={"Enter Whatsapp Number"}
         editable={true}
         keyboardType="numeric"
@@ -181,7 +186,7 @@ const Details = ({ formData, onFieldChange, errors }) => {
         onChangeText={(value) => onFieldChange('whatsappNumber', value)}
       />
       <FormInput
-        label={"Landline Number :"}
+        label={"Landline Number "}
         placeholder={"Enter Landline Number"}
         editable={true}
         keyboardType="numeric"
@@ -189,8 +194,8 @@ const Details = ({ formData, onFieldChange, errors }) => {
         onChangeText={(value) => onFieldChange('landlineNumber', value)}
       />
       <FormInput
-        label={"Fax :"}
-        placeholder={"Enter Fax :"}
+        label={"Fax "}
+        placeholder={"Enter Fax "}
         editable={true}
         keyboardType="numeric"
         validate={errors.fax}

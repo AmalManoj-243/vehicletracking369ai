@@ -115,15 +115,16 @@ const Address = ({ formData, onFieldChange, errors }) => {
   return (
     <RoundedScrollContainer>
       <FormInput
-        label= {"Address :"}
+        label= {"Address "}
         placeholder={"Enter Address"}
         editable={true}
+        required
         validate={errors.address}        
         onChangeText={(value) => onFieldChange('address', value)}
         // onValueChange={(value) => onFieldChange('address', value)}
       />
       <FormInput
-        label= "Country :"
+        label= "Country "
         placeholder="Select Country"
         dropIcon="menu-down"
         editable={false}
@@ -133,7 +134,7 @@ const Address = ({ formData, onFieldChange, errors }) => {
 
       />
       <FormInput
-        label= "State :"
+        label= "State "
         placeholder="Select State"
         dropIcon="menu-down"
         editable={false}
@@ -142,7 +143,7 @@ const Address = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet("State")}
       />
       <FormInput
-        label= "Area :"
+        label= "Area "
         placeholder="Select Area"
         dropIcon="menu-down"
         editable={false}
@@ -151,7 +152,7 @@ const Address = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet("Area")}
       />
       <FormInput
-        label= {"PO Box :"}
+        label= {"PO Box "}
         placeholder="Enter PO Box"
         editable={true}
         validate={errors.poBox}

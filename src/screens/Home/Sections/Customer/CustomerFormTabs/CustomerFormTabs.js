@@ -12,6 +12,7 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { LoadingButton } from '@components/common/Button';
 import { showToast } from '@utils/common';
 import { post } from '@api/services/utils';
+import { validateFields } from '@utils/validation';
 
 const CustomTabBar = (props) => {
   return (
@@ -31,10 +32,8 @@ const CustomTabBar = (props) => {
 };
 
 const CustomerFormTabs = ({ navigation }) => {
-
   const layout = useWindowDimensions();
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     customerTypes: "",
     customerName: "",
@@ -43,7 +42,7 @@ const CustomerFormTabs = ({ navigation }) => {
     salesPerson: "",
     collectionAgent: "",
     modeOfPayment: "",
-    mobileNumber: "",
+    phoneNumber: "",
     whatsappNumber: "",
     landlineNumber: "",
     fax: "",
@@ -76,7 +75,7 @@ const CustomerFormTabs = ({ navigation }) => {
     }
   };
 
-  console.log("🚀 ~ CustomerFormTabs ~ formData:", JSON.stringify(formData, null, 2))
+  console.log("🚀 ~ CustomerFormTabs ~ formData:", JSON.stringify(formData, null, 2));
 
   const renderScene = ({ route }) => {
     switch (route.key) {
@@ -86,8 +85,8 @@ const CustomerFormTabs = ({ navigation }) => {
         return <OtherDetails formData={formData} onFieldChange={handleFieldChange} errors={errors} />;
       case 'third':
         return <Address formData={formData} onFieldChange={handleFieldChange} errors={errors} />;
-      // case 'fourth':
-      //   return <ContactPerson formData={formData} onFieldChange={handleFieldChange} errors={errors} />;
+      case 'fourth':
+        return <ContactPerson formData={formData} onFieldChange={handleFieldChange} errors={errors} />;  
       default:
         return null;
     }
@@ -98,68 +97,50 @@ const CustomerFormTabs = ({ navigation }) => {
     { key: 'first', title: 'Details' },
     { key: 'second', title: 'Other Details' },
     { key: 'third', title: 'Address' },
-    // { key: 'fourth', title: 'Contact Person' },
+    { key: 'fourth', title: 'Contact Person' }
   ]);
 
-  const validate = () => {
+  const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
-    let isValid = true;
-    let errors = {};
-
-    const requiredFields = {
-      customerTypes: 'Please select Customer Type',
-      customerName: 'Please enter Customer Name',
-      customerTitles: 'Please select Customer Title',
-      modeOfPayment: 'Please select Mode Of Payment',
-      mobileNumber: "Please enter Mobile Number",
-      address: 'Please enter the Address',
-    };
-
-    Object.keys(requiredFields).forEach(field => {
-      if (!formData[field]) {
-        errors[field] = requiredFields[field];
-        isValid = false;
-      }
-    });
-
+    const { isValid, errors } = validateFields(formData, fieldsToValidate); 
     setErrors(errors);
     return isValid;
   };
 
-
-  const submit = async () => {
-    if (validate()) {
+  const handleSubmit = async () => {
+    const fieldsToValidate = ['customerTypes', 'customerName', 'customerTitles', 'modeOfPayment', 'mobileNumber', 'address']; 
+    if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
-
       const customerData = {
-        customer_type: formData.customerTypes.label,
-        name: formData.customerName,
-        customer_title: formData.customerTitles.label,
-        customer_email: formData.emailAddress,
-        sales_person_id: formData.salesPerson.id,
-        collection_agent_id: formData.collectionAgent.id ?? null,
-        mode_of_payment: formData.modeOfPayment?.value,
-        customer_mobile: formData.mobileNumber,
-        whatsapp_no: formData.whatsappNumber,
-        land_phone_no: formData.landlineNumber,
-        fax: formData.fax,
-        is_active: formData.isActive,
-        is_supplier: formData.isSupplier,
-        trn_no: parseInt(formData.trn, 10) || null,
-        customer_behaviour: formData.customerBehaviour?.value,
-        customer_atitude: formData.customerAttitude?.value,
-        language_id: formData.language.id,
-        currency_id: formData.currency.id,
-        address: formData.address,
-        country_id: formData.country.id,
-        state_id: formData.state.id,
-        area_id: formData.area.id,
-        po_box: formData.poBox,
-      }
-      console.log("🚀 ~ submit ~ customerData:", JSON.stringify(customerData, null, 2))
+        customer_type: formData?.customerTypes?.label ?? null,
+        name: formData?.customerName || null,
+        customer_title: formData?.customerTitles?.label ?? null,
+        customer_email: formData?.emailAddress || null,
+        sales_person_id: formData?.salesPerson.id ?? null,
+        collection_agent_id: formData?.collectionAgent?.id ?? null,
+        mode_of_payment: formData?.modeOfPayment?.value ?? null,
+        customer_mobile: formData?.mobileNumber || null,
+        whatsapp_no: formData?.whatsappNumber || null,
+        land_phone_no: formData?.landlineNumber || null,
+        fax: formData?.fax  || null,
+        is_active: formData?.isActive,
+        is_supplier: formData?.isSupplier,
+        trn_no: parseInt(formData?.trn, 10) || null,
+        customer_behaviour: formData?.customerBehaviour?.value ?? null,
+        customer_atitude: formData?.customerAttitude?.value ?? null,
+        language_id: formData?.language?.id ?? null,
+        currency_id: formData?.currency?.id ?? null,
+        address: formData?.address || null,
+        country_id: formData?.country?.id ?? null,
+        state_id: formData?.state?.id ?? null,
+        area_id: formData?.area?.id ?? null,
+        po_box: formData?.poBox || null,
+      };
+      console.log("🚀 ~ submit ~ customerData:", JSON.stringify(customerData, null, 2));
+
       try {
         const response = await post("/createCustomer", customerData);
-        console.log("🚀 ~ submit ~ response:", response)
+        console.log("🚀 ~ submit ~ response:", response);
         if (response.success === 'true') {
           showToast({
             type: "success",
@@ -185,9 +166,9 @@ const CustomerFormTabs = ({ navigation }) => {
       } finally {
         setIsSubmitting(false);
       }
-    };
+    }
+  };
 
-  }
   return (
     <SafeAreaView>
       <NavigationHeader
@@ -203,9 +184,8 @@ const CustomerFormTabs = ({ navigation }) => {
           initialLayout={{ width: layout.width }}
         />
       </KeyboardAvoidingView>
-
       <View style={{ backgroundColor: 'white', paddingHorizontal: 50, paddingBottom: 12 }}>
-        <LoadingButton onPress={submit} title={'Submit'} loading={isSubmitting} />
+        <LoadingButton onPress={handleSubmit} title={'Submit'} loading={isSubmitting} />
       </View>
     </SafeAreaView>
   );

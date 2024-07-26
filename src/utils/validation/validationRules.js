@@ -1,5 +1,4 @@
 // utils/validators/validationRules.js
-
 import { validateEmail, validatePhoneNumber, validateRequired } from "./validationFunction";
 
 export const allValidationRules = {
@@ -23,5 +22,21 @@ export const allValidationRules = {
         message: 'Please select the Source',
         validate: validateRequired,
     },
-   
+    customerTypes: {
+        message: 'Please select Customer Types',
+        validate: validateRequired,
+    },
+    customerName: {
+        message: 'Please select Customer Name',
+        validate: validateRequired,
+    },
+    customerTitles: {
+        message: 'Please select Customer Types',
+        validate: validateRequired,
+    },
+    modeOfPayment: {
+        message: 'Please select Mode Of Payment',
+        validate: validateRequired,
+    },
+    // Add other fields as needed
 };

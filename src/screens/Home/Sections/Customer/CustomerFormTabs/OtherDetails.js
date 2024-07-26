@@ -98,7 +98,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
   return (
     <RoundedScrollContainer>
       <FormInput
-        label={"TRN No:"}
+        label={"TRN No "}
         placeholder={"Enter TRN"}
         editable={true}
         keyboardType="numeric"
@@ -121,7 +121,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
         onPress={() => onFieldChange('isActive', !formData.isActive)}
       />
       <FormInput
-        label={"Customer Attitude :"}
+        label={"Customer Attitude "}
         placeholder={"Enter Customer Attitude"}
         dropIcon={"menu-down"}
         items={customerAttitude}
@@ -131,7 +131,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet('Customer Attitude')}
       />
       <FormInput
-        label={"Language :"}
+        label={"Language "}
         placeholder={"Select Language"}
         dropIcon={"menu-down"}
         editable={false}
@@ -140,7 +140,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet('Language')}
       />
       <FormInput
-        label={"Currency :"}
+        label={"Currency "}
         placeholder={"Select Currency"}
         dropIcon={"menu-down"}
         editable={false}
@@ -149,7 +149,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
         onPress={() => toggleBottomSheet('Currency')}
       />
       <CheckBox
-        label="Is Supplier"
+        label="Is Supplier "
         checked={formData.isSupplier}
         onPress={() => onFieldChange('isSupplier', !formData.isSupplier)}
       />
