@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWindowDimensions, Keyboard, View } from 'react-native';
+import {  Keyboard, View } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
