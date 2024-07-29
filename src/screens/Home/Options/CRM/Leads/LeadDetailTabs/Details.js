@@ -70,7 +70,7 @@ const Details = ({ leadId }) => {
     };
 
     const viewOpportunity = () => {
-        navigation.navigate('PipelineDetails', { pipelineId: details?.pipeline?._id });
+        navigation.navigate('PipelineDetailTabs', { id: details?.pipeline[0]?._id });
     };
 
     return (

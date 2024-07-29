@@ -17,9 +17,9 @@ import { VisitPlanForm, VisitsPlanScreen } from "@screens/Home/Options/VisitsPla
 import { EditVisit, VisitDetails, VisitForm, VisitScreen } from "@screens/Home/Options/Visits"; //customer visit
 import { MapViewScreen } from "@components/MapViewScreen";
 import { CRMScreen } from "@screens/Home/Options/CRM";
-import { EnquiryRegisterForm, EnquiryRegisterScreen } from "@screens/Home/Options/CRM/EnquiryRegister";
+import { EditEnquiryRegister, EnquiryRegisterForm, EnquiryRegisterScreen } from "@screens/Home/Options/CRM/EnquiryRegister";
 import { CustomerFormTabs } from "@screens/Home/Sections/Customer/CustomerFormTabs";
-import { LeadForm, LeadScreen } from "@screens/Home/Options/CRM/Leads";
+import { EditLead, LeadForm, LeadScreen } from "@screens/Home/Options/CRM/Leads";
 import { EnquiryDetailTabs } from "@screens/Home/Options/CRM/EnquiryRegister/EnquiryDetailTabs";
 import { LeadDetailTabs } from "@screens/Home/Options/CRM/Leads/LeadDetailTabs";
 import { PipelineForm, PipelineScreen } from "@screens/Home/Options/CRM/Pipeline";
@@ -203,6 +203,12 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
+      <Stack.Screen
+        name="EditEnquiryRegister"
+        component={EditEnquiryRegister}
+        options={{ headerShown: false }}
+      />
+
       {/* leads */}
       <Stack.Screen
         name="LeadScreen"
@@ -217,6 +223,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="LeadDetailTabs"
         component={LeadDetailTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditLead"
+        component={EditLead}
         options={{ headerShown: false }}
       />
 

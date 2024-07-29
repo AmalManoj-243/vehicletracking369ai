@@ -1,3 +1,4 @@
 import LeadScreen from "./LeadScreen";
 import LeadForm from "./LeadForm";
-export { LeadScreen, LeadForm }
+import EditLead from "./EditLead";
+export { LeadScreen, LeadForm, EditLead }

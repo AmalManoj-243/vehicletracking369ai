@@ -9,7 +9,6 @@ import { FABButton } from '@components/common/Button';
 import { fetchEnquiryRegister } from '@api/services/generalApi';
 import { useDataFetching } from '@hooks';
 import EnquiryRegisterList from './EnquiryRegisterList';
-import AnimatedLoader from '@components/Loader/AnimatedLoader';
 import { useAuthStore } from '@stores/auth';
 import { OverlayLoader } from '@components/Loader';
 

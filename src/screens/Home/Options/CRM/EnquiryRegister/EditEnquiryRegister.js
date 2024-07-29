@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {  Keyboard } from 'react-native';
+import { Keyboard } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { LoadingButton } from '@components/common/Button';
@@ -14,7 +14,7 @@ import { useAuthStore } from '@stores/auth';
 import { formatDateTime } from '@utils/common/date';
 import { validateFields } from '@utils/validation';
 
-const EnquiryRegisterForm = ({ navigation }) => {
+const EditEnquiryRegister = ({ navigation }) => {
 
   const currentUserId = useAuthStore((state) => state.user?.related_profile?._id || '');
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
@@ -230,4 +230,4 @@ const EnquiryRegisterForm = ({ navigation }) => {
   );
 };
 
-export default EnquiryRegisterForm;
+export default EditEnquiryRegister;

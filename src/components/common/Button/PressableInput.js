@@ -26,6 +26,7 @@ const PressableInput = ({
                     autoCorrect={false}
                     style={styles.input}
                     placeholderTextColor={'#666666'}
+                    editable={false}
                     {...props}
                 />
                 {dropIcon && (
