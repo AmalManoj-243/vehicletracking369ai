@@ -38,19 +38,26 @@ export const modeOfPayment = [
 ];
 
 export const customerBehaviour = [
-  { label:'Fast Payment', value: 'Fast Payment' },
-  { label:'Normal Payment', value: 'Normal Payment' },
-  { label:'Delayed Payment', value: 'Delayed Payment' },
+  { label: 'Fast Payment', value: 'Fast Payment' },
+  { label: 'Normal Payment', value: 'Normal Payment' },
+  { label: 'Delayed Payment', value: 'Delayed Payment' },
 ];
 
 export const customerAttitude = [
-  { label:'Option 1', value: 'Option 1' },
-  { label:'Option 2', value: 'Option 2' },
+  { label: 'Option 1', value: 'Option 1' },
+  { label: 'Option 2', value: 'Option 2' },
 ];
-            
+
 export const priority = [
   { label: "High", value: "HIGH" },
   { label: "Medium", value: "MEDIUM" },
   { label: "Low", value: "LOW" },
   { label: "Critical", value: "CRITICAL" }
+];
+
+export const actions = [
+  { label: "Won", value: "Won" },
+  { label: "Hold", value: "Hold" },
+  { label: "Lost", value: "Lost" },
+  { label: "Qualified", value: "Qualified" }
 ];

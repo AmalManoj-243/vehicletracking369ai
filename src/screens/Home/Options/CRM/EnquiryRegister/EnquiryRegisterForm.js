@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useWindowDimensions, Keyboard, View } from 'react-native';
+import {  Keyboard } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
-import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { LoadingButton } from '@components/common/Button';
 import { showToast } from '@utils/common';
 import { post } from '@api/services/utils';

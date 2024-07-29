@@ -297,7 +297,6 @@ const VisitScreen = ({ navigation }) => {
           <PressableInput
             placeholder='From Date'
             value={formData.fromDate}
-            editable={false}
             handlePress={() => {
               setDatePickerMode('from');
               setDatePickerVisibility(true);
@@ -312,7 +311,6 @@ const VisitScreen = ({ navigation }) => {
               setDatePickerMode('to');
               setDatePickerVisibility(true);
             }}
-            editable={false}
           />
           <View style={{ width: 10 }} />
           <TouchableOpacity onPress={() => toggleBottomSheet('Select Durations')}>
@@ -324,7 +322,6 @@ const VisitScreen = ({ navigation }) => {
             placeholder='Employee'
             dropIcon={"menu-down"}
             value={formData.employees[0]?.label}
-            editable={false}
             // multiline={true}
             handlePress={() => toggleBottomSheet('Employees')}
           />
@@ -332,7 +329,6 @@ const VisitScreen = ({ navigation }) => {
           <PressableInput
             placeholder='Departments'
             dropIcon={"menu-down"}
-            editable={false}
             value={formData.departments[0]?.label}
             handlePress={() => toggleBottomSheet('Departments')}
           />
@@ -340,7 +336,6 @@ const VisitScreen = ({ navigation }) => {
           <PressableInput
             placeholder='Brands'
             dropIcon={"menu-down"}
-            editable={false}
             value={formData.brands[0]?.label}
             handlePress={() => toggleBottomSheet('Brands')}
           />
@@ -351,7 +346,6 @@ const VisitScreen = ({ navigation }) => {
           <PressableInput
             placeholder='Select Customer'
             dropIcon={"menu-down"}
-            editable={false}
             value={formData.customer?.label}
             handlePress={() => toggleBottomSheet('Customer')}
           />

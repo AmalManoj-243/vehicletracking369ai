@@ -21,7 +21,7 @@ const LeadDetailTabs = ({ navigation, route }) => {
         { key: 'second', title: 'Follow Up' },
         { key: 'third', title: 'Email History' },
         { key: 'fourth', title: 'Call History' },
-        { key: 'fifth', title: 'WhatsApp History' },  
+        { key: 'fifth', title: 'WhatsApp History' },
     ]);
 
     const renderScene = ({ route }) => {
@@ -46,6 +46,9 @@ const LeadDetailTabs = ({ navigation, route }) => {
             <NavigationHeader
                 title="Lead Details"
                 onBackPress={() => navigation.goBack()}
+                logo={false}
+                iconOneName='edit'
+                iconOnePress={() => navigation.navigate('EditLead', { leadId: id })}
             />
             <TabView
                 navigationState={{ index, routes }}

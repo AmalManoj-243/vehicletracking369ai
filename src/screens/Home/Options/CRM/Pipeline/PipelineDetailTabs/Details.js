@@ -1,15 +1,21 @@
 import React, { useState, useCallback } from 'react';
-import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
+import { View } from 'react-native';
+import { RoundedScrollContainer } from '@components/containers';
 import { useFocusEffect } from '@react-navigation/native';
 import { DetailField } from '@components/common/Detail';
 import { formatDateTime } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';
 import { fetchPipelineDetails } from '@api/details/detailApi';
 import { OverlayLoader } from '@components/Loader';
+import { PressableInput } from '@components/common/Button';
+import { CustomListModal } from '@components/Modal';
+import { actions } from '@constants/dropdownConst';
+import { put } from '@api/services/utils';
 
 const Details = ({ pipelineId }) => {
   const [details, setDetails] = useState({});
   const [isLoading, setIsLoading] = useState(false)
+  const [isVisibleModal, setIsVisibleModal] = useState(false)
 
   const fetchDetails = async (pipelineId) => {
     setIsLoading(true);
@@ -31,15 +37,41 @@ const Details = ({ pipelineId }) => {
       }
     }, [pipelineId])
   );
+  const handleUpdateStatus = async (status) => {
+    if (status) {
+      try {
+        const pipelineUpdates = {
+          pipeline_id: pipelineId,
+          status: status.value,
+        };
+        await put('/updatePipeline', pipelineUpdates);
+        showToastMessage('Status updated successfully');
+      } catch (error) {
+        console.log("API Error:", error);
+      } finally {
+        fetchDetails(pipelineId);
+      }
+    }
+  };
+
+
 
   return (
     <RoundedScrollContainer>
+      <View style={{ marginBottom: 10, width: '30%', alignSelf: 'flex-end' }}>
+        <PressableInput
+          placeholder="Actions"
+          dropIcon={"menu-down"}
+          handlePress={() => setIsVisibleModal(!isVisibleModal)}
+        />
+      </View>
       <DetailField label="Date & Time" value={formatDateTime(details.date)} />
+      <DetailField label="Customer" value={details?.customer?.name || '-'} />
+      <DetailField label="Status" value={details?.status || '-'} />
       <DetailField label="Source" value={details?.source?.source_name || '-'} />
       <DetailField label="Enquiry Type" value={details?.enquiry_type || '-'} />
-      <DetailField label="Sales Person" value={details?.sales_person || '-'} />
+      <DetailField label="Sales Person" value={details?.employee?.employee_name || '-'} />
       <DetailField label="Opportunity" value={details?.opportunity || '-'} />
-      <DetailField label="Customer" value={details?.customer || '-'} />
       <DetailField
         label="Remarks"
         value={details?.remarks || '-'}
@@ -47,6 +79,14 @@ const Details = ({ pipelineId }) => {
         numberOfLines={5}
       />
       <OverlayLoader visible={isLoading} />
+      <CustomListModal
+        onAddIcon={false}
+        title={'Actions'}
+        items={actions}
+        isVisible={isVisibleModal}
+        onValueChange={handleUpdateStatus}
+        onClose={() => setIsVisibleModal(!isVisibleModal)}
+      />
     </RoundedScrollContainer>
   );
 };

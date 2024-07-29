@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   TouchableOpacity,
@@ -11,6 +11,7 @@ import Modal from "react-native-modal";
 import Text from "@components/Text";
 import { COLORS, FONT_FAMILY } from "@constants/theme";
 import { AntDesign } from "@expo/vector-icons";
+import { NavigationHeader } from "@components/Header";
 
 const { height } = Dimensions.get("window");
 
@@ -18,8 +19,9 @@ const CustomListModal = ({
   items,
   onValueChange,
   isVisible,
-  onAdd = () => {},
-  onClose = () => {},
+  onAdd = () => { },
+  onAddIcon = true,
+  onClose = () => { },
   title,
 }) => {
   const handleCustomModal = (selectedCustomData) => {
@@ -43,7 +45,7 @@ const CustomListModal = ({
       }}
     >
       <View style={styles.modalContainer}>
-        <View style={[styles.container]}>
+        {onAddIcon ? <View style={[styles.container]}>
           <TouchableOpacity onPress={onClose} style={styles.goBackContainer}>
             <AntDesign name="left" size={20} color={"white"} />
           </TouchableOpacity>
@@ -54,7 +56,10 @@ const CustomListModal = ({
               <Text style={styles.addText}>Add</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> :
+          <>
+            <NavigationHeader title={title} onBackPress={onClose} />
+          </>}
         <View style={styles.modalContent}>
           <FlatList
             data={items}
