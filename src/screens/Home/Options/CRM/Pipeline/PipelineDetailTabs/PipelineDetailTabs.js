@@ -11,34 +11,39 @@ import EmailHistory from './EmailHistory';
 import CallHistory from './CallHistory';
 import WhatsAppHistory from './WhatsAppHistory';
 import MeetingsTab from './MeetingsTab';
+import Details from './Details';
 const PipelineDetailTabs = ({ navigation, route }) => {
 
   const { id } = route?.params || {};
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'first', title: 'Follow Up' },
-    { key: 'second', title: 'Customer Visit' },
-    { key: 'third', title: 'Email History' },
-    { key: 'fourth', title: 'Call History' },
-    { key: 'fifth', title: 'Whatsapp History' },
-    { key: 'sixth', title: 'Meetings Tab' },
+    { key: 'first', title: 'Details' },
+    { key: 'second', title: 'Follow Up' },
+    { key: 'third', title: 'Customer Visit' },
+    { key: 'fourth', title: 'Email History' },
+    { key: 'fifth', title: 'Call History' },
+    { key: 'sixth', title: 'Whatsapp History' },
+    { key: 'seventh', title: 'Meetings Tab' },
+    { key: 'first', title: 'Details' },
   ]);
 
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'first':
-        return <FollowUp enquiryId={id} />;
+          return <Details pipelineId={id} />; 
       case 'second':
-        return <CustomerVisit enquiryId={id} />;
+        return <FollowUp pipelineId={id} />;
       case 'third':
-        return <EmailHistory enquiryId={id} />;
+        return <CustomerVisit pipelineId={id} />;
       case 'fourth':
-        return <CallHistory enquiryId={id} />;
+        return <EmailHistory pipelineId={id} />;
       case 'fifth':
-        return <WhatsAppHistory enquiryId={id} />;
+        return <CallHistory pipelineId={id} />;
       case 'sixth':
-        return <MeetingsTab enquiryId={id} />;
+        return <WhatsAppHistory pipelineId={id} />;
+      case 'seventh':
+        return <MeetingsTab pipelineId={id} />;      
       default:
         return null;
     }
