@@ -45,7 +45,7 @@ const LeadScreen = ({ navigation }) => {
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={''} />
+    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={'No Leads Found'} />
   );
 
   const renderContent = () => (

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {  Keyboard, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
-import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { LoadingButton } from '@components/common/Button';
 import { showToast } from '@utils/common';
 import { post } from '@api/services/utils';
@@ -37,7 +36,7 @@ const LeadForm = ({ navigation }) => {
     emailAddress: '',
     address: '',
     remarks: '',
-    expectedClosingDate: '',
+    expectedClosingDate: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -67,14 +66,27 @@ const LeadForm = ({ navigation }) => {
     fetchDropdownData();
   }, []);
 
+  const handleFieldChange = (field, value) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [field]: value,
+    }));
+    if (errors[field]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [field]: null,
+      }));
+    }
+  };
+
   const toggleDropdownSheet = (type) => {
     setSelectedDropdownType(type);
     setIsDropdownSheetVisible(!isDropdownSheetVisible);
   };
 
   const handleDateConfirm = (date) => {
-    const formatDate = formatDate(date, 'yyyy-MM-dd')
-    handleFieldChange('expectedClosingDate', formatDate);
+    const formattedDate = formatDate(date, 'yyyy-MM-dd');
+    handleFieldChange('expectedClosingDate', formattedDate);
     setIsDatePickerVisible(false);
   };
 
@@ -109,19 +121,6 @@ const LeadForm = ({ navigation }) => {
     );
   };
 
-  const handleFieldChange = (field, value) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [field]: value,
-    }));
-    if (errors[field]) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [field]: null,
-      }));
-    }
-  };
-
   const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
     const { isValid, errors } = validateFields(formData, fieldsToValidate);
@@ -129,9 +128,8 @@ const LeadForm = ({ navigation }) => {
     return isValid;
   };
 
-
   const handleSubmit = async () => {
-    const fieldsToValidate = ['contactName', 'phoneNumber', 'salesPerson', 'source', 'priority']
+    const fieldsToValidate = ['contactName', 'phoneNumber', 'salesPerson', 'source', 'priority'];
     if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
       const leadData = {
@@ -150,14 +148,12 @@ const LeadForm = ({ navigation }) => {
         source_id: formData?.source?.id ?? null,
         remarks: formData.remarks,
         priority: formData.priority?.value,
-        // enquiry_register_id: enquiryDetails?._id || null,
         expected_closing_date: formData.expectedClosingDate || null,
         created_by_id: currentUser?.related_profile?._id || null,
         created_by_name: currentUser?.related_profile?.name || null
       };
       try {
         const response = await post("/createLead", leadData);
-        console.log("🚀 ~ handleSubmit ~ response:", response)
         if (response.success) {
           showToast({
             type: "success",
@@ -273,9 +269,9 @@ const LeadForm = ({ navigation }) => {
         <FormInput
           label="Expected Closing Date"
           dropIcon="calendar"
-          placeholder="mm-dd-yyyy"
+          placeholder="DD-MM-YYYY"
           editable={false}
-          value={formatDateTime(formData.expectedClosingDate)}
+          value={formData.expectedClosingDate ? formatDate(formData.expectedClosingDate, 'dd-MM-yyyy') : ''}
           onPress={() => setIsDatePickerVisible(true)}
         />
         <FormInput

@@ -44,7 +44,7 @@ const EnquiryRegisterScreen = ({ navigation }) => {
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={''} />
+    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={'No Enquiries Found'} />
   );
 
   const renderContent = () => (
