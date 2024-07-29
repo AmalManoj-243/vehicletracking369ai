@@ -1,16 +1,15 @@
 import * as React from 'react';
 import { useWindowDimensions } from 'react-native';
-import { TabView, TabBar } from 'react-native-tab-view';
+import { TabView } from 'react-native-tab-view';
 import { useState } from 'react';
 import Details from './Details';
 import FollowUp from './FollowUp';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
-import { COLORS, FONT_FAMILY } from '@constants/theme';
+import { CustomTabBar } from '@components/TabBar';
 import EmailHistory from './EmailHistory';
 import CallHistory from './CallHistory';
 import WhatsAppHistory from './WhatsAppHistory';
-import { CustomTabBar } from '@components/TabBar';
 
 
 const LeadDetailTabs = ({ navigation, route }) => {

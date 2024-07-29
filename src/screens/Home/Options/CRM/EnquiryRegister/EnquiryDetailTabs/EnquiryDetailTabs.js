@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useWindowDimensions, KeyboardAvoidingView, Platform, Keyboard, View } from 'react-native';
-import { TabView, TabBar } from 'react-native-tab-view';
+import { useWindowDimensions } from 'react-native';
+import { TabView } from 'react-native-tab-view';
 import { useState } from 'react';
 import Details from './Details';
 import FollowUp from './FollowUp';
