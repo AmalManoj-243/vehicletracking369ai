@@ -22,6 +22,8 @@ import { CustomerFormTabs } from "@screens/Home/Sections/Customer/CustomerFormTa
 import { LeadForm, LeadScreen } from "@screens/Home/Options/CRM/Leads";
 import { EnquiryDetailTabs } from "@screens/Home/Options/CRM/EnquiryRegister/EnquiryDetailTabs";
 import { LeadDetailTabs } from "@screens/Home/Options/CRM/Leads/LeadDetailTabs";
+import { PipelineForm, PipelineScreen } from "@screens/Home/Options/CRM/Pipeline";
+import PipelineList from "@screens/Home/Options/CRM/Pipeline/PipelineList";
 
 const Stack = createNativeStackNavigator();
 
@@ -215,6 +217,23 @@ const StackNavigator = () => {
       <Stack.Screen
         name="LeadDetailTabs"
         component={LeadDetailTabs}
+        options={{ headerShown: false }}
+      />
+
+      {/*Pipeline*/}
+      <Stack.Screen
+        name="PipelineScreen"
+        component={PipelineScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PipelineList"
+        component={PipelineList}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PipelineForm"
+        component={PipelineForm}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

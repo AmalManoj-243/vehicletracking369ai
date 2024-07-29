@@ -101,3 +101,7 @@ export const fetchSourceDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.SOURCE);
 }
 
+export const fetchOpportunityDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.OPPORTUNITY);
+}
+

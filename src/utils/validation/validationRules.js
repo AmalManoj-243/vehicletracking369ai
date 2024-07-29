@@ -50,5 +50,17 @@ export const allValidationRules = {
         message: 'Please select Mode Of Payment',
         validate: validateRequired,
     },
+    customer: {
+        message: 'Please select Customer Types',
+        validate: validateRequired,
+    },
+    opportunity: {
+        message: 'Please select Opportunity',
+        validate: validateRequired,
+    },
+    enquiryType: {
+        message: 'Please select Enquiry Type',
+        validate: validateRequired,
+    },
     // Add other fields as needed
 };

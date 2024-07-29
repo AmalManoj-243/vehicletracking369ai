@@ -36,6 +36,7 @@ export const DROP_DOWN_API_ENDPOINTS = {
     VIEW_LANGUAGE: "/viewLanguage/language_list/language_dropdown",
     VIEW_CURRENCY: "/viewCurrency/currency_list/currency_dropdown",
     SOURCE: "/viewSource/source_list/source_dropdown",
+    OPPORTUNITY: "/viewOppertunityType/oppertunity_list/oppertunity_dropdown"
 };
 
 export const DETAIL_API_ENDPOINTS = {
