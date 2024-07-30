@@ -8,8 +8,12 @@ import { fetchInvoiceDropdown } from '@api/dropdowns/dropdownApi';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { formatDate } from '@utils/common/date';
+import { useAuthStore } from '@stores/auth';
 
 const VisitPlanForm = ({ navigation }) => {
+
+  const currentUser = useAuthStore(state=> state.user)
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
@@ -112,14 +116,10 @@ const VisitPlanForm = ({ navigation }) => {
         items = dropdown.customer;
         fieldName = 'customer';
         break;
-      case 'Employees':
-        items = dropdown.assignedTo;
-        fieldName = 'assignedTo';
-        break;
-      case 'Select Manger':
-        items = dropdown.brand;
-        fieldName = 'brand';
-        break;
+      // case 'Employees':
+      //   items = dropdown.assignedTo;
+      //   fieldName = 'assignedTo';
+      //   break;
       case 'Select Duration':
         items = dropdown.selectDuration;
         fieldName = 'selectDuration';
@@ -193,18 +193,11 @@ const VisitPlanForm = ({ navigation }) => {
         />
         <FormInput
           label={"Assigned To"}
-          placeholder={"Select Assignee"}
+          // placeholder={"Select Assignee"}
           dropIcon={"menu-down"}
+          value={currentUser?.related_profile?.name}
           editable={false}
-          onPress={() => toggleBottomSheet('Employees')}
-        />
-        <FormInput
-          label={"Brand"}
-          placeholder={"Select Brand"}
-          dropIcon={"menu-down"}
-          editable={false}
-          validate={errors.brand}
-          onPress={() => toggleBottomSheet('Select Manger')}
+          // onPress={() => toggleBottomSheet('Employees')}
         />
         <FormInput
           label={"Date & Time"}
