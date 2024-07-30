@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import Text from '@components/Text';
+import Modal from 'react-native-modal';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import format from 'date-fns/format';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { CheckBox } from '@components/common/CheckBox';
+import { Button } from '@components/common/Button';
+
+const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
+    const [meeting, setMeeting] = useState('');
+    const [meetingDate, setMeetingDate] = useState(new Date());
+    const [meetingTime, setMeetingTime] = useState(new Date());
+    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+    const [isTimePickerVisible, setTimePickerVisible] = useState(false);
+    const [isReminder, setReminder] = useState(false);
+    const [reminderMinutes, setReminderMinutes] = useState(0);
+
+    const handleSave = () => {
+        onSave({
+            title: meeting,
+            date: meetingDate,
+            time: meetingTime,
+            isReminder: isReminder,
+            reminderMinutes: isReminder ? reminderMinutes : 0,
+        });
+    };
+
+    return (
+        <Modal
+            isVisible={isVisible}
+            animationIn="bounceIn"
+            animationOut="slideOutDown"
+            backdropOpacity={0.7}
+            animationInTiming={400}
+            animationOutTiming={300}
+            backdropTransitionInTiming={400}
+            backdropTransitionOutTiming={300}
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalHeader}>Schedule Meeting</Text>
+                    <TextInput
+                        placeholder="Enter Meeting"
+                        value={meeting}
+                        onChangeText={setMeeting}
+                        style={styles.textInput}
+                    />
+                    <View style={styles.inputRow}>
+                        <Text style={styles.label}>Date:</Text>
+                        <View style={[styles.textInput, { flexDirection: "row", justifyContent: 'space-between' }]}>
+                            <Text style={{ fontFamily: 'roboto', marginRight: 20 }}>
+                                {meetingDate ? format(meetingDate, "dd-MM-yyyy") : 'Select Date'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
+                                <Icon name="calendar" size={25} color='#2e294e' />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <DateTimePickerModal
+                        isVisible={isDatePickerVisible}
+                        mode="date"
+                        date={meetingDate}
+                        onConfirm={(date) => {
+                            setMeetingDate(date);
+                            setDatePickerVisible(false);
+                        }}
+                        onCancel={() => setDatePickerVisible(false)}
+                    />
+                    <View style={styles.inputRow}>
+                        <Text style={styles.label}>Time:</Text>
+                        <View style={[styles.textInput, { flexDirection: "row", justifyContent: 'space-between' }]}>
+                            <Text style={{ fontFamily: 'roboto', marginRight: 20 }}>
+                                {meetingTime ? format(meetingTime, "HH:mm:ss") : 'Select Time'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setTimePickerVisible(true)}>
+                                <Icon name="clock-o" size={25} color='#2e294e' />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <DateTimePickerModal
+                        isVisible={isTimePickerVisible}
+                        mode="time"
+                        date={meetingTime}
+                        onConfirm={(time) => {
+                            setMeetingTime(time);
+                            setTimePickerVisible(false);
+                        }}
+                        onCancel={() => setTimePickerVisible(false)}
+                    />
+                    <View style={styles.checkboxContainer}>
+                        <CheckBox value={isReminder} onValueChange={setReminder} />
+                        <Text style={styles.checkboxLabel}>Set Reminder</Text>
+                    </View>
+                    {isReminder && (
+                        <TextInput
+                            placeholder={reminderMinutes === 0 ? 'Enter reminder minutes' : ''}
+                            value={reminderMinutes === 0 ? '' : reminderMinutes.toString()}
+                            onChangeText={(text) => setReminderMinutes(parseInt(text) || 0)}
+                            keyboardType="numeric"
+                            style={styles.textInput}
+                        />
+                    )}
+                    <View style={styles.buttonRow}>
+                        <View style={{ flex: 2 }}>
+                            <Button title="CANCEL" onPress={() => onClose()} />
+                        </View>
+                        <View style={{ width: 10 }} />
+                        <View style={{ flex: 2 }}>
+                            <Button title="SAVE" onPress={handleSave} />
+                        </View>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};
+
+const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        width: '100%',
+    },
+    modalHeader: {
+        fontSize: 18,
+        fontFamily: 'raleway_bold',
+        marginBottom: 10,
+    },
+    textInput: {
+        borderWidth: 1,
+        borderColor: 'gray',
+        marginBottom: 10,
+        padding: 10,
+        borderRadius: 5,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    label: {
+        flex: 1,
+        textAlign: 'left',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    buttonContainer: {
+        marginLeft: 10,
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    checkboxLabel: {
+        marginLeft: 8,
+    },
+});
+
+export default MeetingsScheduleModal;
