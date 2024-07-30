@@ -1,0 +1,6 @@
+{
+    "turboConsoleLog.logFunction": "console.log",
+    "turboConsoleLog.logMessagePrefix": "console.log(\\\"${variableName} value:\\\", JSON.stringify(${variableName}, null, 2));",
+    "turboConsoleLog.logMessageSuffix": ", null, 2))",
+    "turboConsoleLog.wrapLogMessage": false
+}

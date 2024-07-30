@@ -32,9 +32,7 @@ const EditLead = ({ navigation, route }) => {
     const fetchDetails = async (leadId) => {
         setIsLoading(true);
         try {
-            const enquiryDetails = await fetchLeadDetails(leadId);
-            const detail = enquiryDetails[0];
-            console.log("🚀 ~ fetchDetails ~ lead detail:", JSON.stringify(detail, null, 2))
+            const [detail] = await fetchLeadDetails(leadId);
             setFormData((prevFormData) => ({
                 ...prevFormData,
                 date: detail?.date || new Date(),

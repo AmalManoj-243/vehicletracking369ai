@@ -93,6 +93,7 @@ const Details = ({ leadId }) => {
                 value={details?.remarks || '-'}
                 multiline
                 numberOfLines={5}
+                textAlignVertical={'top'}
             />
             <LoadingButton
                 marginVertical={20}

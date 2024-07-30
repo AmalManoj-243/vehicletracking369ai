@@ -1,15 +1,22 @@
-import {  Keyboard } from 'react-native';
+import { Keyboard } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, RoundedScrollContainer } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { LoadingButton } from '@components/common/Button';
 import { TextInput as FormInput } from '@components/common/TextInput';
-import { fetchInvoiceDropdown } from '@api/dropdowns/dropdownApi';
+import { fetchCustomersDropdown, fetchEmployeesDropdown, fetchInvoiceDropdown, fetchPurposeofVisitDropdown } from '@api/dropdowns/dropdownApi';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { formatDate } from '@utils/common/date';
+import { useAuthStore } from '@stores/auth';
+import { validateFields } from '@utils/validation';
+import { post } from '@api/services/utils';
+import { showToast } from '@utils/common';
 
 const VisitPlanForm = ({ navigation }) => {
+
+  const currentUser = useAuthStore(state => state.user)
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
@@ -18,7 +25,7 @@ const VisitPlanForm = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     customer: '',
-    assignedTo: '',
+    assignedTo: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.name || '' },
     brand: '',
     selectDuration: '',
     dateAndTime: '',
@@ -52,23 +59,25 @@ const VisitPlanForm = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDropdownData = async () => {
       try {
-        const invoiceDropdown = await fetchInvoiceDropdown();
+        const customerDropdown = await fetchCustomersDropdown();
+        const assignedToDropdown = await fetchEmployeesDropdown();
+        const visitPurposeDropdown = await fetchPurposeofVisitDropdown();
         setDropdown((prevDropdown) => ({
           ...prevDropdown,
-          customer: invoiceDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
+          customer: customerDropdown.map((data) => ({ id: data._id, label: data.name?.trim() })),
+          assignedTo: assignedToDropdown.map((data) => ({ id: data._id, label: data.name })),
+          visitPurpose: visitPurposeDropdown.map((data) => ({ id: data._id, label: data.name }))
         }));
       } catch (error) {
         console.error('Error fetching dropdown data:', error);
       }
     };
 
-    fetchData();
+    fetchDropdownData();
   }, []);
+
 
   useEffect(() => {
     if (formData.selectDuration?.id === 'tomorrow') {
@@ -116,10 +125,6 @@ const VisitPlanForm = ({ navigation }) => {
         items = dropdown.assignedTo;
         fieldName = 'assignedTo';
         break;
-      case 'Select Manger':
-        items = dropdown.brand;
-        fieldName = 'brand';
-        break;
       case 'Select Duration':
         items = dropdown.selectDuration;
         fieldName = 'selectDuration';
@@ -142,36 +147,39 @@ const VisitPlanForm = ({ navigation }) => {
     );
   };
 
-  // Validation functions before submission
-  const validate = () => {
+  const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
-    let isValid = true;
-    let errors = {};
-
-    const requiredFields = {
-      customer: 'Please select a customer',
-      brand: 'Please select a brand',
-      dateAndTime: 'Please select a date and time',
-      visitPurpose: 'Please select a purpose of visit',
-      remarks: 'Please enter remarks'
-    };
-
-    Object.keys(requiredFields).forEach(field => {
-      if (!formData[field]) {
-        errors[field] = requiredFields[field];
-        isValid = false;
-      }
-    });
-
+    const { isValid, errors } = validateFields(formData, fieldsToValidate);
     setErrors(errors);
     return isValid;
   };
 
-  const submit = () => {
-    if (validate()) {
+  const handleSubmit = async () => {
+    const fieldsToValidate = ['customer', 'dateAndTime', 'visitPurpose', 'remarks'];
+    if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
-      // Handle form submission
-      // ...
+      const visitPlanData = {
+        visit_date: formData.dateAndTime,
+        customer_id: formData.customer?.id,
+        purpose_of_visit_id: formData.visitPurpose?.id,
+        sales_person_id: currentUser?.related_profile?._id || '',
+        remarks: formData.remarks,
+        approval_status: 'Approved',
+        visit_employee_id: formData?.assignedTo?.id
+      };
+      try {
+        const response = await post("/createVisitPlan", visitPlanData);
+        if (response.success) {
+          showToast({ type: "success", title: "Success", message: response.message || "Visit Plan created successfully" });
+          navigation.navigate("VisitsPlanScreen");
+        } else {
+          showToast({ type: "error", title: "Error", message: response.message || "Create Visit Plan failed" });
+        }
+      } catch (error) {
+        showToast({ type: "error", title: "Error", message: "An unexpected error occurred. Please try again later." });
+      } finally {
+        setIsSubmitting(false);
+      }
       setIsSubmitting(false);
     }
   };
@@ -186,8 +194,10 @@ const VisitPlanForm = ({ navigation }) => {
         <FormInput
           label={"Customer Name"}
           placeholder={"Select Customer"}
+          value={formData?.customer?.label}
           dropIcon={"menu-down"}
           editable={false}
+          multiline
           validate={errors.customer}
           onPress={() => toggleBottomSheet('Customers')}
         />
@@ -195,16 +205,9 @@ const VisitPlanForm = ({ navigation }) => {
           label={"Assigned To"}
           placeholder={"Select Assignee"}
           dropIcon={"menu-down"}
+          value={formData?.assignedTo?.label}
           editable={false}
           onPress={() => toggleBottomSheet('Employees')}
-        />
-        <FormInput
-          label={"Brand"}
-          placeholder={"Select Brand"}
-          dropIcon={"menu-down"}
-          editable={false}
-          validate={errors.brand}
-          onPress={() => toggleBottomSheet('Select Manger')}
         />
         <FormInput
           label={"Date & Time"}
@@ -220,6 +223,7 @@ const VisitPlanForm = ({ navigation }) => {
           placeholder={"Select purpose of visit"}
           dropIcon={"menu-down"}
           editable={false}
+          value={formData?.visitPurpose?.label}
           validate={errors.visitPurpose}
           onPress={() => toggleBottomSheet('Visit Purpose')}
         />
@@ -229,13 +233,14 @@ const VisitPlanForm = ({ navigation }) => {
           multiline={true}
           numberOfLines={5}
           validate={errors.remarks}
+          textAlignVertical={'top'}
           onChangeText={(value) => handleFieldChange('remarks', value)}
         />
         {renderBottomSheet()}
         <LoadingButton
           loading={isSubmitting}
           title={'SAVE'}
-          onPress={submit}
+          onPress={handleSubmit}
         />
         <DateTimePickerModal
           isVisible={isTimePickerVisible}

@@ -15,7 +15,7 @@ const PipelineList = ({ item, onPress }) => {
         </View>
       </View>
       <View style={styles.rightColumn}>
-        <Text style={styles.content}>{item?.name}</Text>
+        <Text style={styles.content}>{item?.customer?.name?.trim()}</Text>
         <Text style={styles.contentRight}>{formatDate(item?.date) || '-'}</Text>
       </View>
     </TouchableOpacity>

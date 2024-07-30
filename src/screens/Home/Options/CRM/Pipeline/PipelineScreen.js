@@ -2,15 +2,15 @@ import React, { useEffect, useCallback } from 'react';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { RoundedContainer, SafeAreaView } from '@components/containers';
+import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
 import { FABButton } from '@components/common/Button';
 import { fetchPipeline } from '@api/services/generalApi';
 import { useDataFetching } from '@hooks';
 import PipelineList from './PipelineList';
-import AnimatedLoader from '@components/Loader/AnimatedLoader';
 import { useAuthStore } from '@stores/auth';
+import { OverlayLoader } from '@components/Loader';
 
 const PipelineScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
@@ -55,14 +55,6 @@ const PipelineScreen = ({ navigation }) => {
       onEndReached={handleLoadMore}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      ListFooterComponent={
-        loading && (
-          <AnimatedLoader
-            visible={loading}
-            animationSource={require('@assets/animations/loading.json')}
-          />
-        )
-      }
       estimatedItemSize={100}
     />
   );
@@ -80,10 +72,12 @@ const PipelineScreen = ({ navigation }) => {
         title="Pipeline"
         onBackPress={() => navigation.goBack()}
       />
+      <SearchContainer placeholder="Search Pipelines..." onChangeText={''} />
       <RoundedContainer>
         {renderPipeline()}
         <FABButton onPress={() => navigation.navigate('PipelineForm')} />
       </RoundedContainer>
+      <OverlayLoader visible={loading} />
     </SafeAreaView>
   );
 };

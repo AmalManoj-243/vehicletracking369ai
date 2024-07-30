@@ -54,8 +54,10 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     flex: 1,
     fontFamily: FONT_FAMILY.urbanistMedium,
-    marginTop: 10,
-    textAlignVertical: 'top',
+    marginVertical:5,
+    // marginTop: 10,
+    // textAlignVertical: 'top',
+   
   },
 });
 

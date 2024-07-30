@@ -66,17 +66,18 @@ const Details = ({ pipelineId }) => {
         />
       </View>
       <DetailField label="Date & Time" value={formatDateTime(details.date)} />
-      <DetailField label="Customer" value={details?.customer?.name || '-'} />
+      <DetailField label="Customer" value={details?.customer?.name?.trim() || '-'} multiline />
       <DetailField label="Status" value={details?.status || '-'} />
       <DetailField label="Source" value={details?.source?.source_name || '-'} />
-      <DetailField label="Enquiry Type" value={details?.enquiry_type || '-'} />
+      <DetailField label="Enquiry Type" value={details?.enquiry?.enquiry_name || '-'} />
       <DetailField label="Sales Person" value={details?.employee?.employee_name || '-'} />
-      <DetailField label="Opportunity" value={details?.opportunity || '-'} />
+      <DetailField label="Opportunity" value={details?.oppertunity?.oppertunity_name || '-'} />
       <DetailField
         label="Remarks"
         value={details?.remarks || '-'}
         multiline
         numberOfLines={5}
+        textAlignVertical={'top'}
       />
       <OverlayLoader visible={isLoading} />
       <CustomListModal

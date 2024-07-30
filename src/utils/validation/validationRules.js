@@ -51,7 +51,7 @@ export const allValidationRules = {
         validate: validateRequired,
     },
     customer: {
-        message: 'Please select Customer Types',
+        message: 'Please select Customer ',
         validate: validateRequired,
     },
     opportunity: {
@@ -62,5 +62,17 @@ export const allValidationRules = {
         message: 'Please select Enquiry Type',
         validate: validateRequired,
     },
+    dateAndTime: {
+        message: 'Please select Date and Time',
+        validate: validateRequired,
+    },
+    visitPurpose: {
+        message: 'Please select Purpose of Visit',
+        validate: validateRequired
+    },
+    remarks: {
+        message: 'Please select remarks',
+        validate: validateRequired,
+    }
     // Add other fields as needed
 };

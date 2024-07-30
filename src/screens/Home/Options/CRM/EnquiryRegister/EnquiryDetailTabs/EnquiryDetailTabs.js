@@ -34,8 +34,8 @@ const EnquiryDetailTabs = ({ navigation, route }) => {
         title="Enquiry Register Details"
         onBackPress={() => navigation.goBack()}
         logo={false}
-        iconOneName="edit"
-        iconOnePress={() => { }}
+        // iconOneName="edit"
+        // iconOnePress={() => { navigation.navigate('EditEnquiryRegister', { enquiryId: id }) }}
         iconTwoName="plus"
         iconTwoPress={() => { navigation.navigate('LeadForm', { enquiryId: id }) }}
         iconThreeName="delete"

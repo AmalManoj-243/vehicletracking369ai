@@ -46,6 +46,7 @@ const Details = ({ enquiryId }) => {
         value={details?.enquiry_details || '-'}
         multiline
         numberOfLines={5}
+        textAlignVertical={'top'}
       />
       <OverlayLoader visible={isLoading} />
     </RoundedScrollContainer>

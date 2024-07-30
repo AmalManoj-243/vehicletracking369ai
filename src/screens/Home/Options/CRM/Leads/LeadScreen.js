@@ -11,7 +11,6 @@ import { useDataFetching, useDebouncedSearch } from '@hooks';
 import LeadList from './LeadList';
 import { useAuthStore } from '@stores/auth';
 import { OverlayLoader } from '@components/Loader';
-import { COLORS } from '@constants/theme';
 
 const LeadScreen = ({ navigation }) => {
 
@@ -75,7 +74,7 @@ const LeadScreen = ({ navigation }) => {
         title="Leads"
         onBackPress={() => navigation.goBack()}
       />
-      <SearchContainer placeholder="Search Leads" onChangeText={handleSearchTextChange} />
+      <SearchContainer placeholder="Search Leads..." onChangeText={handleSearchTextChange} />
       <RoundedContainer>
         {renderEnquiryRegister()}
         <FABButton onPress={() => navigation.navigate('LeadForm')} />

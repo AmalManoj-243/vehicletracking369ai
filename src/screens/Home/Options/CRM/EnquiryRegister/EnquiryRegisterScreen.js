@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
-import { RoundedContainer, SafeAreaView } from '@components/containers';
+import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
 import { FABButton } from '@components/common/Button';
@@ -39,7 +39,7 @@ const EnquiryRegisterScreen = ({ navigation }) => {
     if (item.empty) {
       return <EmptyItem />;
     }
-    return <EnquiryRegisterList item={item} onPress={()=> navigation.navigate('EnquiryDetailTabs', {id: item._id})} />;
+    return <EnquiryRegisterList item={item} onPress={() => navigation.navigate('EnquiryDetailTabs', { id: item._id })} />;
   };
 
   const renderEmptyState = () => (
@@ -73,12 +73,12 @@ const EnquiryRegisterScreen = ({ navigation }) => {
         title="Enquiry Register"
         onBackPress={() => navigation.goBack()}
       />
-      {/* <SearchContainer placeholder="Search Products" onChangeText={handleSearchTextChange} /> */}
+      <SearchContainer placeholder="Search Enquiries.." onChangeText={''} />
       <RoundedContainer>
-         {renderEnquiryRegister()}
+        {renderEnquiryRegister()}
         <FABButton onPress={() => navigation.navigate('EnquiryRegisterForm')} />
       </RoundedContainer>
-      <OverlayLoader visible={loading}  />
+      <OverlayLoader visible={loading} />
     </SafeAreaView>
   );
 };

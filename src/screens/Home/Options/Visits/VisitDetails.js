@@ -69,7 +69,7 @@ const VisitDetails = ({ navigation, route }) => {
         <DetailField label="Contact Person" value={contactNames || '-'} />
         <DetailField label="Contact No" value={contactNo || '-'} />
         <DetailField label="Visit Purpose" value={visitPurposes || '-'} />
-        <DetailField label="Remarks" value={details?.remarks || '-'} multiline numberOfLines={5} />
+        <DetailField label="Remarks" value={details?.remarks || '-'} multiline numberOfLines={5} textAlignVertical={'top'} />
       </RoundedScrollContainer>
     </SafeAreaView>
   );

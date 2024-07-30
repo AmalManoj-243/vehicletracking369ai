@@ -22,19 +22,17 @@ import { validateFields } from '@utils/validation';
 
 const PipelineForm = ({ navigation }) => {
 
-  const currentUserId = useAuthStore((state) => state.user?.related_profile?._id || '');
+  const currentUser = useAuthStore((state) => state.user);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDropdownType, setSelectedDropdownType] = useState(null);
   const [isDropdownSheetVisible, setIsDropdownSheetVisible] = useState(false);
-  const [selectedType, setSelectedType] = useState(null);
-  const [isVisible, setIsVisible] = useState(false);
 
   const [formData, setFormData] = useState({
     dateTime: new Date(),
     source: '',
     enquiryType: '',
-    salesPerson: '',
+    salesPerson: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.name },
     opportunity: '',
     customer: '',
     remarks: '',
@@ -59,7 +57,6 @@ const PipelineForm = ({ navigation }) => {
           fetchCustomersDropdown(),
           fetchOpportunityDropdown(),
         ]);
-
         setDropdowns({
           source: sourceData.map(data => ({
             id: data._id,
@@ -104,15 +101,15 @@ const PipelineForm = ({ navigation }) => {
   };
 
   const toggleBottomSheet = (type) => {
-    setSelectedType(type);
-    setIsVisible(!isVisible);
+    setSelectedDropdownType(type);
+    setIsDropdownSheetVisible(!isDropdownSheetVisible);
   };
 
   const renderBottomSheet = () => {
     let items = [];
     let fieldName = '';
 
-    switch (selectedType) {
+    switch (selectedDropdownType) {
       case 'Source':
         items = dropdowns.source;
         fieldName = 'source';
@@ -138,14 +135,13 @@ const PipelineForm = ({ navigation }) => {
     }
     return (
       <DropdownSheet
-        isVisible={isVisible}
+        isVisible={isDropdownSheetVisible}
         items={items}
-        title={selectedType}
-        onClose={() => setIsVisible(false)}
+        title={selectedDropdownType}
+        onClose={() => setIsDropdownSheetVisible(false)}
         onValueChange={(value) => handleFieldChange(fieldName, value)}
       />
     );
-    setIsDropdownSheetVisible(!isDropdownSheetVisible);
   };
 
   const handleDateConfirm = (date) => {
@@ -153,20 +149,6 @@ const PipelineForm = ({ navigation }) => {
     setIsDatePickerVisible(false);
   };
 
-  const renderDropdownSheet = () => {
-    if (!selectedDropdownType) return null;
-
-    const items = dropdowns[selectedDropdownType] || [];
-    return (
-      <DropdownSheet
-        isVisible={isDropdownSheetVisible}
-        items={items}
-        title={selectedDropdownType.charAt(0).toUpperCase() + selectedDropdownType.slice(1)}
-        onClose={() => setIsDropdownSheetVisible(false)}
-        onValueChange={(value) => handleFieldChange(selectedDropdownType, value)}
-      />
-    );
-  };
 
   const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
@@ -189,7 +171,7 @@ const PipelineForm = ({ navigation }) => {
         customer_id: formData?.customer?.id || null,
         remarks: formData?.remarks || null,
       };
-      
+
       console.log("Submitting Pipeline Data:", PipelineData)
       try {
         const response = await post("/createPipeline", PipelineData);
@@ -280,7 +262,7 @@ const PipelineForm = ({ navigation }) => {
           editable={false}
           required
           validate={errors.customer}
-          value={formData.customer?.label}
+          value={formData.customer?.label?.trim()}
           onPress={() => toggleBottomSheet('Customer')}
         />
         <FormInput
@@ -296,7 +278,7 @@ const PipelineForm = ({ navigation }) => {
         {renderBottomSheet()}
         <LoadingButton title="SAVE" onPress={handleSubmit} loading={isSubmitting} marginTop={10} />
         <DateTimePickerModal
-          isVisible={isDatePickerVisible}
+          isDropdownSheetVisible={isDatePickerVisible}
           mode="date"
           onConfirm={handleDateConfirm}
           onCancel={() => setIsDatePickerVisible(false)}

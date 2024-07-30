@@ -30,7 +30,7 @@ const PipelineDetailTabs = ({ navigation, route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'first':
-          return <Details pipelineId={id} />; 
+        return <Details pipelineId={id} />;
       case 'second':
         return <FollowUp pipelineId={id} />;
       case 'third':
@@ -42,7 +42,7 @@ const PipelineDetailTabs = ({ navigation, route }) => {
       case 'sixth':
         return <WhatsAppHistory pipelineId={id} />;
       case 'seventh':
-        return <Meetings pipelineId={id} />;      
+        return <Meetings pipelineId={id} />;
       default:
         return null;
     }
@@ -53,6 +53,9 @@ const PipelineDetailTabs = ({ navigation, route }) => {
       <NavigationHeader
         title="Pipeline Details"
         onBackPress={() => navigation.goBack()}
+        logo={false}
+        iconOneName='edit'
+        iconOnePress={() => navigation.navigate('EditPipeline', { pipelineId: id })}
       />
       <TabView
         navigationState={{ index, routes }}
