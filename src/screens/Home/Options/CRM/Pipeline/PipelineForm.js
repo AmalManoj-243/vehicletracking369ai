@@ -27,6 +27,8 @@ const PipelineForm = ({ navigation }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDropdownType, setSelectedDropdownType] = useState(null);
   const [isDropdownSheetVisible, setIsDropdownSheetVisible] = useState(false);
+  const [selectedType, setSelectedType] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   const [formData, setFormData] = useState({
     dateTime: new Date(),
@@ -39,7 +41,7 @@ const PipelineForm = ({ navigation }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const [dropdownOptions, setDropdownOptions] = useState({
+  const [dropdowns, setDropdowns] = useState({
     source: [],
     enquiryType: [],
     salesPerson: [],
@@ -58,14 +60,14 @@ const PipelineForm = ({ navigation }) => {
           fetchOpportunityDropdown(),
         ]);
 
-        setDropdownOptions({
+        setDropdowns({
           source: sourceData.map(data => ({
             id: data._id,
             label: data.source_name,
           })),
           enquiryType: enquiryTypeData.map(data => ({
             id: data._id,
-            label: data.name,
+            label: data.type_name,
           })),
           salesPerson: salesPersonData.map(data => ({
             id: data._id,
@@ -77,7 +79,7 @@ const PipelineForm = ({ navigation }) => {
           })),
           opportunity: opportunityData.map(data => ({
             id: data._id,
-            label: data.name,
+            label: data.oppertunity_name,
           })),
         });
       } catch (error) {
@@ -87,37 +89,6 @@ const PipelineForm = ({ navigation }) => {
 
     fetchDropdownData();
   }, []);
-
-  const toggleDropdownSheet = (type) => {
-    setSelectedDropdownType(type);
-    setIsDropdownSheetVisible(!isDropdownSheetVisible);
-  };
-
-  const handleDateConfirm = (date) => {
-    handleFieldChange('dateTime', date);
-    setIsDatePickerVisible(false);
-  };
-
-  const renderDropdownSheet = () => {
-    const dropdownMapping = {
-      'Source': 'source',
-      'Enquiry Type': 'enquiryType',
-      'Sales Person': 'salesPerson',
-      'Customer': 'customer',
-      'Opportunity': 'opportunity',
-    };
-
-    const items = dropdownOptions[dropdownMapping[selectedDropdownType]] || [];
-    return (
-      <DropdownSheet
-        isVisible={isDropdownSheetVisible}
-        items={items}
-        title={selectedDropdownType}
-        onClose={() => setIsDropdownSheetVisible(false)}
-        onValueChange={(value) => handleFieldChange(dropdownMapping[selectedDropdownType], value)}
-      />
-    );
-  };
 
   const handleFieldChange = (field, value) => {
     setFormData((prevFormData) => ({
@@ -132,6 +103,71 @@ const PipelineForm = ({ navigation }) => {
     }
   };
 
+  const toggleBottomSheet = (type) => {
+    setSelectedType(type);
+    setIsVisible(!isVisible);
+  };
+
+  const renderBottomSheet = () => {
+    let items = [];
+    let fieldName = '';
+
+    switch (selectedType) {
+      case 'Source':
+        items = dropdowns.source;
+        fieldName = 'source';
+        break;
+      case 'Enquiry Type':
+        items = dropdowns.enquiryType;
+        fieldName = 'enquiryType';
+        break;
+      case 'Sales Person':
+        items = dropdowns.salesPerson;
+        fieldName = 'salesPerson';
+        break;
+      case 'Customer':
+        items = dropdowns.customer;
+        fieldName = 'customer';
+        break;
+      case 'Opportunity':
+        items = dropdowns.opportunity;
+        fieldName = 'opportunity';
+        break;
+      default:
+        return null;
+    }
+    return (
+      <DropdownSheet
+        isVisible={isVisible}
+        items={items}
+        title={selectedType}
+        onClose={() => setIsVisible(false)}
+        onValueChange={(value) => handleFieldChange(fieldName, value)}
+      />
+    );
+    setIsDropdownSheetVisible(!isDropdownSheetVisible);
+  };
+
+  const handleDateConfirm = (date) => {
+    handleFieldChange('dateTime', date);
+    setIsDatePickerVisible(false);
+  };
+
+  const renderDropdownSheet = () => {
+    if (!selectedDropdownType) return null;
+
+    const items = dropdowns[selectedDropdownType] || [];
+    return (
+      <DropdownSheet
+        isVisible={isDropdownSheetVisible}
+        items={items}
+        title={selectedDropdownType.charAt(0).toUpperCase() + selectedDropdownType.slice(1)}
+        onClose={() => setIsDropdownSheetVisible(false)}
+        onValueChange={(value) => handleFieldChange(selectedDropdownType, value)}
+      />
+    );
+  };
+
   const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
     const { isValid, errors } = validateFields(formData, fieldsToValidate);
@@ -144,15 +180,17 @@ const PipelineForm = ({ navigation }) => {
     if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
       const PipelineData = {
-        date: formData?.dateTime || null,
-        source: formData?.source?.id ?? null,
-        enquiry_type: formData?.enquiryType?.id ?? null,
-        sales_person: formData?.salesPerson?.id ?? null,
-        opportunity: formData?.opportunity?.id ?? null,
-        customer: formData?.customer?.id ?? null,
+        date: formData?.dateTime,
+        status: "opportunity",
+        source_id: formData?.source?.id || null,
+        enquiry_type_id: formData?.enquiryType?.id || null,
+        sales_person_id: formData?.salesPerson?.id || null,
+        oppertunity_type_id: formData?.opportunity?.id || null,
+        customer_id: formData?.customer?.id || null,
         remarks: formData?.remarks || null,
       };
-
+      
+      console.log("Submitting Pipeline Data:", PipelineData)
       try {
         const response = await post("/createPipeline", PipelineData);
         if (response.success) {
@@ -203,7 +241,7 @@ const PipelineForm = ({ navigation }) => {
           required
           validate={errors.source}
           value={formData.source?.label}
-          onPress={() => toggleDropdownSheet('Source')}
+          onPress={() => toggleBottomSheet('Source')}
         />
         <FormInput
           label="Enquiry Type"
@@ -213,7 +251,7 @@ const PipelineForm = ({ navigation }) => {
           required
           validate={errors.enquiryType}
           value={formData.enquiryType?.label}
-          onPress={() => toggleDropdownSheet('Enquiry Type')}
+          onPress={() => toggleBottomSheet('Enquiry Type')}
         />
         <FormInput
           label="Sales Person"
@@ -223,7 +261,7 @@ const PipelineForm = ({ navigation }) => {
           required
           validate={errors.salesPerson}
           value={formData.salesPerson?.label}
-          onPress={() => toggleDropdownSheet('Sales Person')}
+          onPress={() => toggleBottomSheet('Sales Person')}
         />
         <FormInput
           label="Opportunity"
@@ -233,7 +271,7 @@ const PipelineForm = ({ navigation }) => {
           required
           validate={errors.opportunity}
           value={formData.opportunity?.label}
-          onPress={() => toggleDropdownSheet('opportunity')}
+          onPress={() => toggleBottomSheet('Opportunity')}
         />
         <FormInput
           label="Customer"
@@ -243,7 +281,7 @@ const PipelineForm = ({ navigation }) => {
           required
           validate={errors.customer}
           value={formData.customer?.label}
-          onPress={() => toggleDropdownSheet('Customer')}
+          onPress={() => toggleBottomSheet('Customer')}
         />
         <FormInput
           label="Remarks"
@@ -255,7 +293,7 @@ const PipelineForm = ({ navigation }) => {
           marginTop={10}
           onChangeText={(value) => handleFieldChange('remarks', value)}
         />
-        {renderDropdownSheet()}
+        {renderBottomSheet()}
         <LoadingButton title="SAVE" onPress={handleSubmit} loading={isSubmitting} marginTop={10} />
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
@@ -265,6 +303,7 @@ const PipelineForm = ({ navigation }) => {
         />
       </RoundedScrollContainer>
     </SafeAreaView>
+
   );
 };
 
