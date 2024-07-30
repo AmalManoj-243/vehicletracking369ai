@@ -176,7 +176,7 @@ const LeadForm = ({ navigation, route }) => {
         created_by_name: currentUser?.related_profile?.name || null,
         enquiry_register_id: enquiryId || null,
       };
-      console.log("🚀 ~ handleSubmit ~ leadData:", JSON.stringify(leadData, null, 2))
+      // console.log("🚀 ~ handleSubmit ~ leadData:", JSON.stringify(leadData, null, 2))
       try {
         const response = await post("/createLead", leadData);
         if (response.success) {
