@@ -10,7 +10,7 @@ import { fetchPipeline } from '@api/services/generalApi';
 import { useDataFetching } from '@hooks';
 import PipelineList from './PipelineList';
 import { useAuthStore } from '@stores/auth';
-import OverlayLoader from '@components/Loader/OverlayLoader';
+import { OverlayLoader } from '@components/Loader';
 
 const PipelineScreen = ({ navigation }) => {
   const isFocused = useIsFocused();

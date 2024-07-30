@@ -11,7 +11,6 @@ import { useDataFetching, useDebouncedSearch } from '@hooks';
 import LeadList from './LeadList';
 import { useAuthStore } from '@stores/auth';
 import { OverlayLoader } from '@components/Loader';
-import { COLORS } from '@constants/theme';
 
 const LeadScreen = ({ navigation }) => {
 
