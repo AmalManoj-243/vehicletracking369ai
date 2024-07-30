@@ -1,12 +1,22 @@
-import { View, Text } from 'react-native'
 import React from 'react'
+import { RoundedScrollContainer } from '@components/containers'
+import { TouchableOpacity, Image, Linking } from 'react-native'
+import { COLORS } from '@constants/theme';
 
 const WhatsAppHistory = () => {
-  return (
-    <View>
-      <Text>WhatsAppHistory</Text>
-    </View>
-  )
+
+    const openWhatsApp = () => {
+        // Replace 'whatsapp://send?phone=1234567890' with the desired WhatsApp phone number
+        Linking.openURL('whatsapp://send?phone=');
+    };
+
+    return (
+        <RoundedScrollContainer>
+            <TouchableOpacity onPress={openWhatsApp} style={{ position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
+                <Image source={require('@assets/icons/common/watsapp_1.png')} style={{ width: 35, height: 35, tintColor:COLORS.primaryThemeColor }} />
+            </TouchableOpacity>
+        </RoundedScrollContainer>
+    )
 }
 
 export default WhatsAppHistory

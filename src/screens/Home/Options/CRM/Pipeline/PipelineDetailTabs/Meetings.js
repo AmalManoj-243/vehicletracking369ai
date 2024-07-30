@@ -1,18 +1,89 @@
-import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { RoundedContainer } from '@components/containers';
+import React, { useState, useCallback } from 'react';
+import { RoundedScrollContainer } from '@components/containers';
+import { useFocusEffect } from '@react-navigation/native';
+import { showToastMessage } from '@components/Toast';
+import { fetchMeetingsDetails } from '@api/details/detailApi';
+import { OverlayLoader } from '@components/Loader';
+import { post } from '@api/services/utils';
+import { MeetingsScheduleModal } from '@components/Modal';
 import { FABButton } from '@components/common/Button';
-import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@stores/auth';
+import { formatDateTime } from '@utils/common/date';
+import { FlatList } from 'react-native';
+import { MeetingsList } from '@components/CRM';
 
-const Meetings = () => {
-    const navigation = useNavigation();
+const Meetings = ({ meetingsId }) => {
+
+    const currentUser = useAuthStore((state) => state.user);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [meetingsHistory, setMeetingsHistory] = useState([]);
+
+    const fetchDetails = async () => {
+        setIsLoading(true);
+        try {
+            const updatedDetails = await fetchMeetingsDetails(meetingsId);
+            const history = updatedDetails[0]?.meetings_histories;
+            setMeetingsHistory(history);
+        } catch (error) {
+            console.error('Error fetching Meetings details:', error);
+            showToastMessage('Failed to fetch Meetings details. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchDetails();
+        }, [meetingsId])
+    );
+
+    const saveUpdates = async (updateText) => {
+        try {
+            const formattedDate = formatDateTime(new Date(), "Pp");
+            const meetingsHistoryData = {
+                date: formattedDate,
+                remarks: updateText || null,
+                employee_id: currentUser._id,
+                meetings_id: meetingsId,
+            };
+            const response = await post('/createCustomerSchedule', meetingsHistoryData);
+            if (response.success === 'true') {
+                showToastMessage('Meeting history created successfully');
+            } else {
+                showToastMessage('Meeting history creation failed');
+            }
+        } catch (error) {
+            console.log("API Error:", error);
+        } finally {
+            fetchDetails();
+        }
+    };
 
     return (
-        <SafeAreaView>
-            <RoundedContainer>
-                <FABButton onPress={() => navigation.navigate('MeetingsScheduleModal')} />
-            </RoundedContainer>
-        </SafeAreaView>
+        <RoundedScrollContainer paddingHorizontal={0}>
+            <FlatList
+                data={meetingsHistory}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                    <MeetingsList
+                        item={item}
+                    />
+                )}
+                showsVerticalScrollIndicator={false}
+            />
+            <MeetingsScheduleModal
+                isVisible={isModalVisible}
+                header='Add Meetings'
+                title={'Add Updates'}
+                placeholder='Add Meetings'
+                onClose={() => setIsModalVisible(!isModalVisible)}
+                onSubmit={saveUpdates}
+            />
+            <OverlayLoader visible={isLoading} />
+            <FABButton onPress={() => setIsModalVisible(!isModalVisible)} />
+        </RoundedScrollContainer>
     );
 };
 

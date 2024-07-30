@@ -1,12 +1,21 @@
-import { View, Text } from 'react-native'
 import React from 'react'
+import { RoundedScrollContainer } from '@components/containers'
+import { TouchableOpacity, Image, Linking } from 'react-native';
+import { COLORS } from '@constants/theme';
 
 const EmailHistory = () => {
-  return (
-    <View>
-      <Text>EmailHistory</Text>
-    </View>
-  )
+
+    const openGmail = () => {
+        Linking.openURL('mailto:example@gmail.com');
+    };
+
+    return (
+        <RoundedScrollContainer>
+            <TouchableOpacity onPress={openGmail} style={{ position: 'absolute', top: 10, right: 10, zIndex: 1 }}>
+                <Image source={require('@assets/icons/common/gmail_history.png')} style={{ width: 35, height: 35, tintColor: COLORS.primaryThemeColor }} />
+            </TouchableOpacity>
+        </RoundedScrollContainer>
+    )
 }
 
 export default EmailHistory

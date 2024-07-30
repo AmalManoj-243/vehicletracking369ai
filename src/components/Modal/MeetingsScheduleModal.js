@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import Text from '@components/Text';
 import Modal from 'react-native-modal';
+import { Button } from '@components/common/Button';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { COLORS, FONT_FAMILY } from '@constants/theme';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import format from 'date-fns/format';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import { CheckBox } from '@components/common/CheckBox';
-import { Button } from '@components/common/Button';
 
 const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
     const [meeting, setMeeting] = useState('');
@@ -20,10 +21,11 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
     const handleSave = () => {
         onSave({
             title: meeting,
-            date: meetingDate,
-            time: meetingTime,
-            isReminder: isReminder,
-            reminderMinutes: isReminder ? reminderMinutes : 0,
+            start: date,
+            is_Remainder: isReminder,
+            minutes: isReminder ? reminderMinutes : 0,
+            meetings_id: meeting._id,
+            type: 'CRM'
         });
     };
 
@@ -48,9 +50,9 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
                         style={styles.textInput}
                     />
                     <View style={styles.inputRow}>
-                        <Text style={styles.label}>Date:</Text>
+                        <Text style={styles.label}>Enter Date:</Text>
                         <View style={[styles.textInput, { flexDirection: "row", justifyContent: 'space-between' }]}>
-                            <Text style={{ fontFamily: 'roboto', marginRight: 20 }}>
+                            <Text style={{ marginRight: 20 }}>
                                 {meetingDate ? format(meetingDate, "dd-MM-yyyy") : 'Select Date'}
                             </Text>
                             <TouchableOpacity onPress={() => setDatePickerVisible(true)}>
@@ -69,9 +71,9 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
                         onCancel={() => setDatePickerVisible(false)}
                     />
                     <View style={styles.inputRow}>
-                        <Text style={styles.label}>Time:</Text>
+                        <Text style={styles.label}>Enter Time:</Text>
                         <View style={[styles.textInput, { flexDirection: "row", justifyContent: 'space-between' }]}>
-                            <Text style={{ fontFamily: 'roboto', marginRight: 20 }}>
+                            <Text style={{ marginRight: 20 }}>
                                 {meetingTime ? format(meetingTime, "HH:mm:ss") : 'Select Time'}
                             </Text>
                             <TouchableOpacity onPress={() => setTimePickerVisible(true)}>
@@ -104,7 +106,7 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
                     )}
                     <View style={styles.buttonRow}>
                         <View style={{ flex: 2 }}>
-                            <Button title="CANCEL" onPress={() => onClose()} />
+                            <Button title="CANCEL" onPress={onClose} />
                         </View>
                         <View style={{ width: 10 }} />
                         <View style={{ flex: 2 }}>
@@ -116,6 +118,7 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave }) => {
         </Modal>
     );
 };
+
 
 const styles = StyleSheet.create({
     modalContainer: {
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
     },
     modalHeader: {
         fontSize: 18,
-        fontFamily: 'raleway_bold',
+        fontFamily: FONT_FAMILY.urbanistMedium,
         marginBottom: 10,
     },
     textInput: {
@@ -139,6 +142,7 @@ const styles = StyleSheet.create({
         borderColor: 'gray',
         marginBottom: 10,
         padding: 10,
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
         borderRadius: 5,
     },
     inputRow: {
@@ -149,13 +153,12 @@ const styles = StyleSheet.create({
     label: {
         flex: 1,
         textAlign: 'left',
+        color: COLORS.primaryThemeColor,
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-    },
-    buttonContainer: {
-        marginLeft: 10,
     },
     checkboxContainer: {
         flexDirection: 'row',

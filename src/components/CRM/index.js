@@ -1,3 +1,4 @@
 import FollowUpList from "./FollowUpList";
+import MeetingsList from "./Meetingslist";
 
-export { FollowUpList }
+export { FollowUpList, MeetingsList }
