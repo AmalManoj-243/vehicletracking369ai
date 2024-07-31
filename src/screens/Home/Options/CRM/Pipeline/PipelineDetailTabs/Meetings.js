@@ -10,24 +10,24 @@ import { FABButton } from '@components/common/Button';
 import { useAuthStore } from '@stores/auth';
 import { formatDateTime } from '@utils/common/date';
 import { FlatList } from 'react-native';
-import { MeetingsList } from '@components/CRM';
+import { FollowUpList } from '@components/CRM';
 
-const Meetings = ({ meetingsId }) => {
-
+const Meetings = ({ pipelineId }) => {
+    const [details, setDetails] = useState({});
     const currentUser = useAuthStore((state) => state.user);
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [meetingsHistory, setMeetingsHistory] = useState([]);
 
-    const fetchDetails = async () => {
+    const fetchDetails = async (pipelineId) => {
         setIsLoading(true);
         try {
-            const updatedDetails = await fetchMeetingsDetails(meetingsId);
-            const history = updatedDetails[0]?.meetings_histories;
-            setMeetingsHistory(history);
+            const updatedDetails = await fetchMeetingsDetails(pipelineId);
+            console.log("Fetched details:", updatedDetails);
+            setDetails(updatedDetails[0]);
         } catch (error) {
-            console.error('Error fetching Meetings details:', error);
-            showToastMessage('Failed to fetch Meetings details. Please try again.');
+            console.error('Error fetching meetings details:', error);
+            showToastMessage('Failed to fetch meetings details. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -35,20 +35,24 @@ const Meetings = ({ meetingsId }) => {
 
     useFocusEffect(
         useCallback(() => {
-            fetchDetails();
-        }, [meetingsId])
+            if (pipelineId) {
+                fetchDetails(pipelineId);
+            }
+        }, [pipelineId])
     );
 
     const saveUpdates = async (updateData) => {
         try {
             const formattedDate = formatDateTime(new Date(), "Pp");
             const meetingsHistoryData = {
+                title: updateData.title || null,
                 date: formattedDate,
-                remarks: updateData.title || null,
                 employee_id: currentUser._id,
-                meetings_id: meetingsId,
+                pipeline_id: pipelineId,
             };
+            console.log("Body:", meetingsHistoryData);
             const response = await post('/createCustomerSchedule', meetingsHistoryData);
+            console.log("API Response:", response);
             if (response.success === 'true') {
                 showToastMessage('Meeting history created successfully');
             } else {
@@ -57,27 +61,29 @@ const Meetings = ({ meetingsId }) => {
         } catch (error) {
             console.log("API Error:", error);
         } finally {
-            fetchDetails();
+            if (pipelineId) {
+                fetchDetails(pipelineId);
+            }
         }
     };
 
     return (
         <RoundedScrollContainer paddingHorizontal={0}>
             <FlatList
-                data={meetingsHistory}
+                data={details.customer_schedules}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
-                    <MeetingsList
+                    <FollowUpList
                         item={item}
                     />
                 )}
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={false} // Custom component to display when the list is empty
             />
             <MeetingsScheduleModal
                 isVisible={isModalVisible}
                 header='Schedule Meeting'
                 title={'Add Meeting'}
-                placeholder= 'Enter meeting'
+                placeholder='Enter meeting'
                 onClose={() => setIsModalVisible(!isModalVisible)}
                 onSave={saveUpdates}
             />
@@ -86,5 +92,6 @@ const Meetings = ({ meetingsId }) => {
         </RoundedScrollContainer>
     );
 };
+
 
 export default Meetings;

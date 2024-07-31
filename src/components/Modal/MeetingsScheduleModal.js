@@ -10,7 +10,9 @@ import format from 'date-fns/format';
 import { CheckBox } from '@components/common/CheckBox';
 import { NavigationHeader } from '@components/Header';
 
-const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title,header = '', placeholder }) => {
+
+const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title, header = '', placeholder}) => {
+    
     const [meeting, setMeeting] = useState('');
     const [meetingDate, setMeetingDate] = useState(new Date());
     const [meetingTime, setMeetingTime] = useState(new Date());
@@ -32,7 +34,7 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title,header = '', 
 
         if (!hasError) {
             onSave({
-                title: meeting,
+                title:meeting,
                 start: meetingDate,
                 time: meetingTime,
                 is_Remainder: isReminder,
