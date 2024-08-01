@@ -4,7 +4,7 @@ import { RoundedContainer, SafeAreaView } from '@components/containers'
 import { VerticalScrollableCalendar } from '@components/Calendar';
 import { NavigationHeader } from '@components/Header';
 import { RulesModal } from '@components/Modal';
-import { FABButton } from '@components/common/Button';
+import { FABButton, LoadingButton } from '@components/common/Button';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useDataFetching } from '@hooks';
 import { fetchVisitPlan } from '@api/services/generalApi';
@@ -88,9 +88,10 @@ const VisitsPlanScreen = ({ navigation }) => {
             // iconOneName='questioncircleo'
             // iconOnePress={() => setIsVisible(!isVisible)}
             />
-            {/* <TouchableOpacity style={{padding:110}}>
+            {/* <TouchableOpacity style={{padding:10, backgroundColor: 'white', alignSelf: 'flex-end'}}>
 
             </TouchableOpacity> */}
+            <LoadingButton width={'30%'} height={40} alignSelf={'flex-end'} marginVertical={0} marginBottom={10} marginHorizontal={20} title={'Send Approval'}/>
             <RoundedContainer borderTopLeftRadius={20} borderTopRightRadius={20}>
                 <View style={{ marginVertical: 15 }}>
                     <VerticalScrollableCalendar date={date} onChange={(newDate) => setDate(newDate)} />
