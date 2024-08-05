@@ -162,9 +162,10 @@ const VisitPlanForm = ({ navigation }) => {
         visit_date: formData.dateAndTime,
         customer_id: formData.customer?.id,
         purpose_of_visit_id: formData.visitPurpose?.id,
-        sales_person_id: currentUser?.related_profile?._id || '',
+        sales_person_id: currentUser?._id || '',
         remarks: formData.remarks,
-        visit_employee_id: formData?.assignedTo?.id
+        visit_employee_id: formData?.assignedTo?.id,
+        created_by_id: currentUser?._id
       };
       try {
         const response = await post("/createVisitPlan", visitPlanData);

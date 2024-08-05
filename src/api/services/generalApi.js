@@ -171,13 +171,15 @@ export const fetchPipeline = async ({ offset, limit, date, source, opportunity, 
   }
 };
 
-export const fetchVisitPlan = async ({ offset, limit, date, managerId }) => {
+export const fetchVisitPlan = async ({ offset, limit, date, managerId, createdById }) => {
   try {
     const queryParams = {
       offset,
       limit,
       date: date,
-      // ...(managerId !== undefined && { manager_id: managerId }),
+      ...(managerId !== undefined && { manager_id: managerId }),
+      ...(createdById !== undefined && { created_by_id: createdById }),
+
     };
     const response = await get(API_ENDPOINTS.VIEW_VISIT_PLAN, queryParams);
     return response.data;

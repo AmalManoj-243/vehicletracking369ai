@@ -76,7 +76,7 @@ const Meetings = ({ pipelineId }) => {
                 )}
                 showsVerticalScrollIndicator={false}
             />
-            <FABButton onPress={() => setIsModalVisible(!isModalVisible)} />
+            <FABButton onPress={() => setIsModalVisible(!isModalVisible)}/>
             <MeetingsScheduleModal
                 isVisible={isModalVisible}
                 title={'Schedule Meeting'}

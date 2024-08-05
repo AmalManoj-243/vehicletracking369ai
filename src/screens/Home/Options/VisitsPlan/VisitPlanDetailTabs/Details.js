@@ -16,6 +16,7 @@ const Details = ({ visitPlanId }) => {
 
   const currentUser = useAuthStore(state => state.user)
   const [details, setDetails] = useState({});
+  console.log("🚀 ~ file: Details.js:19 ~ Details ~ details:", JSON.stringify(details, null, 2))
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
 
@@ -45,7 +46,7 @@ const Details = ({ visitPlanId }) => {
     setIsConfirmationModalVisible(false);
     const visitPlanUpdateData = {
       visit_plan_id: visitPlanId,
-      approval_status: details?.approval_status === 'Pending' ? 'Approved' : 'Pending'
+      approval_status: 'Approved'
     };
     console.log("🚀 ~ file: Details.js:50 ~ updateApprovalStatus ~ visitPlanUpdateData:", visitPlanUpdateData)
     try {
@@ -63,21 +64,15 @@ const Details = ({ visitPlanId }) => {
     }
   };
 
-  const shouldShowButton = () => {
-    if (details?.approval_status === 'Approved') return false;
-    if (details?.approval_status === 'Pending') {
-      return true;
-    }
-    if (details?.approval_status !== 'Pending' && details?.approval_status !== 'Approved') {
-      return true;
-    }
-    return false;
+
+  const shouldShowApprovalButton = () => {
+    return details?.approval_status === 'Pending' && currentUser._id === details?.visit_employee_manager_id;
   };
 
   return (
     <RoundedScrollContainer>
       <DetailField label="Visit Date" value={formatDateTime(details?.visit_date)} />
-      <DetailField label="Customer Name" value={details?.customer_name?.trim() || '-'} />
+      <DetailField multiline label="Customer Name" value={details?.customer_name?.trim() || '-'} />
       <DetailField label="Assigned To" value={details?.visit_employee_name || '-'} />
       <DetailField label="Created By" value={details?.sales_person_name || '-'} />
       <DetailField label="Approval Status" value={details?.approval_status || '-'} />
@@ -90,11 +85,11 @@ const Details = ({ visitPlanId }) => {
         textAlignVertical="top"
       />
 
-      {shouldShowButton() && <LoadingButton
+      {shouldShowApprovalButton() && <LoadingButton
         width="50%"
         alignSelf="center"
         marginVertical={50}
-        title={details?.approval_status === 'New' ? 'SEND APPROVAL' : details?.approval_status === 'Pending' ? 'APPROVE' : null}
+        title={'Approve'}
         onPress={() => setIsConfirmationModalVisible(true)}
       />}
       <OverlayLoader visible={isLoading} />

@@ -13,7 +13,7 @@ import { InventoryDetails, InventoryForm, InventoryScreen } from "@screens/Home/
 import { ProductDetail } from "@components/common/Detail";
 import { CustomerDetails, CustomerScreen } from "@screens/Home/Sections/Customer";
 import { MarketStudyScreen } from "@screens/Home/Options/MarketStudy";
-import { EditVisitPlan, VisitPlanForm, VisitsPlanScreen } from "@screens/Home/Options/VisitsPlan";
+import { EditVisitPlan, VisitPlanForm, VisitsPlanScreen, VisitPlanDetails } from "@screens/Home/Options/VisitsPlan";
 import { EditVisit, VisitDetails, VisitForm, VisitScreen } from "@screens/Home/Options/Visits"; //customer visit
 import { MapViewScreen } from "@components/MapViewScreen";
 import { CRMScreen } from "@screens/Home/Options/CRM";
@@ -24,7 +24,6 @@ import { EnquiryDetailTabs } from "@screens/Home/Options/CRM/EnquiryRegister/Enq
 import { LeadDetailTabs } from "@screens/Home/Options/CRM/Leads/LeadDetailTabs";
 import { EditPipeline, PipelineForm, PipelineScreen } from "@screens/Home/Options/CRM/Pipeline";
 import { PipelineDetailTabs } from "@screens/Home/Options/CRM/Pipeline/PipelineDetailTabs";
-import { VisitPlanDetailTabs } from "@screens/Home/Options/VisitsPlan/VisitPlanDetailTabs";
 
 const Stack = createNativeStackNavigator();
 
@@ -161,7 +160,7 @@ const StackNavigator = () => {
       />
       <Stack.Screen
         name="VisitPlanDetails"
-        component={VisitPlanDetailTabs}
+        component={VisitPlanDetails}
         options={{ headerShown: false }}
       />
       <Stack.Screen

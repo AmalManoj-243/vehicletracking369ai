@@ -1,10 +1,10 @@
-import { TouchableOpacity, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
-import { RoundedContainer, SafeAreaView } from '@components/containers'
+import React, { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
+import { SafeAreaView, RoundedContainer } from '@components/containers';
 import { VerticalScrollableCalendar } from '@components/Calendar';
 import { NavigationHeader } from '@components/Header';
 import { ConfirmationModal, RulesModal } from '@components/Modal';
-import { FABButton, LoadingButton } from '@components/common/Button';
+import { Button, FABButton } from '@components/common/Button';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useDataFetching } from '@hooks';
 import { fetchVisitPlan } from '@api/services/generalApi';
@@ -15,32 +15,35 @@ import { EmptyState } from '@components/common/empty';
 import AnimatedLoader from '@components/Loader/AnimatedLoader';
 import { formatDate } from 'date-fns';
 import { useAuthStore } from '@stores/auth';
+import { showToast } from '@utils/common';
+import { put } from '@api/services/utils';
 
 const VisitsPlanScreen = ({ navigation }) => {
-    const isFocused = useNavigation()
-    const currentUserId = useAuthStore(state => state.user?._id)
-    const [isVisible, setIsVisible] = useState(false)
+    const isFocused = useNavigation();
+    const currentUserId = useAuthStore(state => state.user?._id);
+    const [isVisible, setIsVisible] = useState(false);
     const [date, setDate] = useState(new Date());
-    const formattedDate = formatDate(date, 'yyyy-MM-dd')
+    const formattedDate = formatDate(date, 'yyyy-MM-dd');
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
-
 
     const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchVisitPlan);
 
+    const visitPlanIdsForApproval = data.map(id => id._id);
+
     useFocusEffect(
         useCallback(() => {
-            fetchData({ date: formattedDate, managerId: currentUserId });
+            fetchData({ date: formattedDate,  createdById: currentUserId,  });
         }, [date])
     );
 
     useEffect(() => {
         if (isFocused) {
-            fetchData({ date: formattedDate, managerId: currentUserId });
+            fetchData({ date: formattedDate,  createdById: currentUserId,  });
         }
     }, [isFocused, date]);
 
     const handleLoadMore = () => {
-        fetchMoreData({ date: formattedDate, managerId: currentUserId });
+        fetchMoreData({ date: formattedDate,  createdById: currentUserId,  });
     };
 
     const renderItem = ({ item }) => {
@@ -83,19 +86,46 @@ const VisitsPlanScreen = ({ navigation }) => {
         return renderContent();
     };
 
+    const updatePendingApproval = async () => {
+        setIsConfirmationModalVisible(false);
+        const visitPlanUpdateData = {
+            visit_plan_id: visitPlanIdsForApproval,
+            approval_status: 'Pending'
+        };
+        try {
+            const response = await put('/updateVisitPlan/updateApprovalStatus', visitPlanUpdateData);
+            if (response.success) {
+                showToast({ type: 'success', message: response.message, title: 'Success' });
+                fetchData({ date: formattedDate, createdById: currentUserId,  });
+            } else {
+                showToast({ type: 'error', message: response.message, title: 'Error' });
+            }
+        } catch (error) {
+            console.error('Error updating approval status:', error);
+            showToast({ type: 'error', message: 'Failed to update approval status', title: 'Error' });
+        } 
+    };
+
     return (
         <SafeAreaView>
             <NavigationHeader
-                title="Visits Plan "
-                onBackPress={() => navigation.goBack()}
-                // iconOneName='questioncircleo'
+                title="Visits Plan"
                 logo={false}
-            // iconOnePress={() => setIsVisible(!isVisible)}
+                onBackPress={() => navigation.goBack()}
             />
-            <LoadingButton width={'40%'} height={40} alignSelf={'flex-end'} marginVertical={0} marginBottom={10} marginHorizontal={20} title={'Send for Approval'} onPress={() => setIsConfirmationModalVisible(true) } />
+            <Button
+                width="40%"
+                height={40}
+                alignSelf="flex-end"
+                marginVertical={0}
+                marginBottom={10}
+                marginHorizontal={20}
+                title="Send for Approval"
+                onPress={() => setIsConfirmationModalVisible(true)}
+            />
             <RoundedContainer borderTopLeftRadius={20} borderTopRightRadius={20}>
                 <View style={{ marginVertical: 15 }}>
-                    <VerticalScrollableCalendar date={date} onChange={(newDate) => setDate(newDate)} />
+                    <VerticalScrollableCalendar date={date} onChange={newDate => setDate(newDate)} />
                 </View>
                 {renderVisitPlan()}
             </RoundedContainer>
@@ -104,10 +134,10 @@ const VisitsPlanScreen = ({ navigation }) => {
             <ConfirmationModal
                 isVisible={isConfirmationModalVisible}
                 onCancel={() => setIsConfirmationModalVisible(false)}
-                onConfirm={''}
+                onConfirm={updatePendingApproval}
             />
         </SafeAreaView>
-    )
-}
+    );
+};
 
-export default VisitsPlanScreen
+export default VisitsPlanScreen;
