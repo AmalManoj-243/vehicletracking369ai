@@ -12,6 +12,7 @@ import { put } from '@api/services/utils';
 import { showToast } from '@utils/common';
 import { useAuthStore } from '@stores/auth';
 import { NavigationHeader } from '@components/Header';
+import { set } from 'lodash';
 
 const VisitPlanDetails = ({ navigation, route }) => {
 
@@ -20,12 +21,20 @@ const VisitPlanDetails = ({ navigation, route }) => {
   const [details, setDetails] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+  const [showButton, setShowButton] = useState({
+    approveButton: false,
+    visitButton: false,
+  })
 
   const fetchDetails = async (id) => {
     setIsLoading(true);
     try {
       const [updatedDetails] = await fetchVisitPlanDetails(id);
       setDetails(updatedDetails);
+      setShowButton({
+        approveButton: updatedDetails?.approval_status === 'Pending' && currentUser?.related_profile?._id === updatedDetails?.visit_employee_manager_id,
+        visitButton: updatedDetails?.approval_status === 'Approved' && updatedDetails?.visit_status === 'Not visited' && currentUser?.related_profile?._id === updatedDetails?.sales_person_id,
+      });
     } catch (error) {
       console.error('Error fetching enquiry details:', error);
       showToastMessage('Failed to fetch enquiry details. Please try again.');
@@ -63,11 +72,6 @@ const VisitPlanDetails = ({ navigation, route }) => {
     }
   };
 
-
-  const shouldShowApprovalButton = () => {
-    return details?.approval_status === 'Pending' && currentUser._id === details?.visit_employee_manager_id;
-  };
-
   return (
     <SafeAreaView>
       <NavigationHeader
@@ -85,6 +89,7 @@ const VisitPlanDetails = ({ navigation, route }) => {
         <DetailField label="Created By" value={details?.sales_person_name || '-'} />
         <DetailField label="Approval Status" value={details?.approval_status || '-'} />
         <DetailField label="Visit Purpose" value={details?.purpose_of_visit_name || '-'} />
+        <DetailField label="Visit Status" value={details?.visit_status || '-'} />
         <DetailField
           label="Remarks"
           value={details?.remarks || '-'}
@@ -92,14 +97,22 @@ const VisitPlanDetails = ({ navigation, route }) => {
           numberOfLines={5}
           textAlignVertical="top"
         />
-
-        {shouldShowApprovalButton() && <LoadingButton
-          width="50%"
-          alignSelf="center"
-          marginVertical={50}
-          title={'Approve'}
-          onPress={() => setIsConfirmationModalVisible(true)}
-        />}
+        {showButton.approveButton &&
+          <LoadingButton
+            width="50%"
+            alignSelf="center"
+            marginVertical={50}
+            title="Approve"
+            onPress={() => setIsConfirmationModalVisible(true)}
+          />}
+        {showButton.visitButton &&
+          <LoadingButton
+            width="50%"
+            alignSelf="center"
+            marginVertical={50}
+            title="New Visit"
+            onPress={() => navigation.navigate('VisitForm', { visitPlanId: id })}
+          />}
         <OverlayLoader visible={isLoading} />
         <ConfirmationModal
           isVisible={isConfirmationModalVisible}

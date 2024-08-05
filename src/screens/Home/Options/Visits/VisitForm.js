@@ -245,7 +245,7 @@ const VisitForm = ({ navigation, route }) => {
   };
 
   const submit = async () => {
-    const fieldsToValidate = ['customer', 'siteLocation', 'dateAndTime', 'contactPerson', 'remarks', 'visitPurpose'];
+    const fieldsToValidate = ['customer',  'dateAndTime','remarks', 'visitPurpose'];
     if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
       const visitData = {
@@ -261,6 +261,7 @@ const VisitForm = ({ navigation, route }) => {
         longitude: formData?.longitude || null,
         latitude: formData?.latitude || null,
         pipeline_id: pipelineId || null,
+        visit_plan_id: visitPlanId || null,
       };
       console.log("🚀 ~ submit ~ visitData:", JSON.stringify(visitData, null, 2))
       try {

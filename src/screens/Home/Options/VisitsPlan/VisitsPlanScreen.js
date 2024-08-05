@@ -17,10 +17,11 @@ import { formatDate } from 'date-fns';
 import { useAuthStore } from '@stores/auth';
 import { showToast } from '@utils/common';
 import { put } from '@api/services/utils';
+import { COLORS } from '@constants/theme';
 
 const VisitsPlanScreen = ({ navigation }) => {
     const isFocused = useNavigation();
-    const currentUserId = useAuthStore(state => state.user?._id);
+    const currentUserId = useAuthStore(state => state.user?.related_profile?._id);
     const [isVisible, setIsVisible] = useState(false);
     const [date, setDate] = useState(new Date());
     const formattedDate = formatDate(date, 'yyyy-MM-dd');
@@ -28,22 +29,25 @@ const VisitsPlanScreen = ({ navigation }) => {
 
     const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchVisitPlan);
 
-    const visitPlanIdsForApproval = data.map(id => id._id);
+    const visitPlansNew = data.filter(visitPlan => visitPlan.approval_status === 'New');
+    const allPending = data.every(visitPlan => visitPlan.approval_status === 'Pending');
+
+    const visitPlanIdsForApproval = visitPlansNew.map(visitPlan => visitPlan._id);
 
     useFocusEffect(
         useCallback(() => {
-            fetchData({ date: formattedDate,  createdById: currentUserId,  });
+            fetchData({ date: formattedDate, employeeId: currentUserId });
         }, [date])
     );
 
     useEffect(() => {
         if (isFocused) {
-            fetchData({ date: formattedDate,  createdById: currentUserId,  });
+            fetchData({ date: formattedDate, employeeId: currentUserId });
         }
     }, [isFocused, date]);
 
     const handleLoadMore = () => {
-        fetchMoreData({ date: formattedDate,  createdById: currentUserId,  });
+        fetchMoreData({ date: formattedDate, employeeId: currentUserId });
     };
 
     const renderItem = ({ item }) => {
@@ -96,14 +100,14 @@ const VisitsPlanScreen = ({ navigation }) => {
             const response = await put('/updateVisitPlan/updateApprovalStatus', visitPlanUpdateData);
             if (response.success) {
                 showToast({ type: 'success', message: response.message, title: 'Success' });
-                fetchData({ date: formattedDate, createdById: currentUserId,  });
+                fetchData({ date: formattedDate, employeeId: currentUserId });
             } else {
                 showToast({ type: 'error', message: response.message, title: 'Error' });
             }
         } catch (error) {
             console.error('Error updating approval status:', error);
             showToast({ type: 'error', message: 'Failed to update approval status', title: 'Error' });
-        } 
+        }
     };
 
     return (
@@ -121,7 +125,9 @@ const VisitsPlanScreen = ({ navigation }) => {
                 marginBottom={10}
                 marginHorizontal={20}
                 title="Send for Approval"
+                backgroundColor={allPending || visitPlanIdsForApproval.length === 0 ? COLORS.buttonDisabled : COLORS.orange}
                 onPress={() => setIsConfirmationModalVisible(true)}
+                disabled={allPending || visitPlanIdsForApproval.length === 0}
             />
             <RoundedContainer borderTopLeftRadius={20} borderTopRightRadius={20}>
                 <View style={{ marginVertical: 15 }}>

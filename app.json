@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "369aiUAE",
-    "slug": "369aiuae",
+    "name": "369aiUAETEST",
+    "slug": "369aiuaetest",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/android/icon.png",
@@ -34,7 +34,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA"
       ],
-      "package": "com.danat.uae"
+      "package": "com.danat.test"
     },
     "plugins": [
       [
@@ -66,11 +66,6 @@
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "5649bb80-f5eb-4694-9096-e856471020cf"
-      }
-    }
+    ]
   }
 }
