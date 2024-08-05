@@ -49,9 +49,7 @@ const Meetings = ({ pipelineId }) => {
             const formattedDate = formatDateTime(new Date(), "Pp");
             const pipelineHistoryData = {
                 date: formattedDate,
-                title: 'updated meeting schedule',
-                remarks: null,
-                employee_id: currentUser._id,
+                title: updateText.title,
                 pipeline_id: pipelineId,
             };
             console.log("🚀 ~ file: Meetings.js:55 ~ saveUpdates ~ pipelineHistoryData:", pipelineHistoryData)

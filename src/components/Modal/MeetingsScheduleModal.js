@@ -10,7 +10,6 @@ import format from 'date-fns/format';
 import { CheckBox } from '@components/common/CheckBox';
 import { NavigationHeader } from '@components/Header';
 
-
 const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title, header = '', placeholder}) => {
     
     const [meeting, setMeeting] = useState('');
@@ -23,6 +22,7 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title, header = '',
     const [errorText, setErrorText] = useState('');
 
     const handleSave = () => {
+        console.log(meetingDate, "DAteee")
         let hasError = false;
 
         if (!meeting) {
@@ -32,10 +32,17 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title, header = '',
             setErrorText('');
         }
 
+        if (!meetingDate) {
+            setErrorText('Start time is required');
+            hasError = true;
+        } else {
+            setErrorText('');
+        }
+
         if (!hasError) {
             onSave({
                 title:meeting,
-                start: meetingDate,
+                date: meetingDate,
                 time: meetingTime,
                 is_Remainder: isReminder,
                 minutes: isReminder ? reminderMinutes : 0,
@@ -128,8 +135,8 @@ const MeetingsScheduleModal = ({ isVisible, onClose, onSave, title, header = '',
                         onCancel={() => setTimePickerVisible(false)}
                     />
                     <View style={styles.checkboxContainer}>
-                        <CheckBox value={isReminder} onPress={setReminder} />
                         <Text style={styles.checkboxLabel}>Set Reminder</Text>
+                        <CheckBox value={isReminder} onPress={setReminder} /> 
                     </View>
                     {isReminder && (
                         <TextInput
@@ -195,6 +202,7 @@ const styles = StyleSheet.create({
     label: {
         flex: 1,
         textAlign: 'left',
+        fontSize: 17,
         color: COLORS.primaryThemeColor,
         fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
@@ -209,7 +217,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     checkboxLabel: {
-        marginLeft: 8,
+        fontSize: 17,
+        color: COLORS.primaryThemeColor,
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
     },
 });
 
