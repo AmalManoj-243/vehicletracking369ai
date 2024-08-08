@@ -11,6 +11,11 @@ const MeetingsList = ({ item }) => {
                 <View style={styles.rightColumn}>
                     <Text style={styles.content}> {item?.start || '-'}</Text>
                     <Text style={styles.contentRight}>{''}</Text>
+                    {/* <Text style={styles.reminderText}>
+                        {item?.minutes && item?.reminderMinutes > 0
+                            ? `Reminder is For ${item?.reminderMinutes} Minutes`
+                            : 'No Reminder'}
+                    </Text> */}
                 </View>
             </View>
         </TouchableOpacity>
