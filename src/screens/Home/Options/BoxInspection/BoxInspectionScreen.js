@@ -43,7 +43,7 @@ const BoxInspectionScreen = ({ navigation }) => {
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={'No Enquiries Found'} />
+    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={'No Boxes Found'} />
   );
 
   const renderContent = () => (
