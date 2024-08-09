@@ -36,7 +36,7 @@ const BoxInspectionForm = ({ navigation }) => {
     salesPerson: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.name },
     warehouseName: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.warehouse_name },
   });
-  
+
   const [errors, setErrors] = useState({});
   const [dropdownOptions, setDropdownOptions] = useState({
     boxName: [],
@@ -170,7 +170,7 @@ const BoxInspectionForm = ({ navigation }) => {
   };
 
   const handleAddItemsPress = () => {
-    navigation.navigate("AddInspectionItems", {addInspectedItems});
+    navigation.navigate("AddInspectionItems", { addInspectedItems });
   };
 
   return (
@@ -198,14 +198,22 @@ const BoxInspectionForm = ({ navigation }) => {
           onPress={() => toggleDropdownSheet('Box Name')}
         />
         <FormInput
-          label="Sales Person"
-          placeholder="Select Sales Person"
+          label="Inspected By"
           dropIcon="menu-down"
           editable={false}
           required
           validate={errors.salesPerson}
           value={formData.salesPerson?.label || ''}
-          onPress={() => toggleDropdownSheet('Sales Person')}
+          onPress={() => { }}
+        />
+        <FormInput
+          label="Warehouse Name"
+          dropIcon="menu-down"
+          editable={false}
+          required
+          validate={errors.salesPerson}
+          value={formData.salesPerson?.label || ''}
+          onPress={() => { }}
         />
         {renderDropdownSheet()}
 
@@ -247,9 +255,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   addButtonText: {
-    color: '#FFFFFF',
+    flex: 2 / 3,
+    marginVertical: 5,
     fontSize: 16,
-    fontWeight: 'bold',
+    color: COLORS.primaryThemeColor,
+    fontFamily: FONT_FAMILY.urbanistSemiBold,
   },
 });
 

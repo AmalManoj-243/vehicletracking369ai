@@ -8,13 +8,13 @@ import { post } from '@api/services/utils';
 import { RoundedScrollContainer } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
-import { fetchproductNameDropdown, fetchuomNameDropdown } from '@api/dropdowns/dropdownApi';
+import { fetchProductsDropdown, fetchUomDropdown } from '@api/dropdowns/dropdownApi';
 import { useAuthStore } from '@stores/auth';
 import { validateFields } from '@utils/validation';
 
 const AddInspectionItems = ({ navigation, route }) => {
 
-  const {addInspectedItems} = route?.params
+  const { addInspectedItems } = route?.params
   const currentUser = useAuthStore(state => state.user);
   console.log("🚀 ~ file: AddInspectionItems.js:17 ~ AddInspectionItems ~ currentUser:", currentUser)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,7 +25,7 @@ const AddInspectionItems = ({ navigation, route }) => {
     productName: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.product_name || '' },
     boxQuantity: '',
     inspectedQuantity: '',
-    uomName: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.uom_name || '' },
+    uomName: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -37,23 +37,17 @@ const AddInspectionItems = ({ navigation, route }) => {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-
-        const productNameData = await fetchproductNameDropdown()
-        // const [productNameData, uomNameData] = await Promise.all([
-        //   fetchproductNameDropdown(),
-        //   fetchuomNameDropdown(),
-        // ]);
-        // console.log("🚀 ~ file: AddInspectionItems.js:41 ~ fetchDropdownData ~ productNameData:", productNameData)
-    
+        const productsData = await fetchProductsDropdown();
+        const uomData = await fetchUomDropdown();
         setDropdowns({
-          productName: productNameData.map(data => ({
+          productName: productsData.map(data => ({
             id: data._id,
             label: data.product_name,
           })),
-          // uomName: uomNameData.map(data => ({
-          //   id: data._id,
-          //   label: data.uom_name,
-          // })),
+            uomName: uomData.map(data => ({
+              id: data._id,
+              label: data.uom_name,
+            })),  
         });
       } catch (error) {
         console.error('Error fetching dropdown data:', error.message || error);
@@ -131,7 +125,7 @@ const AddInspectionItems = ({ navigation, route }) => {
         inspectedItems: parseInt(formData.inspectedQuantity, 10) || null,
         uom_name_id: formData.uomName?.id || null,
       };
-addInspectedItems(boxInspectionData)
+      addInspectedItems(boxInspectionData)
     }
   };
 

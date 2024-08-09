@@ -113,10 +113,10 @@ export const fetchboxNameDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.NON_INSPECTED);
 }
 
-export const fetchproductNameDropdown = async () => {
-  return fetchData(DROP_DOWN_API_ENDPOINTS.PRODUCT_NAME);
+export const fetchProductsDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.PRODUCTS);
 }
 
-export const fetchuomNameDropdown = async () => {
-  return fetchData(DROP_DOWN_API_ENDPOINTS.UOM_NAME);
+export const fetchUomDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.UOM);
 }
