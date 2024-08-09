@@ -15,7 +15,6 @@ import { formatDateTime } from '@utils/common/date';
 import { validateFields } from '@utils/validation';
 
 const BoxInspectionForm = ({ navigation }) => {
-
   const currentUser = useAuthStore(state => state.user?.related_profile?._id || '');
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,11 +24,16 @@ const BoxInspectionForm = ({ navigation }) => {
   const [formData, setFormData] = useState({
     dateTime: new Date(),
     boxName: '',
+    inspectedItems: '',
     salesPerson: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.name },
+    warehouseName: { id: currentUser?.related_profile?._id || '', label: currentUser?.related_profile?.warehouse_name },
   });
   
   const [errors, setErrors] = useState({});
-  const [dropdownOptions, setDropdownOptions] = useState({ boxName: [], salesPerson: [] });
+  const [dropdownOptions, setDropdownOptions] = useState({
+    boxName: [],
+    salesPerson: [],
+  });
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -38,6 +42,7 @@ const BoxInspectionForm = ({ navigation }) => {
           fetchboxNameDropdown(),
           fetchsalesPersonDropdown(),
         ]);
+
         setDropdownOptions({
           boxName: boxNameData.map(data => ({
             id: data._id,
@@ -50,6 +55,11 @@ const BoxInspectionForm = ({ navigation }) => {
         });
       } catch (error) {
         console.error('Error fetching dropdown data:', error);
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to fetch dropdown data. Please try again later.',
+        });
       }
     };
 
@@ -117,32 +127,33 @@ const BoxInspectionForm = ({ navigation }) => {
     if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
       const boxInspectionData = {
-        date: formData?.dateTime || null,
-        boxName_id: formData?.boxName?.id ?? null,
-        sales_person_id: formData?.salesPerson?.id || null,
+        date: formData.dateTime || null,
+        boxName_id: formData.boxName?.id ?? null,
+        sales_person_id: formData.salesPerson?.id || null,
+        inspectedItems: formData.inspectedItems || null,
       };
 
       try {
         const response = await post("/createBoxInspection", boxInspectionData);
         if (response.success) {
           showToast({
-            type: "success",
-            title: "Success",
-            message: response.message || "Box Inspection created successfully",
+            type: 'success',
+            title: 'Success',
+            message: response.message || 'Box Inspection created successfully',
           });
           navigation.navigate("BoxInspectionScreen");
         } else {
           showToast({
-            type: "error",
-            title: "ERROR",
-            message: response.message || "Box Inspection failed",
+            type: 'error',
+            title: 'Error',
+            message: response.message || 'Box Inspection failed',
           });
         }
       } catch (error) {
         showToast({
-          type: "error",
-          title: "ERROR",
-          message: "An unexpected error occurred. Please try again later.",
+          type: 'error',
+          title: 'Error',
+          message: 'An unexpected error occurred. Please try again later.',
         });
       } finally {
         setIsSubmitting(false);
@@ -179,6 +190,14 @@ const BoxInspectionForm = ({ navigation }) => {
           onPress={() => toggleDropdownSheet('Box Name')}
         />
         <FormInput
+          label="Inspected Items"
+          placeholder="Enter Inspected Items"
+          editable
+          keyboardType="numeric"
+          validate={errors.inspectedItems}
+          onChangeText={(value) => handleFieldChange('inspectedItems', value)}
+        />
+        <FormInput
           label="Sales Person"
           placeholder="Select Sales Person"
           dropIcon="menu-down"
@@ -211,23 +230,23 @@ const BoxInspectionForm = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   inspectionItemsContainer: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginVertical: 10, 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 10,
   },
   inspectionItemsLabel: {
     fontSize: 16,
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#007BFF', 
+    backgroundColor: '#007BFF',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 4,
   },
   addButtonText: {
-    color: '#FFFFFF', 
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
