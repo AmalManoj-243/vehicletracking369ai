@@ -90,7 +90,6 @@ const BoxInspectionForm = ({ navigation, route }) => {
     />
   );
 
-
   const validateForm = fieldsToValidate => {
     Keyboard.dismiss();
     const { isValid, errors } = validateFields(formData, fieldsToValidate);
@@ -98,89 +97,51 @@ const BoxInspectionForm = ({ navigation, route }) => {
     return isValid;
   };
 
-  const prepareBoxInspectionData = () => ({
-    date: formData.date || null,
-    box_id: boxId ?? null,
-    sales_person_id: formData.salesPerson?.id || null,
-    inspected_items: boxItems.map(item => ({
-      product_id: item.product_id,
-      product_name: item.product_name,
-      box_quantity: item.quantity,
-      inspected_quantity: item.inspectedQuantity,
-      uom_id: item.uom_id || null,
-      uom_name: item.uom_name || '',
-    })),
-    warehouse_id: formData.warehouse?.id || null,
-  });
-
-  const prepareInventoryRequestData = () => ({
-    items: boxItems.map(item => ({
-      product_id: item.product_id,
-      product_name: item.product_name,
-      box_quantity: 0,
-      uom_id: item.uom_id || null,
-      uom_name: item.uom_name || '',
-    })),
-    quantity: 0,
-    reason: 'inspection',
-    box_id: boxId,
-    sales_person_id: formData.salesPerson?.id || null,
-    box_status: 'pending',
-    request_status: 'requested',
-    warehouse_name: formData.warehouse?.label || '',
-    warehouse_id: formData.warehouse?.id,
-  });
-
-  const submitData = async (url, data, apiname, successMessage, errorMessage) => {
-    try {
-      const response = await post(url, data);
-      if (response.success && apiname === 'inventory') {
-        showToast({
-          type: 'success',
-          title: 'Success',
-          message: response.message || successMessage,
-        });
-        navigation.navigate('InventoryScreen');
-
-      } else if (response.success && apiname === 'inspection') {
-        showToast({
-          type: 'success',
-          title: 'Success',
-          message: response.message || successMessage,
-        });
-        navigation.navigate('BoxInspection');
-      }
-      else {
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: response.message || errorMessage,
-        });
-      }
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'An unexpected error occurred. Please try again later.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSubmit = async () => {
-    const fieldsToValidate = ['salesPerson'];
+    const fieldsToValidate = ['boxName'];
     if (validateForm(fieldsToValidate)) {
       setIsSubmitting(true);
-
-      const boxInspectionData = prepareBoxInspectionData();
-      const inventoryRequestData = prepareInventoryRequestData();
-
-      await submitData('/createInventoryBoxRequest', inventoryRequestData, 'inventory', 'Inventory Box Request created successfully', 'Inventory Box Request creation failed');
-      await submitData('/createBoxInspection', boxInspectionData, 'inspection', 'Box Inspection created successfully', 'Box Inspection failed');
+      const requestPayload = {
+        date: formData.date || null,
+        box_id: boxId ?? null,
+        sales_person_id: formData.salesPerson?.id || null,
+        inspected_items: boxItems.map(item => ({
+          product_id: item.product_id,
+          product_name: item.product_name,
+          box_quantity: item.quantity,
+          inspected_quantity: item.inspectedQuantity,
+          uom_id: item.uom_id || null,
+          uom_name: item.uom_name || '',
+        })),
+        warehouse_id: formData.warehouse?.id || null,
+      };
+      try {
+        const response = await post("/createBoxInspection", requestPayload);
+        if (response.success) {
+          showToast({
+            type: "success",
+            title: "Success",
+            message: response.message || "Box Inspection created successfully",
+          });
+          navigation.goBack();
+        } else {
+          showToast({
+            type: "error",
+            title: "ERROR",
+            message: response.message || "Box Inspection failed",
+          });
+        }
+      } catch (error) {
+        showToast({
+          type: "error",
+          title: "ERROR",
+          message: "An unexpected error occurred. Please try again later.",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
-  };
-
+  }
 
   return (
     <SafeAreaView>

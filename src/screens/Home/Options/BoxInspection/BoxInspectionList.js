@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity, Dimensions, Image } from 'react-native';
 import Text from '@components/Text';
 import { FONT_FAMILY } from '@constants/theme';
 
@@ -8,6 +8,7 @@ const { width } = Dimensions.get('window');
 const BoxInspectionList = ({ item, onPress }) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
+      <Image source={require('@assets/icons/common/box.png')} style={{width: 30, height: 30, resizeMode: 'contain'}}/>
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{item?.boxName || '-'}</Text>
       </View>
