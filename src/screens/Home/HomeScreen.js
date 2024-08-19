@@ -26,6 +26,7 @@ import { fetchProductDetailsByBarcode } from "@api/details/detailApi";
 import { OverlayLoader } from "@components/Loader";
 
 const { height } = Dimensions.get("window");
+console.log("🚀 ~ file: HomeScreen.js:29 ~ height:", height)
 
 const HomeScreen = ({ navigation }) => {
   const [backPressCount, setBackPressCount] = useState(0);
@@ -104,6 +105,8 @@ const HomeScreen = ({ navigation }) => {
   const snapPoints = useMemo(() => {
     if (height < 700) {
       return ["33%", "79%"];
+    } else if (height < 810) {
+      return ["48%", "83%"];
     } else if (height < 800) {
       return ["45%", "83%"];
     } else {

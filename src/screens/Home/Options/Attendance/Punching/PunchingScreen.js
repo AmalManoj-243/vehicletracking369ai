@@ -4,15 +4,21 @@ import { NavigationHeader } from '@components/Header';
 import { CalendarScreen } from '@components/Calendar';
 
 const PunchingScreen = ({ navigation }) => {
+
+    const [selectedDay, setSelectedDay] = useState(new Date());
     const handleDayPress = (day) => {
-        console.log('Selected day', day);
+     
+        setSelectedDay(day);
     };
+
     return (
         <SafeAreaView>
             <NavigationHeader
                 title="Punching"
                 onBackPress={() => navigation.goBack()}
                 logo={false}
+                iconOneName={'check'}
+                iconOnePress={()=> navigation.navigate('MarkAttendance', {date: selectedDay})}
             />
             <RoundedContainer>
                 <CalendarScreen

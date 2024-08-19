@@ -27,8 +27,7 @@ import { PipelineDetailTabs } from "@screens/Home/Options/CRM/Pipeline/PipelineD
 import { PickupScreen } from "@screens/Home/Options/Pickup";
 import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/BoxInspection";
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
-import { PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
-import { LeaveRequestScreen } from "@screens/Home/Options/Attendance/LeaveRequest";
+import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
 
 const Stack = createNativeStackNavigator();
 
@@ -287,14 +286,15 @@ const StackNavigator = () => {
         component={AttendanceScreen}
         options={{ headerShown: false }}
       />
+      {/* [Punching] */}
       <Stack.Screen
         name="PunchingScreen"
         component={PunchingScreen}
         options={{ headerShown: false }}
       />
-       <Stack.Screen
-        name="LeaveRequestScreen"
-        component={LeaveRequestScreen}
+      <Stack.Screen
+        name="MarkAttendance"
+        component={MarkAttendance}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

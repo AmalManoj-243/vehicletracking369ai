@@ -12,11 +12,6 @@ const AttendanceScreen = ({ navigation }) => {
     const options =
         [
             { title: 'Punching', image: require('@assets/images/Home/options/attendance/punching.png'), onPress: () => navigation.navigate('PunchingScreen') },
-            { title: 'Leave Request', image: require('@assets/images/Home/options/attendance/leave_request.png'), onPress: () => navigation.navigate('LeaveRequestScreen') },
-            { title: 'Attendance Requests', image: require('@assets/images/Home/options/attendance/attendance_requests.png'), onPress: () => navigation.navigate('') },
-            { title: 'Leave Requests', image: require('@assets/images/Home/options/attendance/leave_request.png'), onPress: () => navigation.navigate('') },
-            { title: 'Dashboard', image: require('@assets/images/Home/options/attendance/dashboard.png'), onPress: () => navigation.navigate('') },
-
         ]
 
     const renderItem = ({ item }) => {

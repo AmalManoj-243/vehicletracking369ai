@@ -1,2 +1,3 @@
 import PunchingScreen from "./PunchingScreen";
-export { PunchingScreen }
+import MarkAttendance from "./MarkAttendance";
+export { PunchingScreen, MarkAttendance }

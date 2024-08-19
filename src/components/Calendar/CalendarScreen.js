@@ -47,6 +47,7 @@ const CalendarScreen = ({
                 textSectionTitleColor: COLORS.black,
                 selectedDayBackgroundColor: COLORS.orange,
                 selectedDayTextColor: COLORS.white,
+                todayTextColor: COLORS.orange,
                 dayTextColor: COLORS.black,
                 dotColor: COLORS.orange,
                 arrowColor: COLORS.orange,
