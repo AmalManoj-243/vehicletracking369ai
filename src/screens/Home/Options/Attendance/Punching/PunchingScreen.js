@@ -7,8 +7,7 @@ const PunchingScreen = ({ navigation }) => {
 
     const [selectedDay, setSelectedDay] = useState(new Date());
     const handleDayPress = (day) => {
-     
-        setSelectedDay(day);
+        setSelectedDay(day.dateString);
     };
 
     return (

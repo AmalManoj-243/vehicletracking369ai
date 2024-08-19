@@ -6,16 +6,36 @@ import * as Location from 'expo-location';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import Text from '@components/Text';
 import { FONT_FAMILY } from '@constants/theme';
-import { CheckBox } from '@components/common/CheckBox';
-import { format } from 'date-fns';
+import { formatDate } from '@utils/common/date';
+import { LoadingButton } from '@components/common/Button';
+import { View } from 'react-native';
+import { post } from '@api/services/utils';
+import { useAuthStore } from '@stores/auth';
 
-const MarkAttendanceScreen = () => {
-   
+const MarkAttendanceScreen = ({ navigation, route }) => {
+    const { date } = route?.params
+    const currentUser = useAuthStore(state => state.user)
     const [locationData, setLocationData] = useState({
         latitude: null,
         longitude: null,
     });
     const [loading, setLoading] = useState(true);
+
+    const handleMarkAttendance = async () => {
+        const formattedDate = formatDate(date, 'yyyy-MM-dd')
+        try {
+            const requestPayload =
+            {
+                employee_id: currentUser?.related_profile?._id,
+                forenoon_in: formattedDate,
+                date: new Date()
+            }
+            const response = await post('/createAttendance', requestPayload)
+            console.log("🚀 ~ file: MarkAttendance.js:26 ~ handleMarkAttendance ~ response:", response)
+        } catch (error) {
+            console.log('API Error: ', error);
+        }
+    }
 
     useEffect(() => {
         (async () => {
@@ -43,12 +63,10 @@ const MarkAttendanceScreen = () => {
                 showLogo={false}
             />
             <RoundedScrollContainer>
-                <FormInput label={'Date & Time'} editable={false} />
-                <CheckBox label={'Forenoon In'}/>
-                <CheckBox label={'Forenoon Out'}/>
-                <CheckBox label={'After Noon In'}/>
-                <CheckBox label={'After Noon Out'}/>
-                <Text style={{fontFamily: FONT_FAMILY.urbanistSemiBold}}>You should be inside your shop</Text>
+                <FormInput label={'Date & Time'} editable={false} value={formatDate(date, 'yyyy-MM-dd')} />
+                <LoadingButton title={'Forenoon Check In'} onPress={handleMarkAttendance} />
+                <View style={{ flex: 1 / 3 }} />
+                <Text style={{ fontFamily: FONT_FAMILY.urbanistSemiBold }}>You should be inside your shop</Text>
                 {!loading && (
                     <MapViewComponent
                         longitude={locationData.longitude}
