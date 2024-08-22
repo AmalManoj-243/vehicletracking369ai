@@ -1,5 +1,3 @@
-import ServicesDetails from "./ServicesDetails";
-import ServicesList from "./ServicesList";
-import ServicesScreen from "./ServicesScreen";
+import ServiceScreen from "./ServiceScreen";
 
-export { ServicesDetails,ServicesList,ServicesScreen}
+export {  ServiceScreen}

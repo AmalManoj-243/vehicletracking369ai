@@ -14,8 +14,8 @@ import OtherDetails from './OtherDetails';
 import Address from './Address';
 import ContactPerson from './ContactPerson';
 
-
 const CustomerFormTabs = ({ navigation }) => {
+  
   const layout = useWindowDimensions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [index, setIndex] = useState(0);

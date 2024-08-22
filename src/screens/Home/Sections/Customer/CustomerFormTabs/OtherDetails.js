@@ -122,7 +122,7 @@ const OtherDetails = ({ formData, onFieldChange, errors }) => {
       />
       <FormInput
         label={"Customer Attitude "}
-        placeholder={"Enter Customer Attitude"}
+        placeholder={"Select Customer Attitude"}
         dropIcon={"menu-down"}
         items={customerAttitude}
         editable={false}

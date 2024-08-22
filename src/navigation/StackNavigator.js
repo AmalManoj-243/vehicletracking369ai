@@ -28,6 +28,8 @@ import { PickupScreen } from "@screens/Home/Options/Pickup";
 import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/BoxInspection";
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
+import ServiceScreen from "@screens/Home/Sections/Services/ServiceScreen";
+import ServiceFormTabs from "@screens/Home/Sections/Services/ServiceFormTabs/ServiceFormTabs";
 
 const Stack = createNativeStackNavigator();
 
@@ -141,6 +143,23 @@ const StackNavigator = () => {
       <Stack.Screen
         name="CustomerFormTabs"
         component={CustomerFormTabs}
+        options={{ headerShown: false }}
+      />
+
+      {/* Services */}
+      <Stack.Screen
+        name="ServiceScreen"
+        component={ServiceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ServiceDetails"
+        component={Servi}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ServiceFormTabs"
+        component={ServiceFormTabs}
         options={{ headerShown: false }}
       />
 

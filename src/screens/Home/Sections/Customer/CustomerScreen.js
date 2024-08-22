@@ -5,10 +5,10 @@ import { formatData } from '@utils/formatters';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
-import Text from '@components/Text';
 import { fetchCustomers } from '@api/services/generalApi';
-import { TouchableOpacity, ActivityIndicator, View, Image } from 'react-native';
 import { useDataFetching, useDebouncedSearch } from '@hooks';
+import Text from '@components/Text';
+import { TouchableOpacity, ActivityIndicator, View, Image } from 'react-native';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { Button, FABButton } from '@components/common/Button';
 

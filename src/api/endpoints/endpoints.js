@@ -16,7 +16,8 @@ export const API_ENDPOINTS = {
     VIEW_MEETINGS: '/viewCustomerSchedule',
     VIEW_VISIT_PLAN: '/viewVisitPlan',
     VIEW_BOX_INSPECTION_REPORT: '/viewBoxInspectionReport',
-    VIEW_NON_INSPECTED_BOX: "/viewNonInspectedBoxListing",
+    VIEW_NON_INSPECTED_BOX: '/viewNonInspectedBoxListing',
+    VIEW_SERVICE: '/viewJobRegistration',
 };
 
 export const DROP_DOWN_API_ENDPOINTS = {
@@ -46,6 +47,15 @@ export const DROP_DOWN_API_ENDPOINTS = {
     NON_INSPECTED: "/viewNonInspectedBoxListing",
     PRODUCTS: "/viewProducts/product_list/product_dropdown",
     UOM: "/viewUnitOfMeasure",
+    CUSTOMER_NAME: "/viewCustomers/customer_list/drop_down",
+    WAREHOUSE: "/viewWarehouses/warehouse_list/warehouse_dropdown",
+    DEVICE: "/viewJobDevice/job_devices/dropdown",
+    BRAND: "/viewJobBrand/job_brand_model/dropdown",
+    CONSUMER_MODEL: "/viewJobConsumerModel/job_consumer_model/dropdown",
+    ASSIGNED_TO: "/viewEmployees/employee_list/employee_dropdown",
+    ACCESSORIES: "/viewJobAccessory/accessory_list/accessory_dropdown",
+    COMPLAINTS: "/viewServiceRegisterProblem/service_register_list/service_register_dropdown",
+    SUB_COMPLAINTS: "/viewServiceRegisterSubProblem/service_register_sub_problem_list/service_register_sub_problem_dropdown",
 };
 
 export const DETAIL_API_ENDPOINTS = {
