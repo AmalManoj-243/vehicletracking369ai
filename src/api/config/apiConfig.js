@@ -4,7 +4,7 @@
 // const API_BASE_URL = 'https://shansapp.369ai.biz:3004';
 
 {/* ----Alphalize Development team live ----- */ }
-// const API_BASE_URL = 'https://alphalize.369ai.biz:3042'
+const API_BASE_URL = 'https://alphalize.369ai.biz:3042'
 
 {/* ----UAE Test ----- */ }
 const API_BASE_URL = 'https://uaetest.369ai.biz:3027'
