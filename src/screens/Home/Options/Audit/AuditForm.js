@@ -355,7 +355,7 @@ const AuditForm = ({ navigation }) => {
           auditingData.online_transaction_type = scannedBillDetails?.register_payments[0]?.online_transaction_type ?? null;
           auditingData.online_status = scannedBillDetails?.register_payments[0]?.online_status ?? null;
           auditingData.ledger_id = scannedBillDetails?.register_payments[0]?.ledger_id ?? null;
-          auditingData?.ledger_type = scannedBillDetails?.register_payments[0]?.ledger_type ?? null;
+          auditingData.ledger_type = scannedBillDetails?.register_payments[0]?.ledger_type ?? null;
           auditingData.ledger_display_name = scannedBillDetails?.register_payments[0]?.ledger_display_name ?? null;
           break;
         case "Sales Return":
