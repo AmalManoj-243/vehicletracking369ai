@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Text from '@components/Text';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 
@@ -9,6 +9,7 @@ const Button = ({
   onPress = () => { },
   backgroundColor = COLORS.button,
   disabled = false,
+  loading = false,
   ...props
 }) => {
   return (
@@ -28,9 +29,13 @@ const Button = ({
         paddingHorizontal:8,
         ...props
       }}>
-      <Text style={[styles.title, {color: color}]}>
-        {title}
-      </Text>
+       {loading ? (
+        <ActivityIndicator size="small" color={color} animating={loading} />
+      ) : (
+        <Text style={[styles.title, { color: color }]}>
+          {title}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 };

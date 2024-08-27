@@ -16,8 +16,10 @@ const MarkAttendanceScreen = ({ navigation, route }) => {
     const [attendanceStatus, setAttendanceStatus] = useState('');
     const [attendanceId, setAttendanceId] = useState({})
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleMarkAttendance = async () => {
+        setLoading(true);
         try {
             let endpoint;
             let requestPayload = {
@@ -56,6 +58,8 @@ const MarkAttendanceScreen = ({ navigation, route }) => {
             }
         } catch (error) {
             console.log('API Error: ', error);
+        } finally{
+            setLoading(false);
         }
     };
 
@@ -105,7 +109,7 @@ const MarkAttendanceScreen = ({ navigation, route }) => {
             />
             <RoundedScrollContainer>
                 <FormInput label={'Date & Time'} editable={false} value={formatDate(date, 'yyyy-MM-dd')} />
-                <Button title={buttonTitle} onPress={handleMarkAttendance} disabled={isButtonDisabled} width={'80%'} alignSelf={'center'} />
+                <Button title={buttonTitle} onPress={handleMarkAttendance} disabled={isButtonDisabled} width={'80%'} alignSelf={'center'} loading={loading}/>
             </RoundedScrollContainer>
         </SafeAreaView>
     );
