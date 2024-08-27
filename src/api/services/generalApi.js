@@ -100,6 +100,21 @@ export const fetchService = async ({ offset, limit, loginEmployeeId }) => {
     handleApiError(error);
     throw error;
   }
+}; 
+
+export const fetchSpareParts = async ({ offset, limit, loginEmployeeId }) => {
+  try {
+    const queryParams = {
+      offset,
+      limit,
+      ...(loginEmployeeId !== undefined && { login_employee_id: loginEmployeeId }),
+    };
+    const response = await get(API_ENDPOINTS.VIEW_SPARE_PARTS, queryParams);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
 };
 
 export const fetchMarketStudy = async ({ offset, limit }) => {

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Text from '@components/Text';
 import Modal from 'react-native-modal';
 import { Button } from '@components/common/Button';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import { FONT_FAMILY } from '@constants/theme';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import format from 'date-fns/format';

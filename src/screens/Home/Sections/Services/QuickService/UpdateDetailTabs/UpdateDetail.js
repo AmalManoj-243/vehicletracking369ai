@@ -21,23 +21,9 @@ const UpdateDetail = ({ serviceId }) => {
     const [quantity, setQuantity] = useState('');
     const [unitPrice, setUnitPrice] = useState('');
     const [uom, setUom] = useState(null);
+    const [tax, setTax] = useState('');
+    const [subTotal, setSubTotal] = useState('');
     const [savedItems, setSavedItems] = useState([]);
-
-    const [formData, setFormData] = useState({
-        warehouse: "",
-        device: "",
-        brand: "",
-        consumerModel: "",
-        serialNumber: "",
-        imeiNumber: "",
-        assignedTo: "",
-        preCondition: "",
-        estimation: "",
-        remarks: "",
-        accessories: [],
-        complaints: "",
-        subComplaints: "",
-      });
 
     const [dropdown, setDropdown] = useState({
         products: [],
@@ -53,6 +39,7 @@ const UpdateDetail = ({ serviceId }) => {
                     products: ProductsData.map(data => ({
                         id: data._id,
                         label: data.product_name,
+                        unit_price: data.sale_price,
                     })),
                 }));
             } catch (error) {
@@ -114,53 +101,46 @@ const UpdateDetail = ({ serviceId }) => {
     };
 
     const handleSave = () => {
-        if (!spareName || !description || !quantity || !uom || !unitPrice) {
+        if (!spareName || !description || !quantity || !uom || !unitPrice || !tax || !subTotal) {
             showToastMessage('Please fill out all fields.');
             return;
         }
         const newItem = {
-            // {
-            //     job_registration_id: "66cc681fbf21f17a3e23c6ba",
-            //     date: "2024-08-26T11:33:53.718Z",
-            //     status: "waiting for parts",
-            //     created_by: null,
-            //     created_by_name: "",
-            //     assignee_id: formData?.assignedTo.id ?? null,
-            //     assignee_name: formData.assignedTo?.label ?? null,
-            //     warehouse_id: formData?.warehouse.id ?? null,
-            //     warehouse_name: formData.warehouse?.label ?? null,
-            //     sales_person_id: formData?.assignedTo.id ?? null,
-            //     sales_person_name: formData.assignedTo?.label ?? null,
-            
-                // product_id: "656f2cb002e1b1b31fafc6c6",
-                // product_name: " DESKTOP POWER SUPPLY LENOVO PCG010 12V15A",
-                // description: null,
-                // uom_id: "66b5d3fbca5b01a2366b0b8e",
-                // uom: "GRAMS",
-                // quantity: 1,
-                // unit_price: 160,
-                // unit_cost: 100,
-                // tax_type_id: "648d9b54ef9cd868dfbfa37b",
-                // tax_type_name: "vat 5%",
-                // job_diagnosis_id: "66cc6838bf21f17a3e23c6e2",
-                // status: "out_of_stock",
-                // "id": "66cc6838bf21f17a3e23c6e6",
-                // "_v": 0
-              }
-            //   }
-        //     spareName: spareName.label,
-        //     description,
-        //     quantity,
-        //     uom: uom.label,
-        //     unitPrice,
-        // };
+            spareName: spareName.label,
+            description,
+            quantity,
+            uom: uom.label,
+            unitPrice,
+            tax,
+            subTotal,
+        };
         setSavedItems([...savedItems, newItem]);
         setSpareName(null);
         setDescription('');
         setQuantity('');
         setUom(null);
         setUnitPrice('');
+        setTax('');
+        setSubTotal('');
         setShowForm(false);
+    };
+
+    const calculateSubTotal = (unitPrice, quantity) => {
+        return unitPrice && quantity ? (parseFloat(unitPrice) * parseFloat(quantity)).toFixed(2) : '';
+    };
+
+    const handleProductSelection = (selectedProduct) => {
+        setSpareName(selectedProduct);
+        const unitPrice = selectedProduct.unit_price ? selectedProduct.unit_price.toString() : '0';
+        setUnitPrice(unitPrice);
+        const calculatedSubTotal = calculateSubTotal(unitPrice, quantity);
+        setSubTotal(calculatedSubTotal);
+    };
+
+    const handleQuantityChange = (value) => {
+        setQuantity(value);
+        const calculatedSubTotal = calculateSubTotal(unitPrice, value);
+        setSubTotal(calculatedSubTotal);
     };
 
     const renderBottomSheet = () => {
@@ -187,7 +167,7 @@ const UpdateDetail = ({ serviceId }) => {
                 title={selectedType}
                 onClose={() => setIsVisible(false)}
                 onValueChange={(value) => {
-                    if (fieldName === 'spareName') setSpareName(value);
+                    if (fieldName === 'spareName') handleProductSelection(value);
                     else if (fieldName === 'uom') setUom(value);
                 }}
             />
@@ -201,6 +181,8 @@ const UpdateDetail = ({ serviceId }) => {
             <Text style={styles.savedItemText}>Quantity: {item.quantity}</Text>
             <Text style={styles.savedItemText}>UOM: {item.uom}</Text>
             <Text style={styles.savedItemText}>Unit Price: {item.unitPrice}</Text>
+            <Text style={styles.savedItemText}>Taxes: {item.tax}</Text>
+            <Text style={styles.savedItemText}>Sub Total: {item.subTotal}</Text>
         </View>
     );
 
@@ -244,7 +226,7 @@ const UpdateDetail = ({ serviceId }) => {
                         editable={true}
                         keyboardType="numeric"
                         value={quantity}
-                        onChangeText={setQuantity}
+                        onChangeText={handleQuantityChange}
                     />
                     <FormInput
                         label="UOM"
@@ -263,20 +245,38 @@ const UpdateDetail = ({ serviceId }) => {
                         value={unitPrice}
                         onChangeText={setUnitPrice}
                     />
+                    <FormInput
+                        label="Taxes"
+                        placeholder="Enter Tax"
+                        editable={true}
+                        keyboardType="numeric"
+                        value={tax}
+                        onChangeText={setTax}
+                    />
+                    <FormInput
+                        label="Sub Total"
+                        placeholder="Enter Sub Total"
+                        editable={true}
+                        keyboardType="numeric"
+                        value={subTotal}
+                        onChangeText={setSubTotal}
+                    />
                     <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                         <Text style={styles.saveButtonText}>Save</Text>
                     </TouchableOpacity>
                 </View>
             )}
-            {renderBottomSheet()}
 
             <FlatList
                 data={savedItems}
                 renderItem={renderSavedItem}
                 keyExtractor={(item, index) => index.toString()}
-                style={styles.savedItemsList}
+                ListHeaderComponent={() => savedItems.length > 0 && <Text style={styles.savedItemTitle}>Saved Items</Text>}
             />
-            <OverlayLoader visible={isLoading} />
+
+            {renderBottomSheet()}
+
+            {isLoading && <OverlayLoader />}
         </RoundedScrollContainer>
     );
 };
@@ -284,55 +284,46 @@ const UpdateDetail = ({ serviceId }) => {
 const styles = StyleSheet.create({
     addButton: {
         backgroundColor: '#2e2a4f',
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 20,
-        width: 270,
-        alignSelf: 'center',
+        padding: 10,
+        marginVertical: 10,
+        borderRadius: 5,
     },
     addButtonText: {
-        fontFamily: FONT_FAMILY.urbanistBold,
         color: COLORS.white,
-        textAlign: "center",
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.urbanistBold,
+        textAlign: 'center',
     },
     formContainer: {
-        marginTop: 20,
-        paddingHorizontal: 10,
-    },
-    saveButton: {
-        backgroundColor: '#2e2a4f',
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 20,
-        width: 270,
-        alignSelf: 'center',
-    },
-    saveButtonText: {
-        fontFamily: FONT_FAMILY.urbanistBold,
-        color: COLORS.white,
-        textAlign: "center",
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    savedItem: {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: COLORS.white,
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,
     },
+    saveButton: {
+        backgroundColor: '#2e2a4f',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+    },
+    saveButtonText: {
+        fontFamily: FONT_FAMILY.urbanistBold,
+        color: COLORS.white,
+        textAlign: 'center',
+    },
+    savedItem: {
+        backgroundColor: COLORS.lightGrey,
+        padding: 10,
+        marginVertical: 5,
+        borderRadius: 5,
+    },
     savedItemText: {
         fontFamily: FONT_FAMILY.urbanistRegular,
-        fontSize: 14,
-        marginBottom: 5,
+        color: COLORS.darkGrey,
     },
-    savedItemsList: {
-        marginTop: 20,
+    savedItemTitle: {
+        fontFamily: FONT_FAMILY.urbanistRegular,
+        color: COLORS.primary,
+        marginBottom: 5,
     },
 });
 
