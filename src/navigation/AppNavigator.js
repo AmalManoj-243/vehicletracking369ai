@@ -3,6 +3,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TabBarIcon } from '@components/TabBar';
 import { HomeScreen, CartScreen, CategoriesScreen, MyOrdersScreen, ProfileScreen } from '@screens';
+import { KPIDashboardScreen } from '@screens/KPIDashboard';
 const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => {

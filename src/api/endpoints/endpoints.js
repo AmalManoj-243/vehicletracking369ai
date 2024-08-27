@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     VIEW_SERVICE: '/viewJobRegistration',
     VIEW_ATTENDANCE: '/viewAttendance',
     VIEW_SPARE_PARTS: '/viewSparePartsRequest',
+    VIEW_KPI: '/viewKpiTasks',
 };
 
 export const DROP_DOWN_API_ENDPOINTS = {
