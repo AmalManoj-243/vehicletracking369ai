@@ -105,6 +105,10 @@ export const allValidationRules = {
     assignedTo: {
         message: 'Please select Assigned To',
         validate: validateRequired,
+    },
+    spareName: {
+        message: 'Please select Spare Name',
+        validate: validateRequired,
     }
 
     // Add other fields as needed

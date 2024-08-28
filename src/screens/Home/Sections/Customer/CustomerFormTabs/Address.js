@@ -121,7 +121,6 @@ const Address = ({ formData, onFieldChange, errors }) => {
         required
         validate={errors.address}        
         onChangeText={(value) => onFieldChange('address', value)}
-        // onValueChange={(value) => onFieldChange('address', value)}
       />
       <FormInput
         label= "Country "
@@ -131,7 +130,6 @@ const Address = ({ formData, onFieldChange, errors }) => {
         validate={errors.country}
         value={formData.country?.label}
         onPress={() => toggleBottomSheet("Country")} 
-
       />
       <FormInput
         label= "State "

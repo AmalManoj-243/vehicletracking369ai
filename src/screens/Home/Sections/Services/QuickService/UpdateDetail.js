@@ -1,84 +1,32 @@
-import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
-import { useWindowDimensions, StyleSheet, FlatList, View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from '@components/containers';
 import NavigationHeader from '@components/Header/NavigationHeader';
 import { RoundedScrollContainer } from '@components/containers';
-import { TextInput as FormInput } from '@components/common/TextInput';
-import { DropdownSheet } from '@components/common/BottomSheets';
 import { DetailField } from '@components/common/Detail';
-import { Button } from '@components/common/Button';
 import { OverlayLoader } from '@components/Loader';
 import SparePartsList from './SparePartsList';
 import { formatDateTime } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';
 import { fetchServiceDetails } from '@api/details/detailApi';
-import { fetchProductsDropdown, fetchUnitOfMeasureDropdown } from '@api/dropdowns/dropdownApi';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const UpdateDetails = () => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { id } = route.params || {};
+    const { id, updatedItem } = route.params || {};
 
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const [showForm, setShowForm] = useState(false);
-    const [spareName, setSpareName] = useState(null);
-    const [description, setDescription] = useState('');
-    const [quantity, setQuantity] = useState('');
-    const [unitPrice, setUnitPrice] = useState('');
-    const [uom, setUom] = useState(null);
-    const [tax, setTax] = useState('');
-    const [serviceCharge, setServiceCharge] = useState('');
-    const [subTotal, setSubTotal] = useState('');
     const [savedItems, setSavedItems] = useState([]);
-    const [dropdown, setDropdown] = useState({ products: [], unitofmeasure: [] });
-    const [selectedType, setSelectedType] = useState(null);
-    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const ProductsData = await fetchProductsDropdown();
-                setDropdown(prevDropdown => ({
-                    ...prevDropdown,
-                    products: ProductsData.map(data => ({
-                        id: data._id,
-                        label: data.product_name?.trim(),
-                        unit_price: data.sale_price,
-                        product_description: data.product_description,
-                    })),
-                }));
-            } catch (error) {
-                console.error('Error fetching Products dropdown data:', error);
-            }
-        };
-
-        fetchProducts();
-    }, []);
-
-    useEffect(() => {
-        const fetchUnitOfMeasure = async () => {
-            try {
-                const UnitOfMeasureData = await fetchUnitOfMeasureDropdown();
-                setDropdown(prevDropdown => ({
-                    ...prevDropdown,
-                    unitofmeasure: UnitOfMeasureData.map(data => ({
-                        id: data._id,
-                        label: data.uom_name,
-                        product_description: data.product_description,
-                    })),
-                }));
-            } catch (error) {
-                console.error('Error fetching Unit Of Measure dropdown data:', error);
-            }
-        };
-
-        fetchUnitOfMeasure();
-    }, []);
+        if (updatedItem) {
+            setSavedItems(prevItems => [...prevItems, updatedItem]);
+        }
+    }, [updatedItem]);
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -100,90 +48,6 @@ const UpdateDetails = () => {
             }
         }, [id])
     );
-
-    const toggleBottomSheet = (type) => {
-        setSelectedType(type);
-        setIsVisible(!isVisible);
-    };
-
-    const handleSubmit = () => {
-        if (!spareName || !tax || !serviceCharge) {
-            showToastMessage('Please select Spare Name, Service Charge, and Tax to proceed.');
-            return;
-        }
-        const spareItem = {
-            spareName: spareName?.label || '',
-            description: description || '',
-            quantity: quantity || '',
-            uom: uom?.label || '',
-            unitPrice: unitPrice || '',
-            tax: tax || '',
-            serviceCharge: serviceCharge || '',
-            subTotal: subTotal || '',
-        };
-        setSavedItems([...savedItems, spareItem]);
-        setSpareName(null);
-        setDescription('');
-        setQuantity('');
-        setUom(null);
-        setUnitPrice('');
-        setTax('');
-        setServiceCharge('');
-        setSubTotal('');
-        setShowForm(false);
-    };
-
-    const calculateSubTotal = (unitPrice, quantity) => {
-        return unitPrice && quantity ? (parseFloat(unitPrice) * parseFloat(quantity)).toFixed(2) : '';
-    };
-
-    const handleProductSelection = (selectedProduct) => {
-        setSpareName(selectedProduct);
-        const unitPrice = selectedProduct.unit_price ? selectedProduct.unit_price.toString() : '0';
-        setUnitPrice(unitPrice);
-        const defaultQuantity = '1';
-        setQuantity(defaultQuantity);
-        const calculatedSubTotal = calculateSubTotal(unitPrice, defaultQuantity);
-        setSubTotal(calculatedSubTotal);
-        setDescription(selectedProduct.product_description || '');
-    };
-
-    const handleQuantityChange = (value) => {
-        setQuantity(value);
-        const calculatedSubTotal = calculateSubTotal(unitPrice, value);
-        setSubTotal(calculatedSubTotal);
-    };
-
-    const renderBottomSheet = () => {
-        let items = [];
-        let fieldName = '';
-
-        switch (selectedType) {
-            case 'SpareName':
-                items = dropdown.products;
-                fieldName = 'spareName';
-                break;
-            case 'UOM':
-                items = dropdown.unitofmeasure;
-                fieldName = 'uom';
-                break;
-            default:
-                return null;
-        }
-
-        return (
-            <DropdownSheet
-                isVisible={isVisible}
-                items={items}
-                title={selectedType}
-                onClose={() => setIsVisible(false)}
-                onValueChange={(value) => {
-                    if (fieldName === 'spareName') handleProductSelection(value);
-                    else if (fieldName === 'uom') setUom(value);
-                }}
-            />
-        );
-    };
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -209,8 +73,8 @@ const UpdateDetails = () => {
                 <DetailField label="Consumer Model" value={details?.consumer_model_name || '-'} />
                 <View style={{ justifyContent: 'space-between', flexDirection: 'row', marginVertical: 10 }}>
                     <Text style={styles.label}>Add spare parts</Text>
-                    <TouchableOpacity activeOpacity={0.7} onPress={()=> navigation.navigate('AddSpareParts')}>
-                    <AntDesign name="pluscircle" size={26} color={COLORS.orange} />
+                    <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('AddSpareParts')}>
+                        <AntDesign name="pluscircle" size={26} color={COLORS.orange} />
                     </TouchableOpacity>
                 </View>
                 <FlatList
@@ -221,7 +85,6 @@ const UpdateDetails = () => {
                     keyExtractor={(item, index) => index.toString()}
                 />
             </RoundedScrollContainer>
-            {renderBottomSheet()}
             {isLoading && <OverlayLoader />}
         </SafeAreaView>
     );
