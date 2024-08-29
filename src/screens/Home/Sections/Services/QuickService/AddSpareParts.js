@@ -440,15 +440,40 @@ export default AddSpareParts
 //                 ]
 //             }
 //         ],
-//         sales_person_id: null,
-//         sales_person_name: ""
+//         sales_person_id: formData?.assignedTo.id ?? null,
+//         sales_person_name: formData.assignedTo?.label ?? null,
 //     };
 
 //     try {
-//         const response = await axios.post('YOUR_API_ENDPOINT', requestBody);
-//         // Handle the response accordingly, perhaps navigate back or show a success message
-//         console.log('Response:', response.data);
-//         navigation.goBack(); // Or any other navigation action
+//         const response = await post("/createJobApproveQuote", requestBody);
+//         // console.log("🚀 ~ submit ~ response:", response);
+// if (response.success === 'true') {
+//     showToast({
+//       type: "success",
+//       title: "Success",
+//       message: response.message || "Spare Parts created successfully",
+//     });
+
+//     navigation.goBack()
+//   } else {
+//     console.error("Spare Parts request Failed:", response.message);
+//     showToast({
+//       type: "error",
+//       title: "ERROR",
+//       message: response.message || "Spare Parts Service creation failed",
+//     });
+//   }
+// } catch (error) {
+//   console.error("Error Creating Spare Parts request Failed:", error);
+//   showToast({
+//     type: "error",
+//     title: "ERROR",
+//     message: "An unexpected error occurred. Please try again later.",
+//   });
+// } finally {
+//   setIsSubmitting(false);
+// }
+//         navigation.goBack();
 //     } catch (error) {
 //         console.error('Error submitting spare parts data:', error);
 //         Alert.alert('Error', 'There was an error submitting the spare parts data.');
