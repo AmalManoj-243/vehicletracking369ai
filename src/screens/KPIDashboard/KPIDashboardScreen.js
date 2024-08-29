@@ -123,7 +123,7 @@ const KPIDashboardScreen = ({ navigation }) => {
         <SafeAreaView style={styles.container}>
             <NavigationHeader title="KPI Dashboard" onBackPress={() => navigation.goBack()} />
             <RoundedScrollContainer contentContainerStyle={styles.scrollViewContent}>
-                <PieSection data={chartData} title="Task Status" count={chartData.length} />
+                <PieSection data={chartData} title="Action Screens" count={chartData.length} />
             </RoundedScrollContainer>
         </SafeAreaView>
     );

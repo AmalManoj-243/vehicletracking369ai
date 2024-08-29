@@ -52,14 +52,14 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Cart"
+        name="KPI"
         component={KPIDashboardScreen}
         options={{
           tabBarIcon: ({ focused }) =>
             <TabBarIcon
               focused={focused}
               iconComponent={require('@assets/icons/bottom_tabs/cart.png')}
-              label="Cart"
+              label="KPI"
             />
           // tabBarStyle: { display: 'none' }
         }}

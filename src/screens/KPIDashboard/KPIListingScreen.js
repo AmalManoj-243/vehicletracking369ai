@@ -56,18 +56,18 @@ const KPIListingScreen = ({ navigation }) => {
         switch(kpiCategory) {
             case 'Completed':
                 return dashBoardDetails.completedKpi;
-                case 'In Progress':
-                    return dashBoardDetails.inProgressKpi;
-                case 'Assigned':
-                    return dashBoardDetails.assignedKpiData;
-                case 'Urgent':
-                    return dashBoardDetails.urgentKpiData;
-                case 'Important':
-                    return dashBoardDetails.importantKpiData;
-                case 'Service':
-                    return dashBoardDetails.serviceKpiData;
-                default:
-                    return [];
+            case 'In Progress':
+                return dashBoardDetails.inProgressKpi;
+            case 'Assigned':
+                return dashBoardDetails.assignedKpiData;
+            case 'Urgent':
+                return dashBoardDetails.urgentKpiData;
+            case 'Important':
+                return dashBoardDetails.importantKpiData;
+            case 'Service':
+                return dashBoardDetails.serviceKpiData;
+            default:
+                return [];
         }
     }
     const kpiData = getDataForCategory();
