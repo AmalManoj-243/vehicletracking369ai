@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
-import { fetchProductsDropdown, fetchUnitOfMeasureDropdown } from '@api/dropdowns/dropdownApi';
-import { useFocusEffect } from '@react-navigation/native';
+import { fetchProductsDropdown, fetchUnitOfMeasureDropdown, fetchTaxDropdown } from '@api/dropdowns/dropdownApi';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import { NavigationHeader } from '@components/Header';
 import { Button } from '@components/common/Button';
@@ -20,7 +19,8 @@ const AddSpareParts = ({ navigation, route }) => {
 
     const [dropdown, setDropdown] = useState({
         products: [],
-        unitofmeasure: []
+        unitofmeasure: [],
+        taxes: [],
     });
 
     const [formData, setFormData] = useState({
@@ -120,6 +120,25 @@ const AddSpareParts = ({ navigation, route }) => {
         fetchUnitOfMeasure();
     }, []);
 
+    useEffect(() => {
+        const fetchTaxes = async () => {
+            try {
+                const TaxData = await fetchTaxDropdown();
+                setDropdown(prevDropdown => ({
+                    ...prevDropdown,
+                    taxes: TaxData.map(data => ({
+                        id: data._id,
+                        label: data.tax_type_name,
+                    })),
+                }));
+            } catch (error) {
+                console.error('Error fetching Unit Of Measure dropdown data:', error);
+            }
+        };
+
+        fetchTaxes();
+    }, []);
+
 
     const toggleBottomSheet = (type) => {
         setSelectedType(isVisible ? null : type);
@@ -136,39 +155,39 @@ const AddSpareParts = ({ navigation, route }) => {
     const handleSubmit = async () => {
         const fieldsToValidate = ['spareParts', 'tax'];
         if (validateForm(fieldsToValidate)) {
-            // const requestBody =
-            // {
-            //     _id: id,
-            //     job_stage: 'Waiting for spare',
-            //     create_job_diagnosis: [
-            //         {
-            //             job_registration_id: id,
-            //             proposed_action_id: null,
-            //             proposed_action_name: null,
-            //             done_by_id: currentuser.related_profile?._id,
-            //             untaxed_total_amount: 12,
-            //             done_by_name: currentuser.related name,
-            //             parts_or_service_required: null,
-            //             service_type: null,
-            //             service_charge: 100,
-            //             total_amount: 112.6,
-            //             parts: sparePartsItems?.map(items => ({
-            //                     product_id: items.s,
-            //                     product_name: ENCLOSURE KIT CASE 2.5 SATA,
-            //                     description: ,
-            //                     uom_id: 66506f212e5cf73d8446ff52,
-            //                     uom: Pcs,
-            //                     quantity: 1,
-            //                     unit_price: 12,
-            //                     sub_total: 12,
-            //                     unit_cost: 150,
-            //                     tax_type_name: vat 5%,
-            //                     tax_type_id: 648d9b54ef9cd868dfbfa37b
-                        
-            //         })
-            //         }
-            //     ]
-            // }
+            const requestBody =
+            {
+                _id: id,
+                job_stage: 'Waiting for spare',
+                create_job_diagnosis: [
+                    {
+                        job_registration_id: id,
+                        proposed_action_id: null,
+                        proposed_action_name: null,
+                        untaxed_total_amount: "",
+                        done_by_id: currentUser?.related_profile?._id ?? null,
+                        done_by_name: currentUser.related_profile.name ?? null,
+                        parts_or_service_required: null,
+                        service_type: null,
+                        service_charge: null,
+                        total_amount: null,
+                        parts: sparePartsItems?.map(items => ({
+                            product_id: items.formData?.spareParts.id ?? null,
+                            product_name: items.formData?.spareParts.label ?? null,
+                            description: items.formData.description || null,
+                            uom_id: items.formData?.uom.id ?? null,
+                            uom: items.formData?.uom.label ?? null,
+                            quantity: items.formData.quantity || null,
+                            unit_price: items.formData.unitPrice || null,
+                            sub_total: items.formData.subTotal || null,
+                            unit_cost: null,
+                            tax_type_name: items.formData?.tax.id ?? null,
+                            tax_type_id: items.formData?.tax.label ?? null,
+
+                        }))
+                    }
+                ]
+            }
 
             try {
                 const response = await put("/updateJobRegistration", requestBody);
@@ -178,7 +197,8 @@ const AddSpareParts = ({ navigation, route }) => {
                         title: "Success",
                         message: response.message || "Spare Part Request updated successfully",
                     });
-                    navigation.goBack();
+                    addSpareParts(spareItem);
+                    navigation.navigate('UpdateDetail', { updatedItem: spareItem });
                 } else {
                     showToast({
                         type: "error",
@@ -196,7 +216,7 @@ const AddSpareParts = ({ navigation, route }) => {
                 setIsSubmitting(false);
             }
             addSpareParts(spareItem);
-                navigation.navigate('UpdateDetail', { updatedItem: spareItem });
+            navigation.navigate('UpdateDetail', { updatedItem: spareItem });
         }
     };
 
@@ -212,6 +232,10 @@ const AddSpareParts = ({ navigation, route }) => {
             case 'UOM':
                 items = dropdown.unitofmeasure;
                 fieldName = 'uom';
+                break;
+            case 'Tax':
+                items = dropdown.taxes;
+                fieldName = 'tax';
                 break;
             default:
                 return null;
@@ -319,276 +343,3 @@ const AddSpareParts = ({ navigation, route }) => {
 };
 
 export default AddSpareParts
-
-// import React, { useState, useEffect } from 'react';
-// import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
-// import { TextInput as FormInput } from '@components/common/TextInput';
-// import { fetchProductsDropdown, fetchUnitOfMeasureDropdown } from '@api/dropdowns/dropdownApi';
-// import { useFocusEffect } from '@react-navigation/native';
-// import { DropdownSheet } from '@components/common/BottomSheets';
-// import { NavigationHeader } from '@components/Header';
-// import { Button } from '@components/common/Button';
-// import { COLORS } from '@constants/theme';
-// import { Keyboard, Alert } from 'react-native';
-// import { validateFields } from '@utils/validation';
-// import { put } from '@api/services/utils';
-
-// const AddSpareParts = ({ navigation, route }) => {
-
-//     const { id, addSpareParts } = route?.params || {};
-
-//     const [selectedType, setSelectedType] = useState(null);
-//     const [isVisible, setIsVisible] = useState(false);
-
-//     const [dropdown, setDropdown] = useState({
-//         products: [],
-//         unitofmeasure: []
-//     });
-
-//     const [formData, setFormData] = useState({
-//         spareParts: '',
-//         description: '',
-//         quantity: '1',
-//         uom: '',
-//         unitPrice: '',
-//         serviceCharge: '100',
-//         tax: 'VAT 5%',
-//         subTotal: '',
-//     });
-
-//     const [errors, setErrors] = useState({});
-
-//     const calculateSubTotal = (unitPrice, quantity) => {
-//         return unitPrice && quantity ? (parseFloat(unitPrice) * parseFloat(quantity)).toFixed(2) : '';
-//     };
-
-//     const handleFieldChange = (field, value) => {
-//         setFormData((prevFormData) => ({
-//             ...prevFormData,
-//             [field]: value,
-//         }));
-//         if (errors[field]) {
-//             setErrors((prevErrors) => ({
-//                 ...prevErrors,
-//                 [field]: null,
-//             }));
-//         }
-//     };
-
-//     const handleProductSelection = (selectedProduct) => {
-//         const unitPrice = selectedProduct.unitPrice ? selectedProduct.unitPrice.toString() : '0';
-//         const description = selectedProduct.productDescription || '';
-//         const defaultQuantity = '1';
-//         const calculatedSubTotal = calculateSubTotal(unitPrice, defaultQuantity);
-
-//         setFormData(prevFormData => ({
-//             ...prevFormData,
-//             spareParts: selectedProduct,
-//             description,
-//             unitPrice,
-//             quantity: defaultQuantity,
-//             subTotal: calculatedSubTotal,
-//         }));
-//     };
-
-//     const handleQuantityChange = (value) => {
-//         const unitPrice = formData.unitPrice;
-//         const calculatedSubTotal = calculateSubTotal(unitPrice, value);
-
-//         setFormData(prevFormData => ({
-//             ...prevFormData,
-//             quantity: value,
-//             subTotal: calculatedSubTotal,
-//         }));
-//     };
-
-//     useEffect(() => {
-//         const fetchProducts = async () => {
-//             try {
-//                 const ProductsData = await fetchProductsDropdown();
-//                 setDropdown(prevDropdown => ({
-//                     ...prevDropdown,
-//                     products: ProductsData.map(data => ({
-//                         id: data._id,
-//                         label: data.product_name?.trim(),
-//                         unitPrice: data.sale_price,
-//                         productDescription: data.product_description,
-//                     })),
-//                 }));
-//             } catch (error) {
-//                 console.error('Error fetching Products dropdown data:', error);
-//             }
-//         };
-
-//         fetchProducts();
-//     }, []);
-
-//     useEffect(() => {
-//         const fetchUnitOfMeasure = async () => {
-//             try {
-//                 const UnitOfMeasureData = await fetchUnitOfMeasureDropdown();
-//                 setDropdown(prevDropdown => ({
-//                     ...prevDropdown,
-//                     unitofmeasure: UnitOfMeasureData.map(data => ({
-//                         id: data._id,
-//                         label: data.uom_name,
-//                     })),
-//                 }));
-//             } catch (error) {
-//                 console.error('Error fetching Unit Of Measure dropdown data:', error);
-//             }
-//         };
-
-//         fetchUnitOfMeasure();
-//     }, []);
-
-
-//     const toggleBottomSheet = (type) => {
-//         setSelectedType(isVisible ? null : type);
-//         setIsVisible(!isVisible);
-//     };
-
-//     const validateForm = (fieldsToValidate) => {
-//         Keyboard.dismiss();
-//         const { isValid, errors } = validateFields(formData, fieldsToValidate);
-//         setErrors(errors);
-//         return isValid;
-//     };
-
-//     const handleSubmit = async () => {
-//         const fieldsToValidate = ['spareParts', 'tax'];
-//         if (validateForm(fieldsToValidate)) {
-//     const requestBody = {
-//         job_registration_id: "66cc681fbf21f17a3e23c6ba",
-//         date: "2024-08-26T11:33:53.718Z",
-//         status: "waiting for parts",
-//         created_by: null,
-//         created_by_name: "",
-//         assigned_to: "66aca087b8b0f7479320d8c3",
-//         assigned_to_name: "Akhil",
-//         warehouse_id: formData?.warehouse.id ?? null,
-//         warehouse_name: formData.warehouse?.label ?? null,
-//         job_diagnosis_ids: [
-//             {
-//                 job_diagnosis_id: "66cc6838bf21f17a3e23c6e2",
-//                 job_diagnosis_parts: [
-//                     {
-//                         product_id: formData.spareParts.id,
-//                         product_name: formData.spareParts.label ?? null,
-//                         description: formData.description,
-//                         uom_id: formData.uom,
-//                         uom: dropdown.unitofmeasure.find(uom => uom.id === formData.uom)?.label || '',
-//                         quantity: parseFloat(formData.quantity),
-//                         unit_price: parseFloat(formData.unitPrice),
-//                         unit_cost: parseFloat(formData.serviceCharge),
-//                         tax_type_id: "648d9b54ef9cd868dfbfa37b",
-//                         tax_type_name: formData.tax,
-//                         job_diagnosis_id: "66cc6838bf21f17a3e23c6e2",
-//                         status: "out_of_stock",
-//                         id: "66cc6838bf21f17a3e23c6e6",
-//                         _v: 0
-//                     }
-//                 ]
-//             }
-//         ],
-//         sales_person_id: formData?.assignedTo.id ?? null,
-//         sales_person_name: formData.assignedTo?.label ?? null,
-//     };
-
-//     try {
-//         const response = await put("/updateJobRegistration", requestBody);
-// if (response.message === 'Succesfully updated Spare Part Request') {
-//     showToast({
-//         type: "success",
-//         title: "Success",
-//         message: response.message || "Spare Part Request updated successfully",
-//     });
-//     navigation.goBack();
-// } else {
-//     showToast({
-//         type: "error",
-//         title: "ERROR",
-//         message: response.message || "Spare Part Request updation failed",
-//     });
-// }
-// } catch (error) {
-// showToast({
-//     type: "error",
-//     title: "ERROR",
-//     message: "An unexpected error occurred. Please try again later.",
-// });
-// } finally {
-// setIsSubmitting(false);
-// }
-// }
-// };
-
-// return (
-// <SafeAreaView>
-//     <NavigationHeader title="Add Spare Parts" onBackPress={() => navigation.goBack()} />
-//     <RoundedScrollContainer>
-//         <FormInput
-//             label="Spare Parts"
-//             value={formData.spareParts?.label || ''}
-//             onPress={() => toggleBottomSheet('products')}
-//             errorMessage={errors.spareParts}
-//         />
-//         <FormInput
-//             label="Description"
-//             value={formData.description}
-//             onChangeText={(text) => handleFieldChange('description', text)}
-//         />
-//         <FormInput
-//             label="Quantity"
-//             value={formData.quantity}
-//             keyboardType="numeric"
-//             onChangeText={handleQuantityChange}
-//             errorMessage={errors.quantity}
-//         />
-//         <FormInput
-//             label="Unit Price"
-//             value={formData.unitPrice}
-//             keyboardType="numeric"
-//             onChangeText={(text) => handleFieldChange('unitPrice', text)}
-//             errorMessage={errors.unitPrice}
-//         />
-//         <FormInput
-//             label="Service Charge"
-//             value={formData.serviceCharge}
-//             editable={false}
-//         />
-//         <FormInput
-//             label="Tax"
-//             value={formData.tax}
-//             onPress={() => toggleBottomSheet('tax')}
-//             errorMessage={errors.tax}
-//         />
-//         <FormInput
-//             label="Subtotal"
-//             value={formData.subTotal}
-//             editable={false}
-//         />
-//         <Button
-//             title="Submit"
-//             onPress={handleSubmit}
-//             backgroundColor={COLORS.primary}
-//             color={COLORS.white}
-//         />
-//     </RoundedScrollContainer>
-
-//     {/* Bottom Sheet for selecting products, UOM, etc. */}
-//     <DropdownSheet
-//         visible={isVisible}
-//         onClose={() => setIsVisible(false)}
-//         items={dropdown[selectedType]}
-//         onSelect={(item) => {
-//             selectedType === 'products' ? handleProductSelection(item) : handleFieldChange('uom', item.id);
-//             setIsVisible(false);
-//         }}
-//     />
-// </SafeAreaView>
-// );
-// };
-
-// export default AddSpareParts;
-

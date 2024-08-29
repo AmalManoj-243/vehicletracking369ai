@@ -60,7 +60,9 @@ export const DROP_DOWN_API_ENDPOINTS = {
     COMPLAINTS: "/viewServiceRegisterSubProblem/service_register_sub_problem_list/service_register_sub_problem_dropdown",
     SUB_COMPLAINTS: "/viewServiceRegisterSubProblem/service_register_sub_problem_list/service_register_sub_problem_dropdown",
     UNIT_OF_MEASURE: "/viewUnitOfMeasure/quality_list/quality_dropdown",
+    TAXES: "/viewTaxType/tax_type_list/tax_type_dropdown",
 };
+
 
 export const DETAIL_API_ENDPOINTS = {
     // Transaction Auditing ENDPOINTS

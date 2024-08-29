@@ -169,3 +169,7 @@ export const fetchSubComplaintsDropdown = async (complaintsId) => {
 export const fetchUnitOfMeasureDropdown = async () => {
   return fetchData(DROP_DOWN_API_ENDPOINTS.UNIT_OF_MEASURE);
 }
+
+export const fetchTaxDropdown = async () => {
+  return fetchData(DROP_DOWN_API_ENDPOINTS.TAXES);
+}
