@@ -25,7 +25,6 @@ const UpdateDetails = ({ route, navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sparePartsItems, setSparePartsItems] = useState([]);
-  // console.log("🚀 ~ file: UpdateDetail.js:28 ~ UpdateDetails ~ sparePartsItems:", JSON.stringify(sparePartsItems, null, 3))
   const [subTotal, setSubTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [calculatedTax, setCalculatedTax] = useState(0);
@@ -34,8 +33,9 @@ const UpdateDetails = ({ route, navigation }) => {
     serviceCharge: 100,
     spareTotalPrice: null,
     total: null,
-  })
+  });
 
+  console.log('Formdat in update Details ',formData )
   const addSpareParts = (addedItems) => {
     const structureSpareItems = {
       product_id: addedItems?.product.id,
@@ -46,8 +46,8 @@ const UpdateDetails = ({ route, navigation }) => {
       uom: addedItems?.uom.label,
       unit_price: addedItems.unitPrice,
       unit_cost: addedItems.unitCost,    // undefined
-      tax_type_id: addedItems?.tax?.id,   // undefined
-      tax_type_name: addedItems?.tax?.label,    // undefined
+      tax_type_id: addedItems?.taxType?.id,  
+      tax_type_name: addedItems?.taxType?.label,
       tax: addedItems?.tax,
       spareTotalPrice: addedItems?.spareTotalPrice,
       total: addedItems?.total,
@@ -68,6 +68,11 @@ const UpdateDetails = ({ route, navigation }) => {
 
     const totalTax = accumulatedSparePartsTax + serviceChargeTax;
     setCalculatedTax(totalTax);
+    
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      spareTotalPrice: calculatedSparePartsTotal
+    }))
 
     const calculatedSubTotal = calculatedSparePartsTotal + serviceCharge;
     setSubTotal(calculatedSubTotal);
@@ -188,7 +193,6 @@ const UpdateDetails = ({ route, navigation }) => {
             uom: items?.uom,
             unit_price: items?.unit_price,
             total: items?.total,
-            unit_cost: items?.unit_cost,  // undefined
             tax_type_id: items?.tax_type_id,
             tax_type_name: items?.tax_type_name,
           }))

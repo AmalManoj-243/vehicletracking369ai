@@ -30,7 +30,10 @@ const AddSpareParts = ({ navigation, route }) => {
         isInclusive: false,
         tax: '',       // VAT 5% id and its label
         subTotal: '',
+        taxType: ''
     });
+
+   console.log('Formdata-------------------------------', formData) 
 
     const [errors, setErrors] = useState({});
 
@@ -205,16 +208,18 @@ const calculateTax = (unitPrice, quantity, isInclusive) => {
                     label: data.tax_type_name,
                 }));
     
-                const defaultTax = taxItems.find(tax => tax.label === 'VAT 5%');
-                setDropdown(prevDropdown => ({
-                    ...prevDropdown,
-                    taxes: taxItems,
-                }));
+                const defaultTax = taxItems.find(tax => tax.label === "vat 5%");
+                console.log("🚀 ~ file: AddSpareParts.js:210 ~ fetchTax ~ defaultTax:", defaultTax)
+                // console.log("🚀 ~ file: AddSpareParts.js:210 ~ fetchTax ~ taxItems:", taxItems)
+                // setDropdown(prevDropdown => ({
+                //     ...prevDropdown,
+                //     taxes: taxItems,
+                // }));
     
                 if (defaultTax) {
                     setFormData(prevFormData => ({
                         ...prevFormData,
-                        tax: defaultTax,
+                        taxType: defaultTax,
                     }));
                 }
             } catch (error) {
@@ -250,6 +255,7 @@ const calculateTax = (unitPrice, quantity, isInclusive) => {
                 subTotal: formData.subTotal || '',
                 spareTotalPrice: formData.spareTotalPrice || '',
                 total: formData.total || '',
+                taxType: formData.taxType || '',
             };
             addSpareParts(spareItem);
             navigation.navigate('UpdateDetail', { id });
@@ -344,7 +350,7 @@ const calculateTax = (unitPrice, quantity, isInclusive) => {
                     dropIcon="menu-down"
                     required
                     editable={false}
-                    value={formData.tax?.label || 'VAT 5%'}
+                    value={formData.taxType?.label || 'VAT 5%'}
                 />
                 <CheckBox
                     checked={formData.isInclusive}
