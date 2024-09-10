@@ -32,9 +32,10 @@ import QuickServiceFormTabs from "@screens/Home/Sections/Services/QuickService/Q
 import QuickServiceScreen from "@screens/Home/Sections/Services/QuickService/QuickServiceScreen";
 import { ServiceScreen } from "@screens/Home/Sections/Services";
 import { SparePartsRequestScreen } from "@screens/Home/Sections/Services/SparePartsRequest";
-import SparePartsRequestDetails from "@screens/Home/Sections/Services/SparePartsRequest/SparePartsRequestDetails";
 import { AddSpareParts, ServiceDetails, UpdateDetails } from "@screens/Home/Sections/Services/QuickService";
 import { KPIListingScreen } from "@screens/KPIDashboard";
+import SparePartsRequestDetails from "@screens/Home/Sections/Services/SparePartsRequest/SparePartsRequestDetails";
+import SparePartsIssueCreation from "@screens/Home/Sections/Services/SparePartsRequest/SparePartsIssueCreation";
 
 const Stack = createNativeStackNavigator();
 
@@ -194,6 +195,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="SparePartsRequestDetails"
         component={SparePartsRequestDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SparePartsIssueCreation"
+        component={SparePartsIssueCreation}
         options={{ headerShown: false }}
       />
 

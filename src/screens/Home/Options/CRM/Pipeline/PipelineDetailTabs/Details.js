@@ -54,8 +54,6 @@ const Details = ({ pipelineId }) => {
     }
   };
 
-
-
   return (
     <RoundedScrollContainer>
       <View style={{ marginBottom: 10, width: '30%', alignSelf: 'flex-end' }}>

@@ -28,14 +28,15 @@ const UpdateDetails = ({ route, navigation }) => {
   const [subTotal, setSubTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [calculatedTax, setCalculatedTax] = useState(0);
+
   const [formData, setFormData] = useState({
     subTotal: null,
     serviceCharge: 100,
     spareTotalPrice: null,
     total: null,
   });
-
   console.log('Formdat in update Details ',formData )
+
   const addSpareParts = (addedItems) => {
     const structureSpareItems = {
       product_id: addedItems?.product.id,
@@ -164,7 +165,6 @@ const UpdateDetails = ({ route, navigation }) => {
     } finally {
       setIsSubmitting(false);
     }
-
   }
 
   const handleSubmit = async () => {
@@ -177,8 +177,8 @@ const UpdateDetails = ({ route, navigation }) => {
           job_registration_id: id,
           proposed_action_id: null,
           proposed_action_name: null,
-          done_by_id: currentUser?.related_profile?._id || null,  //
-          done_by_name: currentUser?.related_profile?.name || '', // 
+          done_by_id: currentUser?.related_profile?._id || null, 
+          done_by_name: currentUser?.related_profile?.name || '',
           untaxed_total_amount: parseInt(formData.spareTotalPrice, 0),  // NAN
           parts_or_service_required: null,
           service_type: null,

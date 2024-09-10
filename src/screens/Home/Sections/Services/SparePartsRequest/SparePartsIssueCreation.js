@@ -1,300 +1,387 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { SafeAreaView } from '@components/containers';
-import NavigationHeader from '@components/Header/NavigationHeader';
-import { RoundedScrollContainer } from '@components/containers';
-import { DetailField } from '@components/common/Detail';
-import { OverlayLoader } from '@components/Loader';
+import React, { useEffect, useState } from 'react';
+import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
+import { TextInput as FormInput } from '@components/common/TextInput';
+import { fetchProductsDropdown,fetchUnitOfMeasureDropdown,fetchTaxDropdown } from '@api/dropdowns/dropdownApi';
+import { DropdownSheet } from '@components/common/BottomSheets';
+import { NavigationHeader } from '@components/Header';
 import { Button } from '@components/common/Button';
-import { formatDateTime } from '@utils/common/date';
-import { showToastMessage } from '@components/Toast';
-import { fetchServiceDetails } from '@api/details/detailApi';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
-import { post, put } from '@api/services/utils';
-import { useAuthStore } from '@stores/auth';
-import { showToast } from '@utils/common';
+import { Keyboard } from 'react-native';
+import { validateFields } from '@utils/validation';
+import { CheckBox } from '@components/common/CheckBox';
 
-const SparePartsIssueCreation = ({ route, navigation }) => {
-  const { id } = route.params || {};
-  const currentUser = useAuthStore((state) => state.user);
-  const [details, setDetails] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sparePartsItems, setSparePartsItems] = useState([]);
-  // console.log("🚀 ~ file: UpdateDetail.js:28 ~ UpdateDetails ~ sparePartsItems:", JSON.stringify(sparePartsItems, null, 3))
-  const [subTotal, setSubTotal] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [calculatedTax, setCalculatedTax] = useState(0);
-  const [formData, setFormData] = useState({
-    subTotal: null,
-    serviceCharge: 100,
-    spareTotalPrice: null,
-    total: null,
-  })
+const SparePartsIssueCreation = ({ navigation, route }) => {
+    const { id, addSpareParts } = route?.params || {};
+    const [selectedType, setSelectedType] = useState(null);
+    const [isVisible, setIsVisible] = useState(false);
 
-  const addSpareParts = (addedItems) => {
-    const structureSpareItems = {
-      product_id: addedItems?.product.id,
-      product_name: addedItems?.product.label,
-      description: addedItems?.description,
-      quantity: addedItems?.quantity,
-      uom_id: addedItems?.uom?.id,
-      uom: addedItems?.uom.label,
-      unit_price: addedItems.unitPrice,
-      unit_cost: addedItems.unitCost,    // undefined
-      tax_type_id: addedItems?.tax?.id,   // undefined
-      tax_type_name: addedItems?.tax?.label,    // undefined
-      tax: addedItems?.tax,
-      spareTotalPrice: addedItems?.spareTotalPrice,
-      total: addedItems?.total,
-    }
-    setSparePartsItems(prevItems => [...prevItems, structureSpareItems]);
-    console.log("Structure Spare Items", structureSpareItems)
-  };
+    const [dropdown, setDropdown] = useState({
+        products: [],
+        unitofmeasure: [],
+        taxes: [],
+    });
 
-  const calculateTotals = () => {
-    let calculatedSparePartsTotal = sparePartsItems.reduce(
-      (sum, item) => sum + parseFloat(item.spareTotalPrice || 0), 0);
+    const [formData, setFormData] = useState({
+        product: '',
+        description: '',
+        quantity: '1',
+        uom: '',
+        unitPrice: '',
+        isInclusive: false,
+        tax: '',       // VAT 5% id and its label
+        subTotal: '',
+        taxType: ''
+    });
 
-    let accumulatedSparePartsTax = sparePartsItems.reduce(
-    (sum, item) => sum + parseFloat(item.tax || 0), 0);
+   console.log('Formdata-------------------------------', formData) 
 
-    const serviceCharge = parseFloat(formData.serviceCharge) || 0;
-    const serviceChargeTax = serviceCharge * 0.05;
+    const [errors, setErrors] = useState({});
 
-    const totalTax = accumulatedSparePartsTax + serviceChargeTax;
-    setCalculatedTax(totalTax);
+    const calculateSubTotal = (unitPrice, quantity, isInclusive) => {
+        const subtotal = parseFloat(unitPrice) * parseFloat(quantity);
 
-    const calculatedSubTotal = calculatedSparePartsTotal + serviceCharge;
-    setSubTotal(calculatedSubTotal);
+        if (isInclusive) {
+            const tax = (subtotal / 1.05) * 0.05;
+            return (subtotal - tax).toFixed(2);
+        } else {
+            return subtotal.toFixed(2);
+        }
+    };
 
-    const total = calculatedSubTotal + totalTax;
-    setTotal(total);
-  };
-  
-    useEffect(() => {
-      calculateTotals();
-    }, [sparePartsItems, formData.serviceCharge]);
+    const handleQuantityChange = (value, ) => {
+        const spareTotalPrice = calculateSpareTotalPrice(formData.unitPrice, value, formData.isInclusive);
+        const tax = calculateTax(formData.unitPrice, value, formData.isInclusive);
+        const total = calculateTotal(spareTotalPrice, tax);
     
-    const fetchDetails = async () => {
-      setIsLoading(true);
-      try {
-        const [updatedDetails] = await fetchServiceDetails(id);
-        setDetails(updatedDetails || {});
-        const jobDiagnosisParts = updatedDetails?.job_diagnoses?.flatMap(diagnosis =>
-          diagnosis.job_diagnosis_parts?.map(part => {
-          const { spare_parts_line_lists, product_lists, ...cleanPart } = part;
-          return cleanPart;
-        }) || []
-      ) || [];
-
-      setSparePartsItems(prevItems => {
-        const existingPartIds = new Set(prevItems.map(item => item._id));
-        const newItems = jobDiagnosisParts.filter(item => !existingPartIds.has(item._id));
-        return [...prevItems, ...newItems];
-      });
-    } catch (error) {
-      console.error('Error fetching service details:', error);
-      showToastMessage('Failed to fetch service details. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      if (id) {
-        fetchDetails(id);
-      }
-    }, [id])
-  );
-
-  const handleJobApproveQuote = async (approveJobs) => {
-    const requestPayload = {
-      job_registration_id: id,
-      date: new Date(),
-      status: 'waiting for parts',
-      created_by: currentUser?.related_profile?._id,
-      created_by_name: currentUser?.related_profile?.name ?? '',
-      assigned_to: details?.assignee_id ?? '',
-      assigned_to_name: details?.assignee_name ?? null,
-      warehouse_id: currentUser?.warehouse?.warehouse_id,
-      warehouse_name: currentUser?.warehouse?.warehouse_name,
-      job_diagnosis_ids: [{
-        job_diagnosis_id: approveJobs.job_diagnosis_parts_result?.[0]?.job_diagnosis_id,
-        job_diagnosis_parts: approveJobs.job_diagnosis_parts_result
-      }],
-      sales_person_id: currentUser?.related_profile?._id,
-      sales_person_name: currentUser?.related_profile?.name,
-    }
-    console.log("🚀 ~ file: UpdateDetail.js:78 ~ handleJobApproveQuote ~ requestPayload:", JSON.stringify(requestPayload, null, 2))
-    try {
-      const response = await post("/createJobApproveQuote", requestPayload);
-      console.log("🚀 ~ submit ~ response:", JSON.stringify(response, null, 2));
-      if (response.success === 'true') {
-        showToast({
-          type: "success",
-          title: "Success",
-          message: response.message,
-        });
-        navigation.navigate("QuickServiceScreen");
-      } else {
-        showToast({
-          type: "error",
-          title: "ERROR",
-          message: response.message,
-        });
-      }
-    } catch (error) {
-      console.error("Error job approvilng is failed:", error);
-      showToast({
-        type: "error",
-        title: "ERROR",
-        message: "An unexpected error occurred. Please try again later.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-
-  }
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    const requestPayload = {
-      _id: id,
-      job_stage: 'Waiting for spare',
-      create_job_diagnosis: [
-        {
-          job_registration_id: id,
-          proposed_action_id: null,
-          proposed_action_name: null,
-          done_by_id: currentUser?.related_profile?._id || null,  //
-          done_by_name: currentUser?.related_profile?.name || '', // 
-          untaxed_total_amount: parseInt(formData.spareTotalPrice, 0),  // NAN
-          parts_or_service_required: null,
-          service_type: null,
-          service_charge: parseInt(formData.serviceCharge, 0),
-          total_amount: parseInt(formData.total, 0),    // // NAN
-          parts: sparePartsItems.map((items) => ({
-            product_id: items?.product_id,
-            product_name: items?.product_name,
-            description: items?.description,
-            quantity: items?.quantity,
-            uom_id: items?.uom_id,
-            uom: items?.uom,
-            unit_price: items?.unit_price,
-            total: items?.total,
-            unit_cost: items?.unit_cost,  // undefined
-            tax_type_id: items?.tax_type_id,
-            tax_type_name: items?.tax_type_name,
-          }))
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            quantity: value,
+            spareTotalPrice,
+            tax,
+            total,
+        }));
+    };
+    
+    const handleFieldChange = (field, value) => {
+        let updatedFormData = { ...formData, [field]: value };
+    
+        if (field === 'unitPrice' || field === 'quantity') {
+            const spareTotalPrice = calculateSpareTotalPrice(updatedFormData.unitPrice, updatedFormData.quantity, updatedFormData.isInclusive);
+            const tax = calculateTax(updatedFormData.unitPrice, updatedFormData.quantity, updatedFormData.isInclusive);
+            const total = calculateTotal(spareTotalPrice, tax);
+    
+            updatedFormData = {
+                ...updatedFormData,
+                subTotal: calculateSubTotal(updatedFormData.unitPrice, updatedFormData.quantity, tax, updatedFormData.isInclusive),
+                spareTotalPrice,
+                tax,
+                total,
+            };
         }
-      ]
-    }
-    try {
-      const response = await put("/updateJobRegistration", requestPayload);
-      console.log("Console Of Request", requestPayload)
-      if (response.success === 'true') {
-        handleJobApproveQuote(response);
-        showToast({
-          type: "success",
-          title: "Success",
-          message: response.message || "Spare Parts Request updated successfully",
-        });
-        navigation.navigate("QuickServiceScreen");
-      } else {
-        console.error("Submit Failed:", response.message);
-        showToast({
-          type: "error",
-          title: "ERROR",
-          message: response.message || "Spare Parts Request update failed",
-        });
-      }
-    } catch (error) {
-      console.error("Error Submitting Spare Parts Request:", error);
-      showToast({
-        type: "error",
-        title: "ERROR",
-        message: "An unexpected error occurred. Please try again later.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <NavigationHeader
-        title="Spare Parts Issue Creation"
-        onBackPress={() => navigation.goBack()} />
-      <RoundedScrollContainer>
-        <DetailField label="Mobile Number" value={details?.customer_mobile || '-'} />
-        <DetailField label="Email" value={details?.customer_email || '-'} />
-        <DetailField label="Warehouse Name" value={details?.warehouse_name || '-'} />
-        <DetailField label="Created On" value={formatDateTime(details.date)} />
-        <DetailField label="Created By" value={details?.assignee_name || '-'} />
-        <DetailField label="Brand Name" value={details?.brand_name || '-'} />
-        <DetailField label="Device Name" value={details?.device_name || '-'} />
-        <DetailField label="Consumer Model" value={details?.consumer_model_name || '-'} />
-        {/* <FlatList
-          data={sparePartsItems}
-          renderItem={({ item }) => (
-            <SparePartsList item={item} />
-          )}
-          keyExtractor={(item, index) => index.toString()}
-        /> */}
-        {sparePartsItems.length > 0 && <>
-        <View style={styles.totalSection}>
-          <Text style={styles.totalLabel}>Sub Total : </Text>
-          <Text style={styles.totalValue}>{subTotal.toFixed(2)}</Text>
-        </View>
-        <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Tax : </Text>
-            <Text style={styles.totalValue}>{calculatedTax.toFixed(2)}</Text>
-        </View>
-          <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Total : </Text>
-            <Text style={styles.totalValue}>{total.toFixed(2)}</Text>
-          </View>
-        </>
+    
+        setFormData(updatedFormData);
+    
+        if (errors[field]) {
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                [field]: null,
+            }));
         }
-        <Button
-          title={'SUBMIT'}
-          width={'50%'}
-          alignSelf={'center'}
-          backgroundColor={COLORS.orange}
-          onPress={handleSubmit}
-        />
-
-      </RoundedScrollContainer>
-      <OverlayLoader visible={isLoading || isSubmitting} />
-    </SafeAreaView>
-  );
+    };
+    
+    const handleInclusiveChange = (isInclusive) => {
+        const spareTotalPrice = calculateSpareTotalPrice(formData.unitPrice, formData.quantity, isInclusive);
+        const tax = calculateTax(formData.unitPrice, formData.quantity, isInclusive);
+        const total = calculateTotal(spareTotalPrice, tax);
+    
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            isInclusive,
+            spareTotalPrice,
+            tax,
+            total,
+        }));
+    };
+    
+const calculateSpareTotalPrice = (unitPrice, quantity, isInclusive) => {
+    const subtotal = parseFloat(unitPrice) * parseFloat(quantity);
+    
+    if (isInclusive) {
+        const spareTotalWithoutTax = (subtotal / 1.05).toFixed(2);
+        return spareTotalWithoutTax;
+    } else {
+        return subtotal.toFixed(2);
+    }
 };
 
-const styles = StyleSheet.create({
-  label: {
-    marginVertical: 5,
-    fontSize: 16,
-    color: COLORS.primaryThemeColor,
-    fontFamily: FONT_FAMILY.urbanistSemiBold,
-  },
-  totalSection: {
-    flexDirection: 'row',
-    marginVertical: 5,
-    margin: 10,
-    alignSelf: "center",
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.urbanistBold,
-  },
-  totalValue: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.urbanistBold,
-    color: '#666666',
-  },
-});
+const calculateTax = (unitPrice, quantity, isInclusive) => {
+    const subtotal = parseFloat(unitPrice) * parseFloat(quantity);
+    if (isInclusive) {
+        return (subtotal - (subtotal / 1.05)).toFixed(2);
+    } else {
+        return (subtotal * 0.05).toFixed(2);
+    }
+};
+
+    const handleProductSelection = (selectedProduct) => {
+        const unitPrice = selectedProduct.unitPrice ? selectedProduct.unitPrice.toString() : '0';
+        const description = selectedProduct.productDescription || '';
+        const defaultQuantity = "1";
+        const initialSubTotal = (parseFloat(unitPrice) * parseFloat(defaultQuantity)).toFixed(2);
+        const tax = calculateTax(initialSubTotal,defaultQuantity,formData.isInclusive);
+        const total = calculateTotal(initialSubTotal,tax)
+        const spareTotalPrice = initialSubTotal
+
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            product: selectedProduct,
+            description,
+            unitPrice,
+            quantity: defaultQuantity,
+            tax,
+            spareTotalPrice,
+            total,
+        }));
+    };
+
+    const calculateTotal = (spareTotalPrice, tax,) => {
+        return (parseFloat(spareTotalPrice) + parseFloat(tax)).toFixed(2);
+    };
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const ProductsData = await fetchProductsDropdown();
+                setDropdown(prevDropdown => ({
+                    ...prevDropdown,
+                    products: ProductsData.map(data => ({
+                        id: data._id,
+                        label: data.product_name?.trim(),
+                        unitPrice: data.sale_price,
+                        productDescription: data.product_description,
+                    })),
+                }));
+            } catch (error) {
+                console.error('Error fetching Products dropdown data:', error);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+    useEffect(() => {
+        const fetchUnitOfMeasure = async () => {
+            try {
+                const UnitOfMeasureData = await fetchUnitOfMeasureDropdown();
+                const uomItems = UnitOfMeasureData.map(data => ({
+                    id: data._id,
+                    label: data.uom_name,
+                }));
+
+                const defaultUOM = uomItems.find(uom => uom.label === 'Pcs');
+                setDropdown(prevDropdown => ({
+                    ...prevDropdown,
+                    unitofmeasure: uomItems,
+                }));
+
+                if (defaultUOM) {
+                    setFormData(prevFormData => ({
+                        ...prevFormData,
+                        uom: defaultUOM,
+                    }));
+                }
+            } catch (error) {
+                console.error('Error fetching Unit Of Measure dropdown data:', error);
+            }
+        };
+
+        fetchUnitOfMeasure();
+    }, []);
+
+
+    useEffect(() => {
+        const fetchTax = async () => {
+            try {
+                const TaxData = await fetchTaxDropdown();
+                const taxItems = TaxData.map(data => ({
+                    id: data._id,
+                    label: data.tax_type_name,
+                }));
+    
+                const defaultTax = taxItems.find(tax => tax.label === "vat 5%");
+                console.log("🚀 ~ file: AddSpareParts.js:210 ~ fetchTax ~ defaultTax:", defaultTax)
+                // setDropdown(prevDropdown => ({
+                //     ...prevDropdown,
+                //     taxes: taxItems,
+                // }));
+    
+                if (defaultTax) {
+                    setFormData(prevFormData => ({
+                        ...prevFormData,
+                        taxType: defaultTax,
+                    }));
+                }
+            } catch (error) {
+                console.error('Error fetching Tax dropdown data:', error);
+            }
+        };
+    
+        fetchTax();
+    }, []);
+    
+    const toggleBottomSheet = (type) => {
+        setSelectedType(isVisible ? null : type);
+        setIsVisible(!isVisible);
+    };
+
+    const validateForm = (fieldsToValidate) => {
+        Keyboard.dismiss();
+        const { isValid, errors } = validateFields(formData, fieldsToValidate);
+        setErrors(errors);
+        return isValid;
+    };
+
+    const handleAddItems = async () => {
+        const fieldsToValidate = ['product', 'tax'];
+        if (validateForm(fieldsToValidate)) {
+            const spareItem = {
+                product: formData.product || '',
+                description: formData.description || '',
+                quantity: formData.quantity || '',
+                uom: formData.uom || '',
+                unitPrice: formData.unitPrice || '',
+                tax: formData.tax || '',
+                subTotal: formData.subTotal || '',
+                spareTotalPrice: formData.spareTotalPrice || '',
+                total: formData.total || '',
+                taxType: formData.taxType || '',
+            };
+            addSpareParts(spareItem);
+            navigation.navigate('UpdateDetail', { id });
+        }
+    };
+
+    const renderBottomSheet = () => {
+        let items = [];
+        let fieldName = '';
+
+        switch (selectedType) {
+            case 'Spare Name':
+                items = dropdown.products;
+                fieldName = 'product';
+                break;
+            case 'UOM':
+                items = dropdown.unitofmeasure;
+                fieldName = 'uom';
+                break;
+            case 'Tax':
+                items = dropdown.taxes;
+                fieldName = 'tax';
+                break;
+            default:
+                return null;
+        }
+        return (
+            <DropdownSheet
+                isVisible={isVisible}
+                items={items}
+                title={selectedType}
+                onClose={() => setIsVisible(false)}
+                onValueChange={(value) => {
+                    if (selectedType === 'Spare Name') {
+                        handleProductSelection(value);
+                    } else {
+                        handleFieldChange(fieldName, value);
+                    }
+                }}
+            />
+        );
+    };
+
+    return (
+        <SafeAreaView>
+            <NavigationHeader
+                title="Add Spare Parts"
+                onBackPress={() => navigation.goBack()}
+            />
+            <RoundedScrollContainer>
+                <FormInput
+                    label="Spare Name"
+                    placeholder="Select Product Name"
+                    dropIcon="menu-down"
+                    multiline
+                    required
+                    editable={false}
+                    validate={errors.product}
+                    value={formData.product?.label?.trim()}
+                    onPress={() => toggleBottomSheet('Spare Name')}
+                />
+                <FormInput
+                    label="Description"
+                    placeholder="Enter Description"
+                    value={formData.description}
+                    onChangeText={(value) => handleFieldChange('description', value)}
+                />
+                <FormInput
+                    label="Quantity"
+                    placeholder="Enter Quantity"
+                    keyboardType="numeric"
+                    value={formData.quantity}
+                    onChangeText={(value) => handleQuantityChange(value)}
+                />
+                <FormInput
+                    label="UOM"
+                    placeholder="Unit Of Measure"
+                    dropIcon="menu-down"
+                    editable={false}
+                    value={formData.uom?.label || 'Pcs'}
+                />
+                <FormInput
+                    label="Unit Price"
+                    placeholder="Enter Unit Price"
+                    editable={false}
+                    keyboardType="numeric"
+                    value={formData.unitPrice}
+                />
+                <FormInput
+                    label="Tax"
+                    placeholder="Enter Tax"
+                    dropIcon="menu-down"
+                    required
+                    editable={false}
+                    value={formData.taxType?.label || 'VAT 5%'}
+                />
+                <CheckBox
+                    checked={formData.isInclusive}
+                    onPress={() => handleInclusiveChange(!formData.isInclusive)}
+                    label="Is Inclusive"
+                />
+                <FormInput
+                    label="Spare Item Total"
+                    editable={false}
+                    value={formData.spareTotalPrice}
+                />
+                <FormInput
+                    label="Spare Item Tax"
+                    editable={false}
+                    value={formData.tax}
+                />
+                <FormInput
+                    label="Total"
+                    editable={false}
+                    value={formData.total}
+                />
+                <Button
+                    title={'Add Item'}
+                    width={'50%'}
+                    alignSelf={'center'}
+                    backgroundColor={COLORS.primaryThemeColor}
+                    onPress={handleAddItems}
+                /> 
+                {renderBottomSheet()}
+            </RoundedScrollContainer>
+        </SafeAreaView>
+    );
+};
 
 export default SparePartsIssueCreation;

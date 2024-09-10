@@ -210,7 +210,6 @@ const calculateTax = (unitPrice, quantity, isInclusive) => {
     
                 const defaultTax = taxItems.find(tax => tax.label === "vat 5%");
                 console.log("🚀 ~ file: AddSpareParts.js:210 ~ fetchTax ~ defaultTax:", defaultTax)
-                // console.log("🚀 ~ file: AddSpareParts.js:210 ~ fetchTax ~ taxItems:", taxItems)
                 // setDropdown(prevDropdown => ({
                 //     ...prevDropdown,
                 //     taxes: taxItems,
