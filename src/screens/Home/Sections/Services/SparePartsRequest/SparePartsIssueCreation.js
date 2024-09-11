@@ -128,9 +128,9 @@ const SparePartsIssueCreation = ({ navigation, route }) => {
             />
             <RoundedScrollContainer>
                 <DetailField label="Date" value={formatDateTime(details.date)} />
-                <DetailField label="Assigned To" value={details?.assignee_name || '-'} />
+                <DetailField label="Assigned To" value={details?.assigned_to_name || '-'} />
                 <DetailField label="Job Registration No" value={details?.sequence_no || '-'} />
-                <DetailField label="Spare Part Request" value={details?.sequence_no || '-'} />
+                <DetailField label="Spare Part Request" value={details?.job_registrations?.[0]?.sequence_no || '-'} />
                 <DetailField label="Warehouse" value={details?.warehouse_name || '-'} />
                 <FlatList
                     data={sparePartsItems}

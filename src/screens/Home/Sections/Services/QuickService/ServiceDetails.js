@@ -11,7 +11,7 @@ import { fetchServiceDetails } from '@api/details/detailApi';
 import { OverlayLoader } from '@components/Loader';
 import { LoadingButton } from '@components/common/Button';
 import { COLORS } from '@constants/theme';
-import { post } from '@api/services/utils';
+import { post, put } from '@api/services/utils';
 import { ConfirmationModal } from '@components/Modal';
 
 const ServiceDetails = ({ navigation, route }) => {
@@ -49,12 +49,16 @@ const ServiceDetails = ({ navigation, route }) => {
         setIsSubmitting(true);
         try {
             const closeJobData = {
-                service_id: serviceId,
-                reason: closingReason,
+                _id: details._id,
+                job_stage: "Closed",
+                job_stage_close_reason: null,
             };
-            const response = await post('/closeJob', closeJobData);   ///
+            console.log("Success", closeJobData)
+            const response = await put('/updateJobRegistration', closeJobData);   
+            console.log(response)
             if (response.success === "true") {
                 showToastMessage('Job successfully closed!');
+                navigation.navigate('QuickServiceScreen');
             } else {
                 showToastMessage('Failed to close job. Please try again.');
             }

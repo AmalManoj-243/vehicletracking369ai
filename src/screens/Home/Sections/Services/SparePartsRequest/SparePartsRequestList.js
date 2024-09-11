@@ -9,7 +9,7 @@ const SparePartsRequestList = ({ item, onPress }) => {
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{item?.sequence_no || '-'}</Text>
-        <Text style={styles.content}>{item?.created_by_name || '-'}</Text>
+        <Text style={styles.content}>{item?.created_by?.employee_name || '-'}</Text>
       </View>
       <View style={styles.rightColumn}>
         <Text style={[styles.contentRight]}>{formatDate(item?.date_time, 'dd MMM yyyy') || '-'}</Text>

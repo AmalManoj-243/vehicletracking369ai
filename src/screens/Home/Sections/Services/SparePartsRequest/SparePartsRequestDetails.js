@@ -77,10 +77,10 @@ const SparePartsRequestDetails = ({ navigation, route }) => {
             />
             <RoundedScrollContainer>
                 <DetailField label="Date" value={formatDateTime(details.date)} />
-                <DetailField label="Status" value={details?.status || '-'} />
                 <DetailField label="Assigned To" value={details?.assigned_to_name || '-'} />
-                <DetailField label="Created By" value={details?.assignee_name || '-'} />
-                <DetailField label="Job Registration No" value={details?.sequence_no || '-'} />
+                <DetailField label="Created By" value={details?.created_by?.employee_name || '-'} />
+                <DetailField label="Job Registration No" value={details?.job_registrations?.[0]?.sequence_no || '-'} /> 
+                <DetailField label="Status" value={details?.status || '-'} />
                 <FlatList
                     data={sparePartsItems}
                     renderItem={({ item }) => <SparePartsIssueList item={item} />}
