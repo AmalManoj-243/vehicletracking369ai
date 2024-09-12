@@ -30,12 +30,17 @@ import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
 import QuickServiceFormTabs from "@screens/Home/Sections/Services/QuickService/QuickServiceFormTabs/QuickServiceFormTabs";
 import QuickServiceScreen from "@screens/Home/Sections/Services/QuickService/QuickServiceScreen";
-import { ServiceScreen } from "@screens/Home/Sections/Services";
+
 import { SparePartsRequestScreen } from "@screens/Home/Sections/Services/SparePartsRequest";
 import { AddSpareParts, ServiceDetails, UpdateDetails } from "@screens/Home/Sections/Services/QuickService";
 import { KPIListingScreen } from "@screens/KPIDashboard";
 import SparePartsRequestDetails from "@screens/Home/Sections/Services/SparePartsRequest/SparePartsRequestDetails";
 import SparePartsIssueCreation from "@screens/Home/Sections/Services/SparePartsRequest/SparePartsIssueCreation";
+import ServicesScreen from "@screens/Home/Sections/Services/ServicesScreen";
+import { ServiceScreen } from "@screens/Home/Sections/Services";
+import ConfigurationsScreen from "@screens/Home/Sections/Services/Configurations/ConfigurationsScreen";
+import SpareManagementsScreen from "@screens/Home/Sections/Services/SpareManagements/SpareManagementsScreen";
+import ServiceScreens from "@screens/Home/Sections/Services/Service/ServiceScreens";
 
 const Stack = createNativeStackNavigator();
 
@@ -152,10 +157,15 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
-      {/* Services */}
+      {/* Service */}
       <Stack.Screen
-        name="ServiceScreen"
-        component={ServiceScreen}
+        name="ServiceScreens"
+        component={ServiceScreens}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ServicesScreen"
+        component={ServicesScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -163,7 +173,6 @@ const StackNavigator = () => {
         component={QuickServiceScreen}
         options={{ headerShown: false }}
       />
-
       <Stack.Screen
         name="QuickServiceFormTabs"
         component={QuickServiceFormTabs}
@@ -174,7 +183,6 @@ const StackNavigator = () => {
         component={UpdateDetails}
         options={{ headerShown: false }}
       />
-
       <Stack.Screen
         name="AddSpareParts"
         component={AddSpareParts}
@@ -186,7 +194,19 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
-      {/* Spare Parts */}
+      {/* Configuration */}
+      <Stack.Screen
+        name="ConfigurationsScreen"
+        component={ConfigurationsScreen}
+        options={{ headerShown: false }}
+      />
+
+      {/* Spare Managements */}
+      <Stack.Screen
+        name="SpareManagementsScreen"
+        component={SpareManagementsScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="SparePartsRequestScreen"
         component={SparePartsRequestScreen}

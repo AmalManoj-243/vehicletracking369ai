@@ -1,3 +1,3 @@
-import ServiceScreen from "./ServiceScreen";
+import ServicesScreen from "./ServicesScreen";
 
-export {ServiceScreen}
+export {ServicesScreen}

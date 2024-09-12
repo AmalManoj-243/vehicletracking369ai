@@ -21,7 +21,6 @@ const ServiceDetails = ({ navigation, route }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
-    const [closingReason, setClosingReason] = useState('');
     const [actionToPerform, setActionToPerform] = useState(null);
 
     const fetchDetails = async () => {
@@ -69,7 +68,6 @@ const ServiceDetails = ({ navigation, route }) => {
             fetchDetails();
             setIsSubmitting(false);
             setIsConfirmationModalVisible(false);
-            setClosingReason('');
         }
     };
 
@@ -145,6 +143,16 @@ const ServiceDetails = ({ navigation, route }) => {
                 <DetailField label="Pre Condition" value={details?.pre_condition || '-'} />
                 <DetailField label="Estimation" value={details?.estimation?.toString() || '-'} />
                 <DetailField label="Accessories" value={accessoriesString} />
+                {/* <DetailField label="Complaints"value={details?.service_register_complaints?.[0]?.
+                    master_problem_name || '-'} />
+                <DetailField label="Sub Complaints" value={details?.service_register_complaints?.[0]?.
+                    sub_problems_ids?.[0]?.sub_problem_name || '-'} />
+                <DetailField 
+                    label="Remarks"
+                    value={details?.service_register_complaints?.[0]?.remarks || '-'}
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical={'top'} /> */}
 
                 <View style={{ flexDirection: 'row', marginVertical: 20 }}>
                     <LoadingButton

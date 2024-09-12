@@ -165,7 +165,7 @@ const HomeScreen = ({ navigation }) => {
           />
           <ImageContainer
             source={require("@assets/images/Home/section/services.png")}
-            onPress={() => navigateToScreen("ServiceScreen")}
+            onPress={() => navigateToScreen("ServicesScreen")}
             backgroundColor="#f37021"
             title="Services"
           />

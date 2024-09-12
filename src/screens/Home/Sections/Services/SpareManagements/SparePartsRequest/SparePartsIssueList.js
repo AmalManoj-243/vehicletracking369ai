@@ -16,7 +16,7 @@ const SparePartsIssueList = ({ item }) => {
         <Text style={styles.content}>{item?.uom || '-'}</Text>
       </View>
       <View style={styles.rightColumn}>
-        <Text style={styles.contentRight}>{item?.status || '-'}</Text>
+        <Text style={[styles.contentRight, { color: 'red' }]}>{item?.status || '-'}</Text>
       </View>
     </TouchableOpacity>
   );
