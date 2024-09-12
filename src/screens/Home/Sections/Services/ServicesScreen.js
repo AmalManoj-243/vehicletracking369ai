@@ -12,7 +12,6 @@ const ServicesScreen = ({ navigation }) => {
     const options =
         [
             { title: 'Service', image: require('@assets/images/Home/section/service.png'), onPress: () => navigation.navigate('ServiceScreens') },
-            { title: 'Configurations', image: require('@assets/images/Home/section/service.png'), onPress: () => navigation.navigate('ConfigurationsScreen') },
             { title: 'Spare Managements', image: require('@assets/images/Home/section/spare_parts.png'), onPress: () => navigation.navigate('SpareManagementsScreen') },
         ]
 

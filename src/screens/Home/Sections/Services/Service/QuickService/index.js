@@ -1,6 +1,6 @@
-import ServiceScreen from "./QuickServiceScreen";
+import QuickServiceScreen from "./QuickServiceScreen";
 import ServiceDetails from "./ServiceDetails";
-import UpdateDetails from "./UpdateDetail";
 import AddSpareParts from "./AddSpareParts";
+import UpdateDetails from "./UpdateDetail";
 
-export { ServiceScreen, ServiceDetails, UpdateDetails, AddSpareParts}
+export {QuickServiceScreen, ServiceDetails, AddSpareParts, UpdateDetails};

@@ -29,16 +29,11 @@ import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/Bo
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
 import { KPIListingScreen } from "@screens/KPIDashboard";
-import ServicesScreen from "@screens/Home/Sections/Services/ServicesScreen";
-import ConfigurationsScreen from "@screens/Home/Sections/Services/Configurations/ConfigurationsScreen";
-import SpareManagementsScreen from "@screens/Home/Sections/Services/SpareManagements/SpareManagementsScreen";
-import ServiceScreens from "@screens/Home/Sections/Services/Service/ServiceScreens";
-import QuickServiceFormTabs from "@screens/Home/Sections/Services/Service/QuickService/QuickServiceFormTabs/QuickServiceFormTabs";
-import SparePartsRequestDetails from "@screens/Home/Sections/Services/SpareManagements/SparePartsRequest/SparePartsRequestDetails";
-import { SparePartsRequestScreen } from "@screens/Home/Sections/Services/SpareManagements/SparePartsRequest";
-import SparePartsIssueCreation from "@screens/Home/Sections/Services/SpareManagements/SparePartsRequest/SparePartsIssueCreation";
-import QuickServiceScreen from "@screens/Home/Sections/Services/Service/QuickService/QuickServiceScreen";
-import { AddSpareParts, ServiceDetails, UpdateDetails } from "@screens/Home/Sections/Services/Service/QuickService";
+import { SparePartsIssueCreation, SparePartsRequestDetails, SparePartsRequestScreen } from "@screens/Home/Sections/Services/SpareManagements/SparePartsRequest";
+import { AddSpareParts, QuickServiceScreen, ServiceDetails, UpdateDetails } from "@screens/Home/Sections/Services/Service/QuickService";
+import { ServiceScreens } from "@screens/Home/Sections/Services/Service";
+import { ServicesScreen } from "@screens/Home/Sections/Services";
+import { SpareManagementsScreen } from "@screens/Home/Sections/Services/SpareManagements";
 
 const Stack = createNativeStackNavigator();
 
@@ -162,16 +157,6 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="ServicesScreen"
-        component={ServicesScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="QuickServiceScreen"
-        component={QuickServiceScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
         name="UpdateDetails"
         component={UpdateDetails}
         options={{ headerShown: false }}
@@ -187,27 +172,30 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="ServicesScreen"
+        component={ServicesScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="QuickServiceScreen"
+        component={QuickServiceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="QuickServiceFormTabs"
         component={QuickServiceFormTabs}
         options={{ headerShown: false }}
       />
 
-      {/* Configuration */}
-      <Stack.Screen
-        name="ConfigurationsScreen"
-        component={ConfigurationsScreen}
-        options={{ headerShown: false }}
-      />
-
       {/* Spare Managements */}
-      <Stack.Screen
-        name="SpareManagementsScreen"
-        component={SpareManagementsScreen}
-        options={{ headerShown: false }}
-      />
       <Stack.Screen
         name="SparePartsRequestScreen"
         component={SparePartsRequestScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareManagementsScreen"
+        component={SpareManagementsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
