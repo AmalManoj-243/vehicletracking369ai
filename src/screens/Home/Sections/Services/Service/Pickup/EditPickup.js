@@ -5,17 +5,17 @@ import { NavigationHeader } from '@components/Header';
 import { LoadingButton } from '@components/common/Button';
 import { showToast } from '@utils/common';
 import { put } from '@api/services/utils';
-import { RoundedScrollContainer } from '@components/containers';
+import { RoundedScrollContainer, UploadsContainer } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import { fetchAssigneeDropdown, fetchCustomerNameDropdown, fetchDeviceDropdown, fetchBrandDropdown, fetchConsumerModelDropdown, fetchWarehouseDropdown, fetchSalesPersonDropdown } from '@api/dropdowns/dropdownApi';
 import { formatDateTime } from '@utils/common/date';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { ActionModal } from '@components/Modal'
+import { formatData } from '@utils/formatters';
 import { FlatList } from 'react-native-gesture-handler';
 import SignaturePad from '@components/SignaturePad'
 import { validateFields } from '@utils/validation';
-import { formatData } from '@utils/formatters';
 import { CheckBox } from '@components/common/CheckBox';
 import { formatDate } from '@utils/common/date';
 import { AntDesign } from '@expo/vector-icons';
@@ -54,6 +54,7 @@ const EditPickup = ({ navigation, route }) => {
     setIsLoading(true);
     try {
       const [detail] = await fetchPickupDetails(pickupId);
+      console.log("🚀 ~ EditPickup ~ detail:", JSON.stringify(detail, null, 2));
       setFormData((prevFormData) => ({
         ...prevFormData,
         date: detail?.date || new Date(),
@@ -64,10 +65,15 @@ const EditPickup = ({ navigation, route }) => {
         serialNumber: detail?.serial_Number || '',
         warehouse: { id: detail?.warehouse_id || '', label: detail?.warehouse_name || '' },
         pickupScheduleTime: detail?.pickup_schedule_time || null,
-        assignee: { id: detail?.assignee_id || '', label: detail?.assignee_name || '' },
-        salesPerson: { id: detail?.sales_person_id || '', label: detail?.sales_person_name || '' },
         remarks: detail?.remarks || '',
-        isShowCoordinatorSignaturePad: detail?.customer_signature && detail?.driver_signature
+        isShowCoordinatorSignaturePad: detail?.customer_signature && detail?.driver_signature,
+        customerSignatureUrl: detail?.customer_signature || null,
+        driverSignatureUrl: detail?.driver_signature || null,
+        coordinatorSignatureUrl: detail?.service_coordinator_signature || null,
+        image: detail?.attachment_details || null,
+        // below two are not shown in web so commanded
+        // assignee: { id: detail?.assignee_id || '', label: detail?.assignee_name || '' },
+        // salesPerson: { id: detail?.sales_person_id || '', label: detail?.sales_person_name || '' },
       }));
     } catch (error) {
       console.error('Error fetching pickup details:', error);
@@ -179,9 +185,9 @@ const EditPickup = ({ navigation, route }) => {
   };
 
   const handleDeleteImage = (index) => {
-    const newImageUrls = [...imageUrls];
-    newImageUrls.splice(index, 1);
-    setImageUrls(newImageUrls);
+    const updatedImages = [...formData.imageUrls];
+    updatedImages.splice(index, 1);
+    handleFieldChange('imageUrls', updatedImages);
   };
 
   useEffect(() => {
@@ -435,11 +441,13 @@ const EditPickup = ({ navigation, route }) => {
           setScrollEnabled={setScrollEnabled}
           setUrl={setDriverSignatureUrl}
           title={'Driver Signature'}
+          editable={false}
         />
         <SignaturePad
           setScrollEnabled={setScrollEnabled}
           setUrl={setCustomerSignatureUrl}
           title={'Customer Signature'}
+          editable={false}
         />
         {formData?.isShowCoordinatorSignaturePad  
         && <SignaturePad
@@ -455,20 +463,21 @@ const EditPickup = ({ navigation, route }) => {
           numberOfLines={5}
           onChangeText={(value) => handleFieldChange('remarks', value)}
         />
-        <ActionModal title={'Attach file'} setImageUrl={(url) => setImageUrls(prevUrls => [...prevUrls, url])} />
-        {imageUrls && imageUrls.length > 0 && (
-          <View style={styles.uploadsContainer}>
-            <Text style={styles.labell}>Uploads</Text>
-            <FlatList
-              data={formatData(imageUrls, 4)}
-              numColumns={4}
-              keyExtractor={(item, index) => index.toString()}
-              contentContainerStyle={{ padding: 10 }}
-              showsVerticalScrollIndicator={false}
-              renderItem={renderItem}
-            />
-          </View>
-        )}
+        <ActionModal
+        title="Attach file"
+        setImageUrl={(url) => handleFieldChange('imageUrls', [...formData.imageUrls, url])} />
+        {formData.imageUrls?.length > 0 && (
+        <UploadsContainer imageUrls={formData.imageUrls} onDelete={handleDeleteImage} /> )}
+        <View style={styles.uploadsContainer}>
+        <Text style={styles.labell}>Uploads</Text>
+        <FlatList
+          data={formatData(imageUrls, 4)}
+          numColumns={4}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={{ padding: 10 }}
+          showsVerticalScrollIndicator={false}
+          renderItem={renderItem} />
+        </View>
         {renderBottomSheet()}
         <LoadingButton title="SAVE" onPress={handleSubmit} marginTop={10} loading={isSubmitting} />
         <View style={{ marginBottom: 10 }} />

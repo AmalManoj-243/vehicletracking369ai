@@ -18,7 +18,8 @@ const PickupList = ({ item, onPress }) => {
       </View>
       <View style={styles.rightColumn}>
         <Text style={styles.content}>{item?.sales_person_name}</Text>
-        <Text style={[styles.contentRight, { color: 'red' }]}>{item?.job_stage || '-'}</Text>
+        {item?.job_registration?.map((job, index) => (
+        <Text key={index} style={[styles.contentRight, { color: 'red' }]}>{job?.job_stage || '-'}</Text> ))}
       </View>
     </TouchableOpacity>
   );
