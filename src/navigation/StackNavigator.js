@@ -14,7 +14,7 @@ import { ProductDetail } from "@components/common/Detail";
 import { CustomerDetails, CustomerScreen } from "@screens/Home/Sections/Customer";
 import { MarketStudyScreen } from "@screens/Home/Options/MarketStudy";
 import { EditVisitPlan, VisitPlanForm, VisitsPlanScreen, VisitPlanDetails } from "@screens/Home/Options/VisitsPlan";
-import { EditVisit, VisitDetails, VisitForm, VisitScreen } from "@screens/Home/Options/Visits"; //customer visit
+import { EditVisit, VisitDetails, VisitScreen } from "@screens/Home/Options/Visits"; //customer visit
 import { MapViewScreen } from "@components/MapViewScreen";
 import { CRMScreen } from "@screens/Home/Options/CRM";
 import { EnquiryRegisterForm, EnquiryRegisterScreen } from "@screens/Home/Options/CRM/EnquiryRegister";
@@ -27,7 +27,7 @@ import { PipelineDetailTabs } from "@screens/Home/Options/CRM/Pipeline/PipelineD
 import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/BoxInspection";
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
-import { KPIListingScreen } from "@screens/KPIDashboard";
+import { AddParticipants, KPIActionDetails, KPIListingScreen } from "@screens/KPIDashboard";
 import { SparePartsIssueCreation, SparePartsRequestDetails, SparePartsRequestScreen } from "@screens/Home/Sections/Services/SpareManagements/SparePartsRequest";
 import { AddSpareParts, QuickServiceDetails, QuickServiceScreen, QuickServiceUpdateDetails } from "@screens/Home/Sections/Services/Service/QuickService";
 import { ServiceScreens } from "@screens/Home/Sections/Services/Service";
@@ -374,9 +374,21 @@ const StackNavigator = () => {
         component={MarkAttendance}
         options={{ headerShown: false }}
       />
+
+      {/* KPI               KPI               KPI */}
       <Stack.Screen
         name="KPIListingScreen"
         component={KPIListingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="KPIActionDetails"
+        component={KPIActionDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddParticipants"
+        component={AddParticipants}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

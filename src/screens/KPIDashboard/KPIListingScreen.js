@@ -7,7 +7,7 @@ import { OverlayLoader } from '@components/Loader';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
-import { fetchKPIDashboardData } from '@api/services/generalApi';
+import { fetchKPIDashboard } from '@api/services/generalApi';
 import KPIList from './KPIList';
 import { useAuthStore } from '@stores/auth';
 
@@ -31,7 +31,7 @@ const KPIListingScreen = ({ navigation }) => {
     const fetchKPIDetails = async () => {
         try {
 
-            const data = await fetchKPIDashboardData({ userId: currentUserId });
+            const data = await fetchKPIDashboard({ userId: currentUserId });
             setDashBoardDetails({
                 assignedKpiData: data.assigned_kpi_data || [],
                 importantKpiData: data.important_kpi_data || [],
@@ -76,7 +76,7 @@ const KPIListingScreen = ({ navigation }) => {
         if (item.empty) {
             return <EmptyItem />
         }
-        return <KPIList item={item} onPress={() => console.log("")} />
+        return <KPIList item={item} onPress={() => navigation.navigate('KPIActionDetails', { id: item._id })} />
     }
 
     const renderEmptyState = () => (
@@ -109,7 +109,6 @@ const KPIListingScreen = ({ navigation }) => {
                 title={`${kpiCategory} KPI List`}
                 onBackPress={() => navigation.goBack()}
             />
-            {/* <SearchContainer placeholder="Search Enquiries.." onChangeText={''} /> */}
             <RoundedContainer>
                 {renderKPIList()}
             </RoundedContainer>

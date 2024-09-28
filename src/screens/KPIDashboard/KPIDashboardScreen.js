@@ -7,7 +7,7 @@ import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
 import { useIsFocused } from '@react-navigation/native';
 import { useAuthStore } from '@stores/auth';
 import { showToastMessage } from '@components/Toast';
-import { fetchKPIDashboardData } from '@api/services/generalApi';
+import { fetchKPIDashboard } from '@api/services/generalApi';
 
 const KPIDashboardScreen = ({ navigation }) => {
     const screenWidth = Dimensions.get('window').width;
@@ -26,7 +26,7 @@ const KPIDashboardScreen = ({ navigation }) => {
 
     const fetchKPIDetails = async () => {
         try {
-            const data = await fetchKPIDashboardData({ userId: currentUserId });
+            const data = await fetchKPIDashboard({ userId: currentUserId });
             setDashBoardDetails({
                 assignedKpiData: data.assigned_kpi_data || [],
                 importantKpiData: data.important_kpi_data || [],

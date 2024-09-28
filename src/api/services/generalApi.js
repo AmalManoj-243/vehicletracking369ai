@@ -100,7 +100,7 @@ export const fetchPickup = async ({ offset, limit, loginEmployeeId }) => {
     handleApiError(error);
     throw error;
   }
-}; 
+};
 
 export const fetchService = async ({ offset, limit, loginEmployeeId }) => {
   try {
@@ -115,7 +115,7 @@ export const fetchService = async ({ offset, limit, loginEmployeeId }) => {
     handleApiError(error);
     throw error;
   }
-}; 
+};
 
 export const fetchSpareParts = async ({ offset, limit, loginEmployeeId }) => {
   try {
@@ -260,12 +260,12 @@ export const fetchAttendance = async ({ userId, date }) => {
   }
 };
 
-export const fetchKPIDashboardData = async ({userId}) => {
-  try{
-    const queryParams = {login_employee_id: userId};
-    const response = await get(API_ENDPOINTS.VIEW_KPI,queryParams);
+export const fetchKPIDashboard = async ({ userId }) => {
+  try {
+    const queryParams = { login_employee_id: userId };
+    const response = await get(API_ENDPOINTS.VIEW_KPI, queryParams);
     return response.data;
-  } catch(error) {
+  } catch (error) {
     handleApiError(error);
     throw error;
   }
