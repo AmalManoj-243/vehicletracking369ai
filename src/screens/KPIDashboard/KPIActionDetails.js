@@ -12,12 +12,10 @@ import { LoadingButton } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { put } from '@api/services/utils';
-import { ConfirmationModal, PauseModal, UpdatesModal } from '@components/Modal';
+import { ConfirmationModal, PauseModal, ReAssignModal, UpdatesModal } from '@components/Modal';
 import { formatDateTime } from '@utils/common/date';
-import { UpdateList } from '@components/CRM';
+import { StartList, PauseList, UpdateList } from '@components/CRM';
 import { useAuthStore } from '@stores/auth';
-import PauseList from '@components/CRM/PauseList';
-import ReAssignModal from '@components/Modal/ReAssignModal';
 
 const KPIActionDetails = ({ navigation, route }) => {
 
@@ -34,6 +32,7 @@ const KPIActionDetails = ({ navigation, route }) => {
     const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
     const [updatesList, setUpdatesList] = useState([]);
     const [pauseList, setPauseList] = useState([]);
+    const [startList, setStartList] = useState([]);
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -59,18 +58,24 @@ const KPIActionDetails = ({ navigation, route }) => {
     const handleStartTask = async () => {
         setIsSubmitting(true);
         try {
+            // console.log("Start Data Here", updateStartData)
             const updateStartData = {
-                _id: kpi_id,
+                _id: details._id || id,
                 status: 'In progress',
                 assignee_id: currentUser._id,
                 assignee_name: currentUser?.related_profile?.name,
                 progress_status: 'Ongoing',
                 isDeveloper: false,
-                estimatedTime: foundAssignee?.estimated_time,
+                estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
             };
             const response = await put('/updateKpiTasks', updateStartData);
+            console.log("Start Response",response)
             if (response.success === "true") {
                 showToastMessage('Action Started Successfully');
+                setStartList(prevStartList => [
+                    ...prevStartList, 
+                    { ...updateStartData }
+                ]);
             } else {
                 showToastMessage('Failed to start task. Please try again.');
             }
@@ -83,19 +88,21 @@ const KPIActionDetails = ({ navigation, route }) => {
             setIsStartModalVisible(false);
         }
     };
-
+    
     const handlePauseTask = async () => {
         setIsSubmitting(true);
         try {
+            // console.log("Pause Data Here", updatePauseData)
             const updatePauseData = {
-                id: _id,
+                _id: details._id || id,
                 assignee_id: currentUser._id,
                 assignee_name: currentUser?.related_profile?.name,
                 progress_status: 'Pause',
-                pause_reason: pause?.pause_reason,
+                pause_reason: pause?.pause_reason, //
                 isDeveloper: false,
             };
             const response = await put('/updateKpiTasks', updatePauseData);
+            console.log("Pause Response",response)
             if (response.success === "true") {
                 showToastMessage('Action paused Successfully');
             } else {
@@ -114,21 +121,50 @@ const KPIActionDetails = ({ navigation, route }) => {
     const handleReAssignTask = async () => {
         setIsSubmitting(true);
         try {
-            const updatePauseData = {
-                assignee_id: this.login_employee_id,
-                assignee_name: this.login_employee_name,
-                // reassign_reason: ${this.login_employee_name} reassined the task to ${this.re_assign.assignee_name} due to ${this.re_assign.reassign_reason},
-                // _id: kpi_id,
-                // assignedToId: this.re_assign.assignee_id,
-                // assignedToName: this.re_assign.assignee_name,
-                // estimatedTime: this.re_assign.estimatedTime,
-                // isDeveloper: false,
+            const updateReAssignData = {
+                _id: details._id || id,
+                assignee_id: currentUser._id,
+                assignee_name: currentUser?.related_profile?.name,
+                estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
+                isDeveloper: false,
+                // reassign_reason: currentUser?.related_profile?.name, reassigned the task to ${this.re_assign.assignee_name} due to ${this.re_assign.reassign_reason},
+                // assignedToId: re_assign?.assignee_id,
+                // assignedToName: re_assign?.assignee_name,
             };
-            const response = await put('/updateKpiTasks', updatePauseData);
+            const response = await put('/updateKpiTasks', updateReAssignData);
             if (response.success === "true") {
-                showToastMessage('Action paused Successfully');
+                showToastMessage('Re Assigned Successfully');
             } else {
-                showToastMessage('Failed to pause task. Please try again.');
+                showToastMessage('Failed to Re-Assign task. Please try again.');
+            }
+        } catch (error) {
+            console.error('API error:', error);
+            showToastMessage('An error occurred. Please try again.');
+        } finally {
+            fetchDetails();
+            setIsSubmitting(false);
+            setIsStartModalVisible(false);
+        }
+    };
+
+    const handleCompleteTask = async () => {
+        setIsSubmitting(true);
+        try {
+            const updateReAssignData = {
+                _id: details._id || id,
+                assignee_id: currentUser._id,
+                assignee_name: currentUser?.related_profile?.name,
+                estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
+                isDeveloper: false,
+                // reassign_reason: currentUser?.related_profile?.name, reassigned the task to ${this.re_assign.assignee_name} due to ${this.re_assign.reassign_reason},
+                // assignedToId: re_assign?.assignee_id,
+                // assignedToName: re_assign?.assignee_name,
+            };
+            const response = await put('/updateKpiTasks', updateReAssignData);
+            if (response.success === "true") {
+                showToastMessage('Re Assigned Successfully');
+            } else {
+                showToastMessage('Failed to Re-Assign task. Please try again.');
             }
         } catch (error) {
             console.error('API error:', error);
@@ -215,6 +251,15 @@ const KPIActionDetails = ({ navigation, route }) => {
                     </TouchableOpacity>
                 </View>
 
+                <FlatList
+                    data={startList}
+                    keyExtractor={(item) => item._id}
+                    contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
+                    renderItem={({ item }) => (
+                        <StartList item={item} />
+                    )}
+                    showsVerticalScrollIndicator={false}
+                />
                 <FlatList
                     data={updatesList}
                     keyExtractor={(item) => item._id}
@@ -345,18 +390,15 @@ const KPIActionDetails = ({ navigation, route }) => {
                 />
                 <ReAssignModal
                     isVisible={isAssignModalVisible}
-                    header='Re-Assigning'
-                    title={'Reason'}
-                    multiline
-                    numberOfLines={2}
+                    header='Re-Assigning' 
                     onClose={() => setIsAssignModalVisible(!isAssignModalVisible)}
-                    onSubmit={saveUpdates}
+                    onSubmit={handleReAssignTask}
                 />
                 <ConfirmationModal
                     isVisible={isStartModalVisible}
                     onCancel={() => setIsStartModalVisible(false)}
-                    onConfirm={handleStartTask}
                     headerMessage='Are you sure you want to Start this task?'
+                    onConfirm={handleStartTask}
                 />
                 <OverlayLoader visible={isLoading || isSubmitting} />
             </RoundedScrollContainer>

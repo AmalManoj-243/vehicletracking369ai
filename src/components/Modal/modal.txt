@@ -8,7 +8,7 @@ import { TextInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import { fetchAssigneeDropdown } from '@api/dropdowns/dropdownApi';
 
-const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = '' }) => {
+const ReAssignModal = ({ isVisible, onClose, onSubmit, header = '' }) => {
     const [formState, setFormState] = useState({
         assignee: '',
         estimatedTime: '',
@@ -16,8 +16,7 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
         errorText: ''
     });
 
-    const [selectedType, setSelectedType] = useState(null);
-    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+    const [isDropdownVisible, setDropdownVisible] = useState(false);
     const [dropdown, setDropdown] = useState({
         assignee: [],
     });
@@ -43,6 +42,10 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
 
     const handleInputChange = (name, value) => {
         setFormState((prevState) => ({ ...prevState, [name]: value }));
+    };
+
+    const toggleDropdownSheet = () => {
+        setDropdownVisible(!isDropdownVisible);
     };
 
     const handleSave = () => {
@@ -82,34 +85,6 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
 
     const { assignee, estimatedTime, reason, errorText } = formState;
 
-    const toggleBottomSheet = (type) => {
-        setSelectedType(type);
-        setIsDropdownVisible(!isDropdownVisible);
-    };
-
-    const renderBottomSheet = () => {
-        let items = [];
-        let fieldName = '';
-
-        switch (selectedType) {
-            case 'Assignee':
-                items = dropdown.assignee;
-                fieldName = 'assignee';
-                break;
-            default:
-                return null;
-        }
-        return (
-            <DropdownSheet
-                isVisible={isDropdownVisible}
-                items={items}
-                title={selectedType}
-                onClose={() => setIsDropdownVisible(false)}
-                onValueChange={(value) => handleInputChange(fieldName, value)}
-            />
-        );
-    };
-
     return (
         <Modal
             isVisible={isVisible}
@@ -132,7 +107,7 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                         editable={false}
                         required
                         column={false}
-                        onPress={() => toggleBottomSheet('Assignee')}
+                        onPress={toggleDropdownSheet}
                         validate={errorText}
                         multiline
                         numberOfLines={2}
@@ -161,8 +136,15 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                         <Button title="Assign" onPress={handleSave} />
                     </View>
                 </View>
+
+                <DropdownSheet
+                    isVisible={isDropdownVisible}
+                    items={dropdown.assignee}
+                    title={'Assignee'}
+                    onClose={toggleDropdownSheet}
+                    onValueChange={(value) => handleInputChange('assignee', value)}
+                />
             </View>
-            {renderBottomSheet()}
         </Modal>
     );
 };
