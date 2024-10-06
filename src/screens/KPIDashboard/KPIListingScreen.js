@@ -8,7 +8,7 @@ import { RoundedContainer, SafeAreaView } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
 import { fetchKPIDashboard } from '@api/services/generalApi';
-import KPIList from './KPIList';
+import KPIList from './KpiList';
 import { useAuthStore } from '@stores/auth';
 
 const KPIListingScreen = ({ navigation }) => {
@@ -18,6 +18,7 @@ const KPIListingScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const route = useRoute();
     const { kpiCategory } = route.params;
+    console.log("🚀 ~ file: KPIListingScreen.js:21 ~ KPIListingScreen ~ kpiCategory:", kpiCategory)
     const [dashBoardDetails, setDashBoardDetails] = useState({
         assignedKpiData: [],
         importantKpiData: [],
@@ -31,7 +32,6 @@ const KPIListingScreen = ({ navigation }) => {
     const fetchKPIDetails = async () => {
         try {
             const data = await fetchKPIDashboard({ userId: currentUserId });
-            console.log("🚀 ~ Full API Response:", JSON.stringify(data, null, 2));
             setDashBoardDetails({
                 assignedKpiData: data.assigned_kpi_data || [],
                 importantKpiData: data.important_kpi_data || [],
@@ -68,10 +68,10 @@ const KPIListingScreen = ({ navigation }) => {
             case 'Regular Task':
                 data = dashBoardDetails.serviceKpiData;
                 break;
-            case 'In Progress':
+            case 'In-Progress':
                 data = dashBoardDetails.inProgressKpi;
                 break;
-            case 'Complete':
+            case 'Completed':
                 data = dashBoardDetails.completedKpi;
                 break;
             default:

@@ -16,187 +16,124 @@ import { ConfirmationModal, PauseModal, ReAssignModal, UpdatesModal } from '@com
 import { formatDateTime } from '@utils/common/date';
 import { StartList, PauseList, UpdateList } from '@components/CRM';
 import { useAuthStore } from '@stores/auth';
+import KPIUpdateList from '@components/KPI/KPIUpdateList';
 
 const KPIActionDetails = ({ navigation, route }) => {
 
     const { id } = route?.params || {};
     const currentUser = useAuthStore((state) => state.user);
+  
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [participants, setParticipants] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [actionToPerform, setActionToPerform] = useState(null);
     const [isStartModalVisible, setIsStartModalVisible] = useState(false);
     const [isPauseModalVisible, setIsPauseModalVisible] = useState(false);
     const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
-    const [updatesList, setUpdatesList] = useState([]);
-    const [pauseList, setPauseList] = useState([]);
-    const [startList, setStartList] = useState([]);
+    const [kpiUpdates, setKpiUpdates] = useState([]);
 
     const fetchDetails = async () => {
         setIsLoading(true);
         try {
-            const updatedDetails = await fetchKPIDashboardDetails(id);
-            setDetails(updatedDetails[0] || {});
+          const [updatedDetails] = await fetchKPIDashboardDetails(id);
+          setDetails(updatedDetails || {});
+          setKpiUpdates(updatedDetails?.kpiStatusUpdates || []);
         } catch (error) {
-            console.error('Error fetching KPI details:', error);
-            showToastMessage('Failed to fetch KPI details. Please try again.');
+          console.error('Error fetching KPI details:', error);
+          showToastMessage('Failed to fetch KPI details. Please try again.');
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    };
-
-    useFocusEffect(
+      };
+    
+      useFocusEffect(
         useCallback(() => {
-            if (id) {
-                fetchDetails(id);
-            }
+          if (id) {
+            fetchDetails();
+          }
         }, [id])
-    );
-
-    const handleStartTask = async () => {
-        setIsSubmitting(true);
-        try {
-            const updateStartData = {
-                _id: details._id || id,
-                status: 'In progress',
-                assignee_id: currentUser._id,
-                assignee_name: currentUser?.related_profile?.name,
-                progress_status: 'Ongoing',
-                isDeveloper: false,
-                estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
-                time: formatDateTime(new Date(), "Pp"),
-            };
+      );
     
-            console.log("Start Data Here", updateStartData);
-            const response = await put('/updateKpiTasks', updateStartData);
-            console.log("Start Response", response);
-            if (response.status === true) {
-                showToastMessage('Action Started Successfully');
-                setStartList(prevStartList => [
-                    ...prevStartList, 
-                    { ...updateStartData }
-                ]);
-            } else {
-                showToastMessage('Failed to start task. Please try again.');
-            }
+      const handleTaskAction = async (actionData, successMessage, modalSetter) => {
+        setIsSubmitting(true);
+        try {
+          const response = await put('/updateKpiTasks',actionData);
+          if (response.status === true) {
+            showToastMessage(successMessage);
+          } else {
+            showToastMessage('Failed to perform action. Please try again.');
+          }
         } catch (error) {
-            console.error('API error:', error);
-            showToastMessage('An error occurred. Please try again.');
+          console.error('API error:', error);
+          showToastMessage('An error occurred. Please try again.');
         } finally {
-            fetchDetails();
-            setIsSubmitting(false);
-            setIsStartModalVisible(false);
+          fetchDetails();
+          setIsSubmitting(false);
+          modalSetter(false);
         }
-    };
+      };
     
-    const handlePauseTask = async () => {
-        setIsSubmitting(true);
-        console.log("haiiiii")
-        try {
-            const updatePauseData = {
-                _id: details._id || id,
-                assignee_id: currentUser._id,
-                assignee_name: currentUser?.related_profile?.name,
-                progress_status: 'Pause',
-                // pause_reason: pause?.pause_reason, //
-                isDeveloper: false,
-            };
-            console.log("Pause Data Here", updatePauseData)
-            const response = await put('/updateKpiTasks', updatePauseData);
-            console.log("Pause Response : ",response)
-            if (response.success === "true") {
-                showToastMessage('Action paused Successfully');
-            } else {
-                showToastMessage('Failed to pause task. Please try again.');
-            }
-        } catch (error) {
-            console.error('API error:', error);
-            showToastMessage('An error occurred. Please try again.');
-        } finally {
-            fetchDetails();
-            setIsSubmitting(false);
-            setIsStartModalVisible(false);
-        }
-    };
-
-    const handleReAssignTask = async () => {
-        setIsSubmitting(true);
-        try {
-            const updateReAssignData = {
-                _id: details._id || id,
-                assignee_id: currentUser._id,
-                assignee_name: currentUser?.related_profile?.name,
-                estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
-                isDeveloper: false,
-            };
-            console.log("ReAssign Data Here", updateReAssignData)
-            const response = await put('/updateKpiTasks', updateReAssignData);
-            console.log("ReAssign Response : ",response)
-            if (response.success === "true") {
-                showToastMessage('Re Assigned Successfully');
-            } else {
-                showToastMessage('Failed to Re-Assign task. Please try again.');
-            }
-        } catch (error) {
-            console.error('API error:', error);
-            showToastMessage('An error occurred. Please try again.');
-        } finally {
-            fetchDetails();
-            setIsSubmitting(false);
-            setIsStartModalVisible(false);
-        }
-    };
-
-    const handleCompleteTask = async () => {
-        setIsSubmitting(true);
-        try {
-            const updateCompleteData = {
-                _id: details._id || id,
-                assignee_id: currentUser._id,
-                assignee_name: currentUser?.related_profile?.name,
-                isDeveloper: false,
-                progress_status: "Completed",
-                status: "Completed",
-            };
-            console.log("Complete Data Here", updateCompleteData)
-            const response = await put('/updateKpiTasks', updateCompleteData);
-            console.log("Complete Response : ",response)
-            if (response.success === "true") {
-                showToastMessage('Task Completed Successfully');
-            } else {
-                showToastMessage('Failed to Complete task. Please try again.');
-            }
-        } catch (error) {
-            console.error('API error:', error);
-            showToastMessage('An error occurred. Please try again.');
-        } finally {
-            fetchDetails();
-            setIsSubmitting(false);
-            setIsStartModalVisible(false);
-        }
-    };
-
-    const saveUpdates = async (updateText, isPauseUpdate = false) => {
-        const updateHistoryData = {
-            kpiStatusUpdates: [
-                {
-                    _id: details._id || id,
-                    assignee_id: currentUser._id,
-                    assignee_name: currentUser?.related_profile?.name,
-                    time: formatDateTime(new Date(), "Pp"),
-                    isDeveloper: false,
-                    updateText: updateText || null,
-                }
-            ],
+      const handleStartTask = () => {
+        const data = {
+          _id: details._id || id,
+          status: 'In progress',
+          assignee_id: currentUser._id,
+          assignee_name: currentUser?.related_profile?.name,
+          progress_status: 'Ongoing',
+          estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
+          time: new Date(),
         };
-        if (isPauseUpdate) {
-            setPauseList((prevPauseList) => [...prevPauseList, ...updateHistoryData.kpiStatusUpdates]);
-        } else {
-            setUpdatesList((prevUpdates) => [...prevUpdates, ...updateHistoryData.kpiStatusUpdates]);
-        } setIsModalVisible(false);
-    };
+        handleTaskAction(data, 'Task started successfully', setIsStartModalVisible);
+      };
+    
+      const handlePauseTask = (pauseReason) => {
+        const data = {
+          _id: details._id || id,
+          assignee_id: currentUser._id,
+          assignee_name: currentUser?.related_profile?.name,
+          progress_status: 'Pause',
+          pause_reason: pauseReason,
+        };
+        handleTaskAction(data, 'Task paused successfully', setIsPauseModalVisible);
+      };
+    
+      const handleReAssignTask = () => {
+        const data = {
+          _id: details._id || id,
+          assignee_id: currentUser._id,
+          assignee_name: currentUser?.related_profile?.name,
+          estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
+        };
+        handleTaskAction(data, 'Task reassigned successfully', setIsAssignModalVisible);
+      };
+    
+      const handleCompleteTask = () => {
+        const data = {
+          _id: details._id || id,
+          assignee_id: currentUser._id,
+          assignee_name: currentUser?.related_profile?.name,
+          progress_status: 'Completed',
+          status: 'Completed',
+        };
+        handleTaskAction(data, 'Task completed successfully', setIsStartModalVisible);
+      };
+    
+      const saveUpdates = async (updateText) => {
+        const updateData = {
+          _id: details._id || id,
+          kpiStatusUpdates: [
+            {
+              isDeveloper: true,
+              assignee_id: currentUser._id,
+              assignee_name: currentUser?.related_profile?.name,
+              updateText,
+            },
+          ],
+        };
+    
+        handleTaskAction(updateData, 'Update saved successfully', setIsModalVisible);
+      };
 
     return (
         <SafeAreaView>
@@ -252,31 +189,12 @@ const KPIActionDetails = ({ navigation, route }) => {
                         <AntDesign name="pluscircle" size={27} color={COLORS.orange} />
                     </TouchableOpacity>
                 </View>
-
+                {/* Rendering updates */}
                 <FlatList
-                    data={startList}
+                    data={kpiUpdates}
                     keyExtractor={(item) => item._id}
-                    contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
                     renderItem={({ item }) => (
-                        <StartList item={item} />
-                    )}
-                    showsVerticalScrollIndicator={false}
-                />
-                <FlatList
-                    data={updatesList}
-                    keyExtractor={(item) => item._id}
-                    contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
-                    renderItem={({ item }) => (
-                        <UpdateList item={item} />
-                    )}
-                    showsVerticalScrollIndicator={false}
-                />
-                <FlatList
-                    data={pauseList}
-                    keyExtractor={(item) => item._id}
-                    contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
-                    renderItem={({ item }) => (
-                        <PauseList item={item} />
+                        <KPIUpdateList item={item} />
                     )}
                     showsVerticalScrollIndicator={false}
                 />
@@ -386,14 +304,11 @@ const KPIActionDetails = ({ navigation, route }) => {
                     multiline
                     numberOfLines={2}
                     onClose={() => setIsPauseModalVisible(!isPauseModalVisible)}
-                    onSubmit={(pauseReason) => {
-                        saveUpdates(pauseReason, true);
-                        handlePauseTask();
-                    }}
+                    onSubmit={handlePauseTask}
                 />
                 <ReAssignModal
                     isVisible={isAssignModalVisible}
-                    header='Re-Assigning' 
+                    header='Re-Assigning'
                     onClose={() => setIsAssignModalVisible(!isAssignModalVisible)}
                     onSubmit={handleReAssignTask}
                 />

@@ -7,6 +7,7 @@ import { NavigationHeader } from '@components/Header';
 import { TextInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
 import { fetchAssigneeDropdown } from '@api/dropdowns/dropdownApi';
+import CustomListModal from './CustomListModal';
 
 const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = '' }) => {
     const [formState, setFormState] = useState({
@@ -100,12 +101,13 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                 return null;
         }
         return (
-            <DropdownSheet
+            <CustomListModal
                 isVisible={isDropdownVisible}
                 items={items}
                 title={selectedType}
                 onClose={() => setIsDropdownVisible(false)}
                 onValueChange={(value) => handleInputChange(fieldName, value)}
+                onAddIcon={false}
             />
         );
     };
