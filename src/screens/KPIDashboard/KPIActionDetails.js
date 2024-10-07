@@ -157,11 +157,11 @@ const KPIActionDetails = ({ navigation, route }) => {
                 <DetailField label="Reference Document" value={details?.pre_condition || '-'} />
                 <DetailField label="Estimated Time (HR)" value={details?.totalEstimation?.[0]?.estimated_time?.toString() || '-'} />
                 <DetailField label="Deadline" value={details?.deadline || 'No Data'} />
-                <DetailField label="KPI Points" value={details?.deadline || '-'} />
+                <DetailField label="KPI Points" value={details?.kpi_points || '-'} />
                 <DetailField label="Warehouse" value={details?.warehouse?.[0]?.warehouse_name || '-'} />
                 <DetailField label="Is Manager Review Needed" value={details?.is_manager_review_neededd ? 'Needed' : 'Not needed' || '-'} />
                 <DetailField label="Is Customer Review Needed" value={details?.is_customer_review_needed ? 'Needed' : 'Not needed' || '-'} />
-                <DetailField label="Guidelines" value={details?.deadline || '-'} />
+                <DetailField label="Guidelines" value={details?.guide_lines || '-'} />
 
                 {/* Participants */}
                 {/* <View style={{ justifyContent: 'space-between', flexDirection: 'row', marginVertical: 10 }}>
