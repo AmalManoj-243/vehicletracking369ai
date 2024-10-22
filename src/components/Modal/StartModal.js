@@ -3,7 +3,7 @@ import { View, TouchableOpacity } from 'react-native';
 import Modal from 'react-native-modal';
 import Text from '@components/Text';
 import { NavigationHeader } from '@components/Header';
-import { FONT_FAMILY } from '@constants/theme';
+import { COLORS, FONT_FAMILY } from '@constants/theme';
 
 const StartModal = ({ isVisible, onConfirm, onCancel, headerMessage = 'Are you sure want to Confirm Sent for Approval ?', guidelines }) => {
     return (
@@ -25,7 +25,7 @@ const StartModal = ({ isVisible, onConfirm, onCancel, headerMessage = 'Are you s
                     <TouchableOpacity style={styles.modalButton} onPress={onConfirm}>
                         <Text style={styles.modalButtonText}>Yes</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.modalButton} onPress={onCancel}>
+                    <TouchableOpacity style={styles.modalButtonn} onPress={onCancel}>
                         <Text style={styles.modalButtonText}>No</Text>
                     </TouchableOpacity>
                 </View>
@@ -60,7 +60,15 @@ const styles = {
     },
     modalButton: {
         marginHorizontal: 10,
-        backgroundColor: '#2e294e',
+        backgroundColor: COLORS.green,
+        padding: 10,
+        borderRadius: 5,
+        flex: 1,
+        alignItems: 'center',
+    },
+    modalButtonn: {
+        marginHorizontal: 10,
+        backgroundColor: COLORS.lightRed,
         padding: 10,
         borderRadius: 5,
         flex: 1,

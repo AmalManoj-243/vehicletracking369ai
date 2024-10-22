@@ -1,18 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Image, Linking } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import Text from '@components/Text';
 import { FONT_FAMILY } from '@constants/theme';
 import { formatDateTime } from '@utils/common/date';
 
 const KPIUpdateList = ({ item }) => {
-  const handleFilePress = () => {
-    if (item?.file) {
-      Linking.openURL(item.file).catch(err =>
-        console.error('Failed to open URL:', err)
-      );
-    }
-  };
-
   return (
     <TouchableOpacity activeOpacity={0.8} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
@@ -22,15 +14,6 @@ const KPIUpdateList = ({ item }) => {
         <Text style={styles.content}>{item?.assignee_name || '-'}</Text>
         <Text style={styles.contentRight}>{formatDateTime(item?.time) || '-'}</Text>
       </View>
-      {item?.file && (
-        <TouchableOpacity onPress={handleFilePress} style={styles.fileContainer}>
-          {item.file.endsWith('.png') || item.file.endsWith('.jpg') || item.file.endsWith('.jpeg') ? (
-            <Image source={{ uri: item.file }} style={styles.image} resizeMode="cover" />
-          ) : (
-            <Text style={styles.fileText}>Open document</Text>
-          )}
-        </TouchableOpacity>
-      )}
     </TouchableOpacity>
   );
 };
@@ -59,7 +42,7 @@ const styles = StyleSheet.create({
   rightColumn: {
     justifyContent: 'space-between',
     flexDirection: 'row',
-    flex: 1,
+    flex: 1
   },
   head: {
     fontFamily: FONT_FAMILY.urbanistBold,
@@ -71,26 +54,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 14,
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-    textTransform: 'capitalize',
+    textTransform: 'capitalize'
   },
+
   contentRight: {
     color: '#666666',
     fontFamily: FONT_FAMILY.urbanistSemiBold,
     fontSize: 14,
-  },
-  fileContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-  },
-  fileText: {
-    color: '#007BFF', // Link color
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.urbanistSemiBold,
   },
 });
 

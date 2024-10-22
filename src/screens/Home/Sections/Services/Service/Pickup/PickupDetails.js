@@ -75,7 +75,6 @@ const PickupDetails = ({ navigation, route }) => {
             <DetailField label="Consumer Model" value={details?.consumer_model_name || '-'} />
             <DetailField label="Sequence No" value={details?.sequence_no || '-'} />
             <DetailField label="Date" value={formatDate(details?.date)} />
-            {/* <DetailField label="SalesPerson Name" value={details?.sales_person_name || '-'} /> */}
             <DetailField label="Warehouse" value={details?.warehouse_name || '-'} />
             <DetailField label="Contact Name" value={details?.customer_name || '-'} />
             <DetailField label="Contact No" value={details?.customer_phone_no || '-'} />

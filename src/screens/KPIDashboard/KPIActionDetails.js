@@ -12,7 +12,7 @@ import { Button } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { put } from '@api/services/utils';
-import { CompleteModal, DocumentModal, StartModal, PauseModal, ReAssignModal, UpdatesModal } from '@components/Modal';
+import { CompleteModal, DocumentModal, StartModal, PauseModal, ReAssignModal, UpdatesModal, ActionModal } from '@components/Modal';
 import { useAuthStore } from '@stores/auth';
 import { KPIUpdateList } from '@components/KPI';
 import { formatDateTime } from '@utils/common/date';
@@ -167,7 +167,6 @@ const KPIActionDetails = ({ navigation, route }) => {
     handleTaskAction(data, 'File Uploaded successfully');
   };
 
-
   const UploadsContainer = ({ documentUrls, onDelete }) => {
     return (
       <FlatList
@@ -276,7 +275,27 @@ const KPIActionDetails = ({ navigation, route }) => {
           marginTop={10} />
         <DetailField label="Is Mandatory" value={details?.is_mandatory ? 'Yes' : 'No' || '-'} />
         <DetailField label="Priority" value={details?.priority || '-'} />
-        <DetailField label="Checklists" value={details?.remarks || '-'} />
+        {details?.check_list?.map((item) => (<React.Fragment key={item._id}>
+          <DetailField label="Checklists" value={item.field_name || '-'} />
+          {item.is_image_mandatory && item.image_url && (
+            <Image
+              source={{ uri: item.image_url }}
+              style={{ width: 100, height: 100 }}
+              resizeMode="contain"
+            />
+          )}
+        </React.Fragment>
+        ))}
+        <ActionModal
+          title="Add Checklist"
+          setImageUrl={(url) => handleFieldChange('imageUrls', [...formData.imageUrls, url])} />
+        {formData?.imageUrls && formData?.imageUrls?.length > 0 && (
+          <UploadsContainer
+            imageUrls={formData.imageUrls}
+            onDelete={handleDeleteImage}
+          />
+        )}
+
         <View style={{ marginTop: 10, marginBottom: 10 }}>
           <DetailField
             label="Reference Document"
@@ -352,7 +371,7 @@ const KPIActionDetails = ({ navigation, route }) => {
             width={'50%'}
             backgroundColor={COLORS.brightBlue}
             onPress={() => {
-              if (details?.status === "New") { 
+              if (details?.status === "New") {
                 setIsStartModalVisible(true);
               } else {
                 handleStartTask();
@@ -460,7 +479,7 @@ const KPIActionDetails = ({ navigation, route }) => {
           onConfirm={() => {
             handleStartTask();
             setIsStartModalVisible(false);
-        }}
+          }}
         />
         <PauseModal
           isVisible={isPauseModalVisible}

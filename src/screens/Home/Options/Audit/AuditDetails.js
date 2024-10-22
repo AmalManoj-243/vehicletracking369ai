@@ -19,9 +19,7 @@ const AuditDetails = ({ navigation, route }) => {
     const fetchDetails = async () => {
         setIsLoading(true);
         try {
-            const response = await fetchAuditingDetails(auditId);
-            console.log("Fetched Details :", response); 
-            const updatedDetails = response?.data || [];
+            const updatedDetails = await fetchAuditingDetails(auditId);
             setDetails(updatedDetails[0] || {}); 
         } catch (error) {
             console.error('Error fetching Audit details:', error);
@@ -32,7 +30,7 @@ const AuditDetails = ({ navigation, route }) => {
     };    
 
     const SignatureField = ({ label, signature }) => {
-        if (signature && (signature.startsWith('http') || signature.startsWith('data:image'))) {
+        if (signature && (signature.startsWith('http') || signature.startsWith('https') || signature.startsWith('data:image'))) {
             return (
                 <View style={styles.signatureContainer}>
                 <Text style={styles.signatureLabel}>{label}</Text>
@@ -69,9 +67,9 @@ const AuditDetails = ({ navigation, route }) => {
                 textAlignVertical={'top'}
             />
             <DetailField label="Date" value={formatDate(details?.date)} />
-            <DetailField label="Amount" value={details?.amount || '-'} />
-            <DetailField label="Tax" value={details?.amount || '-'} />
-            <DetailField label="Total" value={details?.taxed_amount || '-'} />
+            <DetailField label="Amount" value={details?.amount?.toString() || '-'} />
+            <DetailField label="Tax" value={(details?.taxed_amount - details?.amount)?.toString() || '-'} />
+            <DetailField label="Total" value={details?.taxed_amount?.toString() || '-'} />
             <DetailField label="Sales Person" value={details?.sales_person_name || '-'} />
             <DetailField label="Warehouse" value={details?.warehouse_name || '-'} />
             <DetailField label="Company" value={details?.company_name || '-'} />

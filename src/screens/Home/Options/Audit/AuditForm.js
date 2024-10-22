@@ -50,14 +50,12 @@ const AuditForm = ({ navigation }) => {
   };
 
   // Function to handle scanned data
-  const handleScan = async (data) => {     // VB 203
-
+    const handleScan = async (data) => {     // VB 203
     const billParts = data.split('-')      // VB-203
     const billName = billParts[0]
     console.log("🚀 ~ file: AuditForm.js:54 ~ handleScan ~ billName:", billName)
     const billSequence = billParts.slice(1).join('-')
     setSplittedBillName(billName)
-
     resetFormState();
 
     try {
@@ -186,7 +184,7 @@ const AuditForm = ({ navigation }) => {
         case "Stock rec":
           response = await fetchBills.stockTransferDetails(billSequence);
           billDetails = response[0];
-          console.log("Bill data Stock  Transfer", JSON.stringify(billDetails, null, 2));
+          console.log("Bill data Stock Transfer", JSON.stringify(billDetails, null, 2));
           break;
 
         case "Fund rec":
@@ -279,6 +277,10 @@ const AuditForm = ({ navigation }) => {
       // Skip validation for displayName field if bill name is "Spare Issue"
       if (field === "displayName" && splittedBillName === "Spare Issue" || field === "displayName" && splittedBillName === 'E/PPAY') {
         continue;
+      }
+
+      if (splittedBillName === 'Stock rec'){
+
       }
 
       if (!displayBillDetails[field]) {
