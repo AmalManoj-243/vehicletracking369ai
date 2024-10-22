@@ -2,20 +2,27 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native'
 import React from 'react'
 import Text from '@components/Text'
 import { FONT_FAMILY } from '@constants/theme'
+import { formatDate } from '@utils/common/date'
 
 const PurchaseRequisitionList = ({item,onPress}) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
-        <Text style={styles.head}></Text>
-        <View style={styles.rightColumn}>
-          <Text style={styles.content}>{'-'}</Text>
-          <Text style={[styles.contentRight, {color: 'red'}]}>{item?.quantity || '-'}</Text>
-        </View>
+        <Text style={styles.head}>{item?.sequence_no ||'-'}</Text>
       </View>
       <View style={styles.rightColumn}>
         <Text style={styles.content}>Requested Date</Text>
-        <Text style={styles.contentRight}>{formatDateTime(item?.updatedAt) || '-'}</Text>
+        <Text style={styles.contentRight}>{formatDate(item?.request_details[0]?.request_date)|| '-'}</Text>
+      </View>
+
+      <View style={styles.rightColumn}>
+        <Text style={styles.content}>Requested By</Text>
+        <Text style={styles.contentRight}>{item?.request_details[0]?.requested_by?.employee_name || '-'}</Text>
+      </View>
+
+      <View style={styles.rightColumn}>
+        <Text style={styles.content}>Warehouse</Text>
+        <Text style={styles.contentRight}>{item?.request_details[0]?.warehouse?.warehouse_name || '-'}</Text>
       </View>
     </TouchableOpacity>
   )

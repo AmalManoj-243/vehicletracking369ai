@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Keyboard } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Keyboard, FlatList } from "react-native";
 import React, { useEffect, useState } from "react";
 import { RoundedScrollContainer, SafeAreaView } from "@components/containers";
 import { NavigationHeader } from "@components/Header";
@@ -14,32 +14,41 @@ import { COLORS, FONT_FAMILY } from "@constants/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { DatePicker } from "@components/common/DatePicker";
 import { formatDate } from "@utils/common/date";
+import ProductLineList from "./ProductLineList";
+import { useAuthStore } from "@stores/auth";
+import { post } from "@api/services/utils";
+import { OverlayLoader } from "@components/Loader";
 
-const PurchaseRequisitionForm = ({ navigation, onFieldChange }) => {
+const PurchaseRequisitionForm = ({ route,navigation }) => {
   const [dropdown, setDropdown] = useState({
     requestedByName: [],
     warehouse: [],
   });
+  const { id } = route.params || {};
+  const currentUser = useAuthStore((state) => state.user);
   const [isVisible, setIsVisible] = useState(false);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [productLines, setProductLines] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     requestDate: new Date().toISOString().slice(0, 10) ,
     requestedBy: "",
     requireBy: "",
-    warehouse: "",
-    productLines: [],
+    warehouseId: "",
+    productLines: [], 
     quantity: "",
     remarks: "",
-    id: "",
-    supplierId: "",
-    supplierName: "",
     employeeName: "",
     requestDetails: [],
     alternateProducts: [],
   });
   console.log("formData is",formData);
+  console.log('====================================');
+  console.log("Data is",id);
+  console.log('====================================');
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -88,6 +97,22 @@ const PurchaseRequisitionForm = ({ navigation, onFieldChange }) => {
     setIsDatePickerVisible(false);
   };
 
+  const handleAddProductLine = (newProductLine) => {
+    // Update the product lines state with the new product line
+    setProductLines((prevLines) => [...prevLines, newProductLine]);
+    setFormData((prevData) => ({
+      ...prevData,
+      productLines: [...prevData.productLines, newProductLine],
+    }));
+  };
+  useEffect(() => {
+    // Console log the product_lines data
+    console.log("Received Product Lines:", productLines);
+  }, [productLines]); // This will log the data whenever product_lines changes
+
+
+
+
   const renderBottomSheet = () => {
     let items = [];
     let fieldName = "";
@@ -127,6 +152,45 @@ const PurchaseRequisitionForm = ({ navigation, onFieldChange }) => {
       }));
     }
   };
+
+  const handleSubmit = async () => {
+      setIsSubmitting = true;
+      const requestPayload = {
+        request_date: formData.requestDate,
+        requested_by: formData.requestedBy,
+        require_by: formData.requestedBy,
+        warehouse_id: formData.warehouseId,
+        product_lines: productLines.map((items)=>({
+          product_name: items?.product_name,
+          product_id: items?.product_id,
+          suppliers: items?.suppliers,
+          quantity: items?.quantity,
+          remarks: items?.remarks
+        }))
+
+      }
+      try{
+        const response = await post("/createPurchaseRequest",requestPayload);
+        console.log("Submitting Purchase Requisition : ", requestPayload);
+        if (response.success === 'true'){
+          showToast({
+            type: "success",
+            title: "Success",
+            message: response.message || "Purchase Requisition created successfully",
+          });
+          navigation.navigate("PurchaseRequisitionScreen");
+        }
+      } catch(error){
+        console.error("Error Submitting Purchase Requisition:", error);
+      showToast({
+        type: "error",
+        title: "ERROR",
+        message: "An unexpected error occurred. Please try again later.",
+      });
+      } finally{
+        setIsSubmitting(false);
+      }
+  }
   const validateForm = (fieldsToValidate) => {
     Keyboard.dismiss();
     const { isValid, errors } = validateFields(formData, fieldsToValidate);
@@ -192,11 +256,18 @@ const PurchaseRequisitionForm = ({ navigation, onFieldChange }) => {
             <AntDesign name="pluscircle" size={26} color={COLORS.orange} />
           </TouchableOpacity>
         </View>
+        <FlatList 
+        data={productLines}
+        renderItem={({item}) => (
+          <ProductLineList item={item}/>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        />
 
         {renderBottomSheet()}
         <LoadingButton
           title="SAVE"
-          // onPress={handleSubmit}
+          onPress={handleSubmit}
           // loading={isSubmitting}
           marginTop={10}
         />
@@ -207,6 +278,7 @@ const PurchaseRequisitionForm = ({ navigation, onFieldChange }) => {
           onCancel={() => setIsDatePickerVisible(false)}
         />
       </RoundedScrollContainer>
+      <OverlayLoader visible={isLoading || isSubmitting} />
     </SafeAreaView>
   );
 };

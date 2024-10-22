@@ -8,14 +8,14 @@ import PurchaseRequisitionList from './PurchaseRequisitionList';
 import { EmptyState } from '@components/common/empty';
 import { FlashList } from '@shopify/flash-list';
 import { AnimatedLoader, OverlayLoader } from '@components/Loader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationHeader } from '@components/Header';
-import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
+import { RoundedContainer, SearchContainer } from '@components/containers';
 import { FABButton } from '@components/common/Button';
 import { formatData } from '@utils/formatters';
 import { fetchProductRequisitory } from '@api/services/generalApi';
 
-const PurchaseRequisitionScreen = ({ navigation }) => {
-
+const PurchaseRequisitionScreen = ({navigation}) => {
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchProductRequisitory);
   const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({ searchText: text }));
@@ -35,52 +35,53 @@ const PurchaseRequisitionScreen = ({ navigation }) => {
     fetchMoreData({ searchText });
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({item}) => {
     if (item.empty) {
       return <EmptyItem />;
     }
-    return <PurchaseRequisitionList item={item} onPress={() => navigation.navigate('ProductRequisitionForm', { id: item._id })} />;
+    return <PurchaseRequisitionList item={item} onPress={() => navigation.navigate("ProductRequisitionForm", { id: item._id })} />
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty.png')} message={'No Product Requisitions Found'} />
+    <EmptyState imageSource={require('@assets/images/EmptyData/empty_data.png')} message={''} /> //no items found 
   );
 
   const renderContent = () => (
-    <FlashList
-      data={formatData(data, 1)}
-      numColumns={1}
+    <FlashList 
+    data={formatData(data, 3)}
+      numColumns={3}
       renderItem={renderItem}
       keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={{ padding: 10, paddingBottom: 50 }}
+      contentContainerStyle={{ padding: 10, paddingBottom: 100 }}
       onEndReached={handleLoadMore}
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.2}
-      estimatedItemSize={100}
+      ListFooterComponent={loading && <AnimatedLoader visible={loading} animationSource={require('@assets/animations/loading_up_down.json')} />}
     />
   );
 
+  // Check if ProductRequisition are empty and not loading to avoid brief display of empty state during initial load
   const renderProductRequisition = () => {
     if (data.length === 0 && !loading) {
       return renderEmptyState();
     }
     return renderContent();
   };
-
+  
   return (
     <SafeAreaView>
       <NavigationHeader
-        title="Purchase Requisition"
+        title="Product Requisitory"
         onBackPress={() => navigation.goBack()}
       />
       <SearchContainer placeholder="Search Enquiries.." onChangeText={''} />
       <RoundedContainer>
-        {renderProductRequisition()}
-        <FABButton onPress={() => navigation.navigate('PurchaseRequisitionForm')} />
+        <FABButton onPress={() => navigation.navigate('ProductRequisitionForm')} />
       </RoundedContainer>
+        {renderProductRequisition()}
       <OverlayLoader visible={loading} />
     </SafeAreaView>
-  );
-};
+    );
+}
 
 export default PurchaseRequisitionScreen;

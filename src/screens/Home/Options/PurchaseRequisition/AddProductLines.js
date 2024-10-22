@@ -12,14 +12,17 @@ import {
   fetchProductsDropdown,
   fetchSupplierDropDown,
 } from "@api/dropdowns/dropdownApi";
+import { Keyboard } from "react-native";
 
 const AddProductLines = ({ navigation, route }) => {
   const [dropdown, setDropdown] = useState({
     products: [],
+    suppliers: [],
   });
   const [searchText, setSearchText] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
 
   const [formData, setFormData] = useState({
     productId: "",
@@ -44,10 +47,10 @@ const AddProductLines = ({ navigation, route }) => {
         console.error("Error fetching Products dropdown data:", error);
       }
     };
-    if(selectedType  === "Product"){
-    fetchProducts();
+    if (selectedType === "Product") {
+      fetchProducts();
     }
-  }, [searchText,selectedType]);
+  }, [searchText, selectedType]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -67,15 +70,12 @@ const AddProductLines = ({ navigation, route }) => {
     if (selectedType === "Supplier") {
       fetchSuppliers();
     }
-  },[searchText,selectedType]);
+  }, [searchText, selectedType]);
 
   const toggleBottomSheet = (type) => {
     setSelectedType(type);
     setIsVisible((prev) => !prev);
   };
-  useEffect(() => {
-    console.log("Bottom sheet visibility:", isVisible);
-  }, [isVisible]); 
 
   const handleProductSelection = (selectedProduct) => {
     setFormData((prevFormData) => ({
@@ -85,32 +85,52 @@ const AddProductLines = ({ navigation, route }) => {
     }));
   };
 
-  const handleSupplierSelection = (selectedSupplier) => {
-    const selectedSuppliersData = selectedSupplier.map((supplier) => ({
-      id: supplier.id,
-      name: supplier.label
-    }));
+  const handleSupplierSelection = (selectedValues) => {
+    setSelectedSuppliers(selectedValues);
     setFormData((prevFormData) => ({
       ...prevFormData,
-      suppliers: selectedSuppliersData, // Update suppliers in formData
+      suppliers: selectedValues,
     }));
+  };
+
+  const validateFields = (fieldsToValidate) => {
+    Keyboard.dismiss();
+    // const {isValid,}
+
   }
+
+  const handleAddProducts = () => {
+    const productLines = {
+      product_name: formData.productName || '',
+      product_id: formData.productId  || '',
+      suppliers: selectedSuppliers.map((supplier) => ({
+        supplier_id: supplier.id,
+        name: supplier.label,
+      })),
+      quantity: formData.quantity  || '',
+      remarks: formData.remarks  || '',
+    };
+    // Log the productLines object to the console
+  console.log('Product Lines before navigation:', productLines);
+    // navigation.navigate("PurchaseRequisitionForm", {
+    //   product_lines: [productLines], // Passing an array with the product line
+    // });
+    navigation.navigate("PurchaseRequisitionForm", );
+  };
 
   const renderBottomSheet = () => {
     let items = [];
     let isMultiSelect = true;
-    let fieldName = "";
 
     switch (selectedType) {
       case "Product":
         items = dropdown.products;
-        fieldName = "products";
         isMultiSelect = false;
         break;
       case "Supplier":
         items = dropdown.suppliers;
         isMultiSelect = true;
-        fieldName = "suppliers";
+        break;
       default:
         return null;
     }
@@ -120,12 +140,11 @@ const AddProductLines = ({ navigation, route }) => {
         isVisible={isVisible}
         items={items}
         title={selectedType}
+        refreshIcon={false}
         search
         onSearchText={(value) => setSearchText(value)}
-        onValueChange={(selectedValues) => {
-          handleSupplierSelection(selectedValues);
-          setIsVisible(false);
-        }}
+        previousSelections={selectedSuppliers}
+        onValueChange={handleSupplierSelection}
         onClose={() => setIsVisible(false)}
       />
     ) : (
@@ -168,6 +187,10 @@ const AddProductLines = ({ navigation, route }) => {
           placeholder={"Enter quantity"}
           required
           editable={true}
+          value={formData.quantity}
+          onChangeText={(text) =>
+            setFormData((prevFormData) => ({ ...prevFormData, quantity: text }))
+          }
         />
         <FormInput
           label={"Remarks"}
@@ -175,14 +198,19 @@ const AddProductLines = ({ navigation, route }) => {
           required
           editable={true}
           multiline={true}
+          value={formData.remarks}
+          onChangeText={(text) =>
+            setFormData((prevFormData) => ({ ...prevFormData, remarks: text }))
+          }
         />
         <FormInput
           label={"Supplier"}
           placeholder={"Add Suppliers"}
           dropIcon={"menu-down"}
+          multiline={true}
           editable={false}
           required
-          value={formData.suppliers.map((supplier) => supplier.name).join(", ")}
+          value={selectedSuppliers.map((supplier) => supplier.label).join(", ")}
           onPress={() => toggleBottomSheet("Supplier")}
         />
         <Button
@@ -190,7 +218,7 @@ const AddProductLines = ({ navigation, route }) => {
           width={"50%"}
           alignSelf={"center"}
           backgroundColor={COLORS.primaryThemeColor}
-          // onPress={handleAddItems}
+          onPress={handleAddProducts}
         />
         {renderBottomSheet()}
       </RoundedScrollContainer>
