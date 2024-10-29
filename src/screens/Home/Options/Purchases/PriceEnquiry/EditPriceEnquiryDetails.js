@@ -13,7 +13,7 @@ import PriceDetailList from './PriceDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS } from '@constants/theme';
-import { put } from '@api/services/utils';
+import { put, get } from '@api/services/utils';
 
 const EditPriceEnquiryDetails = ({ navigation, route }) => {
     const { id: priceId } = route?.params || {};
@@ -50,32 +50,74 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
         setInputPrice(value);
         const updatedPriceLines = priceLines.map((line) => ({
             ...line,
-            price: parseFloat(value) || line.price, // update only if input is valid
+            price: parseFloat(value) || line.price,
         }));
         setPriceLines(updatedPriceLines);
     };
 
-    const handleEditPurchase = async () => {
+    // const handleViewPrice = async () => {
+    //     setIsLoading(true);
+    //     try {
+    //         const response = await get(`/viewPriceEnquiry/${priceId}`);
+    //         if (response.success) {
+    //             navigation.navigate('PriceEnquiryDetails', { details: response.data[0] });
+    //         } else {
+    //             showToastMessage('Failed to view purchase details. Please try again.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error in handleViewPurchase:', error.message || 'Unknown error');
+    //         showToastMessage('An error occurred. Please try again.');
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
+
+    const handleViewPrice = async () => {
+        setIsLoading(true);
+        try {
+            const response = await get(`/viewPriceEnquiry/${priceId}`);
+            if (response.success) {
+                navigation.navigate('PriceEnquiryDetails', { id: priceId });
+            } else {
+                showToastMessage('Failed to retrieve price enquiry details. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error in handleViewPrice:', error.message || 'Unknown error');
+            showToastMessage('An error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEditPrice = async () => {
         setIsSubmitting(true);
         try {
+            const validPriceLines = priceLines
+                .filter(({ _id, price, status }) => _id && price != null && status)
+                .map(({ _id, price, status }) => ({
+                    _id,
+                    price: parseFloat(price),
+                    status: status || "submitted",
+                }));
+    
             const updateData = {
                 _id: details._id,
-                product_lines: priceLines,
+                supplier_price_array: validPriceLines,
             };
             const response = await put('/updateSupplierPriceArray', updateData);
-            if (response.success === "true") {
-                showToastMessage('Successfully Added Suppliers');
-                navigation.navigate('PurchaseRequisitionDetails', { id: priceId });
+            if (response && (response.status === "true" || response.status === true)) {
+                showToastMessage('Successfully Added Price');
             } else {
                 showToastMessage('Failed to update purchase. Please try again.');
             }
         } catch (error) {
+            console.error('Error in handleEditPrice:', error.message || 'Unknown error');
             showToastMessage('An error occurred. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
-    };
-
+    };       
+    
     return (
       <SafeAreaView>
         <NavigationHeader
@@ -108,14 +150,14 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
                     width={'50%'}
                     backgroundColor={COLORS.tabIndicator}
                     title="VIEW"
-                    onPress={() => navigation.navigate('PurchaseRequisitionDetails', { id: priceId })}
+                    onPress={handleViewPrice}
                 />
                 <View style={{ width: 5 }} />
                 <Button
                     width={'50%'}
                     backgroundColor={COLORS.green}
                     title="SUBMIT"
-                    onPress={handleEditPurchase}
+                    onPress={handleEditPrice}
                 />
             </View>
 

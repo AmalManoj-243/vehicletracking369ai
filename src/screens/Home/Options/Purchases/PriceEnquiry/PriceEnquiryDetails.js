@@ -16,11 +16,11 @@ import { post, deleteRequest } from '@api/services/utils';
 import { ConfirmationModal } from '@components/Modal';
 
 const PriceEnquiryDetails = ({ navigation, route }) => {
-    const { id: priceId } = route?.params || {};
+    const { id: priceId, priceLines: updatedPriceLines } = route?.params || {};
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [priceLines, setPriceLines] = useState([]);
+    const [priceLines, setPriceLines] = useState(updatedPriceLines || []);
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
     const [actionToPerform, setActionToPerform] = useState(null);
 
@@ -42,7 +42,7 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
     useFocusEffect(
         useCallback(() => {
             if (priceId) {
-                fetchDetails(priceId);
+                fetchDetails();
             }
         }, [priceId])
     );
@@ -50,7 +50,7 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
     const handlePurchaseOrder = async () => {
         try {
             const { _id } = details;
-            const response = await post('/createPriceEnquiryPurchaseOrder');
+            const response = await post('/createPriceEnquiryPurchaseOrder', { _id });
             if (response.success === true || response.success === 'true') {
                 showToastMessage('Purchase Order Created Successfully');
                 navigation.navigate('OptionScreen');
@@ -63,18 +63,18 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
             fetchDetails();
             setIsSubmitting(false);
         }
-    }
+    };
 
-    const handleDeletePurchase = async () => {  //
+    const handleDeletePrice = async () => {
         setIsSubmitting(true);
         try {
             const { _id } = details;
-            const response = await deleteRequest(`/viewPurchaseRequest/${_id}`);
+            const response = await deleteRequest(`//${_id}`);
             if (response.success === true || response.success === 'true') {
-                showToastMessage('Purchase Deleted Successfully');
-                navigation.navigate('PurchaseRequisitionScreen');
+                showToastMessage('Price Enquiry Deleted Successfully');
+                navigation.navigate('PriceEnquiryScreen');
             } else {
-                showToastMessage('Failed to Delete Purchase. Please try again.');
+                showToastMessage('Failed to Delete Price Enquiry. Please try again.');
             }
         } catch (error) {
             showToastMessage('An error occurred. Please try again.');
@@ -140,7 +140,7 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
                     onCancel={() => setIsConfirmationModalVisible(false)}
                     headerMessage='Are you sure you want to Delete this?'
                     onConfirm={() => {
-                        handleDeletePurchase();
+                        handleDeletePrice();
                         setIsConfirmationModalVisible(false);
                     }}
                 />

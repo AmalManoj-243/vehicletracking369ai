@@ -202,7 +202,7 @@ const PriceEnquiryForm = ({ route, navigation }) => {
   return (
     <SafeAreaView>
       <NavigationHeader
-        title="Add Purchase Requisition"
+        title="Price Enquiry Creation"
         onBackPress={() => navigation.goBack()}
         logo={false}
       />
@@ -243,7 +243,7 @@ const PriceEnquiryForm = ({ route, navigation }) => {
           onPress={() => setIsDatePickerVisible(true)}
         />
         <TitleWithButton
-          label={'Add an Item'}
+          label={'Add Products'}
           onPress={() => { navigation.navigate('AddPriceLines'); }}
         />
         <FlatList

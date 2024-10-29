@@ -164,7 +164,7 @@ const AddPriceLines = ({ navigation, route }) => {
   return (
     <SafeAreaView>
       <NavigationHeader
-        title={"Add Price Enquiry"}
+        title="Add Products"
         onBackPress={() => navigation.goBack()}
       />
       <RoundedScrollContainer>

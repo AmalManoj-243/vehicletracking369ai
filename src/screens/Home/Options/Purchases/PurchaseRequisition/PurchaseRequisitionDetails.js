@@ -54,7 +54,7 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
             if (response.success === true || response.success === 'true') {
                 showToastMessage('Purchase Succesfully added to Price Enquiry');
                 fetchDetails();
-                navigation.navigate('OptionsScreen');
+                navigation.navigate('PriceEnquiryScreen');
             } else {
                 showToastMessage('Failed. Please try again.');
             }
@@ -85,6 +85,8 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
     const handleEditPurchase = () => {
         navigation.navigate('EditPurchaseRequisitionDetails', { id: purchaseId });
     };
+
+    const isSendEnquiry = details?.status === 'Approved';
 
     return (
         <SafeAreaView>
@@ -120,6 +122,7 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
                         backgroundColor={COLORS.tabIndicator}
                         title="Send To Price Enquiry"
                         onPress={handleSendPurchase}
+                        disabled={isSendEnquiry}
                     />
                 <View style={{ width: 5 }} />
                     <Button
