@@ -1,19 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { Switch } from 'react-native-paper';
 import Text from '@components/Text';
 import { FONT_FAMILY } from '@constants/theme';
 
-const PriceDetailList = ({ item, onPress }) => {
-  const productName = item?.products?.product_name?.trim() || '-';
-  const quantity = item?.quantity || '-';
-  const status = item?.status || '-';
-  const suppliers = item?.supplier ? [item.supplier] : [];
-  const price = item?.price || '-';
+const PriceDetailList = ({ item, onPress, onUpdateStatus }) => {
+  const [isSwitchOn, setIsSwitchOn] = useState(false);
+ 
+  // Destructure item properties for easy access
+  const {
+    products: { product_name = '-' } = {},
+    quantity = '-',
+    status = '-',
+    supplier = null,
+    price = '-',
+  } = item || {};
+
+  
+  const suppliers = supplier ? [supplier] : [];
+  const isSwitchEnabled = status === 'Pending' || 'Approved' && price !== '-';
+
+  const handleSwitchToggle = () => {
+    const newSwitchState = !isSwitchOn;
+    setIsSwitchOn(newSwitchState);
+    onUpdateStatus?.(item._id, price, newSwitchState); // Call the update API when toggled
+  };
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
-        <Text style={styles.head}>{productName}</Text>
+      <Text style={styles.productName}>{product_name.trim()}</Text>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>{quantity}</Text>
           <Text style={[styles.contentRight, { color: 'red' }]}>{status}</Text>
@@ -34,10 +50,16 @@ const PriceDetailList = ({ item, onPress }) => {
           )}
         </View>
       </View>
+      <View style={styles.switchContainer}>
+        <Switch
+          value={isSwitchOn}
+          onValueChange={handleSwitchToggle}
+          disabled={!isSwitchEnabled}
+        />
+      </View>
     </TouchableOpacity>
   );
 };
-
 
 const styles = StyleSheet.create({
   itemContainer: {
@@ -73,15 +95,18 @@ const styles = StyleSheet.create({
   content: {
     color: '#666666',
     marginBottom: 5,
-    fontSize:14,
+    fontSize: 14,
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-    textTransform:'capitalize'
+    textTransform: 'capitalize'
   },
- 
   contentRight: {
     color: '#666666',
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-    fontSize:14,
+    fontSize: 14,
+  },
+  switchContainer: {
+    alignItems: 'flex-end',
+    marginTop: 10,
   },
 });
 

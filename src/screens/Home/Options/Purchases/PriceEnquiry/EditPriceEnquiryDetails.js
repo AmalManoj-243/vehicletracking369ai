@@ -94,10 +94,10 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
         try {
             const validPriceLines = priceLines
                 .filter(({ _id, price, status }) => _id && price != null && status)
-                .map(({ _id, price, status }) => ({
+                .map(({ _id, price }) => ({
                     _id,
                     price: parseFloat(price),
-                    status: status || "submitted",
+                    status: "Pending",
                 }));
     
             const updateData = {

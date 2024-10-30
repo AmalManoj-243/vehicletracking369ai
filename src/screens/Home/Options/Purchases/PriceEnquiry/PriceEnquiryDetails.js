@@ -12,8 +12,9 @@ import PriceDetailList from './PriceDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS } from '@constants/theme';
-import { post, deleteRequest } from '@api/services/utils';
+import { post, deleteRequest, put } from '@api/services/utils';
 import { ConfirmationModal } from '@components/Modal';
+import { Switch } from 'react-native-paper';
 
 const PriceEnquiryDetails = ({ navigation, route }) => {
     const { id: priceId, priceLines: updatedPriceLines } = route?.params || {};
@@ -90,6 +91,16 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
 
     const isPurchaseOrderDisabled = priceLines.some(item => item.status === 'Approved');
 
+    const handleUpdateStatus = async (id, price, isSwitchOn) => {
+        const reqBody = {
+            _id: id,
+            price: price,
+            status: isSwitchOn ? 'Approved' : 'Pending'
+        }
+        await put('/updateSupplierPrices', reqBody);
+        fetchDetails();
+    }
+
     return (
         <SafeAreaView>
             <NavigationHeader
@@ -104,7 +115,7 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
                 <DetailField label="Require By" value={formatDate(details?.request_details?.[0]?.require_by)} />
                 <FlatList
                     data={priceLines}
-                    renderItem={({ item }) => <PriceDetailList item={item} />}
+                    renderItem={({ item }) => <PriceDetailList item={item} onUpdateStatus={handleUpdateStatus} />}
                     keyExtractor={(item) => item._id}
                 />
 
@@ -144,7 +155,6 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
                         setIsConfirmationModalVisible(false);
                     }}
                 />
-
                 <OverlayLoader visible={isLoading || isSubmitting} />
             </RoundedScrollContainer>
         </SafeAreaView>

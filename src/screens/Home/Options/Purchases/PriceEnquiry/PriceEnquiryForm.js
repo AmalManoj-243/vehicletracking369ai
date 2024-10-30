@@ -71,12 +71,6 @@ const PriceEnquiryForm = ({ route, navigation }) => {
     setIsVisible(!isVisible);
   };
 
-  const handleDateConfirm = (date) => {
-    const formattedDate = date.toISOString().slice(0, 10);
-    handleFieldChange("requireBy", formattedDate);
-    setIsDatePickerVisible(false);
-  };
-
   const handleAddProductLine = (newProductLine) => {
     setProductLines((prevLines) => [...prevLines, newProductLine]);
     setFormData((prevData) => ({
@@ -263,7 +257,8 @@ const PriceEnquiryForm = ({ route, navigation }) => {
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
           mode="date"
-          onConfirm={handleDateConfirm}
+          onConfirm={(date) => { handleFieldChange("requireBy", date); setIsDatePickerVisible(false) }}
+          minimumDate={new Date()} 
           onCancel={() => setIsDatePickerVisible(false)}
         />
       </RoundedScrollContainer>
