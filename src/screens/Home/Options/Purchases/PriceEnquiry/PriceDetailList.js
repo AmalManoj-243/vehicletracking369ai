@@ -29,7 +29,7 @@ const PriceDetailList = ({ item, onPress, onUpdateStatus }) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
-      <Text style={styles.productName}>{product_name.trim()}</Text>
+      <Text style={styles.head}>{product_name.trim()}</Text>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>{quantity}</Text>
           <Text style={[styles.contentRight, { color: 'red' }]}>{status}</Text>

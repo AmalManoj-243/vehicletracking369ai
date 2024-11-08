@@ -23,6 +23,7 @@ const AddPriceLines = ({ navigation, route }) => {
   const [formData, setFormData] = useState({
     productId: "",
     productName: "",
+    description: '',
     suppliers: [],
     quantity: "",
     remarks: "",
@@ -37,6 +38,7 @@ const AddPriceLines = ({ navigation, route }) => {
           products: productsData?.map((data) => ({
             id: data._id,
             label: data.product_name?.trim(),
+            productDescription: data.product_description, // Include description
           })),
         }));
       } catch (error) {
@@ -47,6 +49,15 @@ const AddPriceLines = ({ navigation, route }) => {
       fetchProducts();
     }
   }, [searchText, selectedType]);
+  
+  const handleProductSelection = (selectedProduct) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      description: selectedProduct.productDescription || '', // Automatically set description
+      productId: selectedProduct.id,
+      productName: selectedProduct.label,
+    }));
+  };
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -73,14 +84,6 @@ const AddPriceLines = ({ navigation, route }) => {
     setIsVisible((prev) => !prev);
   };
 
-  const handleProductSelection = (selectedProduct) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      productId: selectedProduct.id,
-      productName: selectedProduct.label,
-    }));
-  };
-
   const handleSupplierSelection = (selectedValues) => {
     setSelectedSuppliers(selectedValues);
     setFormData((prevFormData) => ({
@@ -102,6 +105,7 @@ const AddPriceLines = ({ navigation, route }) => {
       const productLines = {
         product_name: formData.productName || '',
         product_id: formData.productId || '',
+        description: formData.description || '',
         quantity: formData.quantity || '',
         remarks: formData.remarks || '',
         suppliers: selectedSuppliers.map((supplier) => ({
@@ -178,6 +182,12 @@ const AddPriceLines = ({ navigation, route }) => {
           validate={errors.productName}
           value={formData.productName}
           onPress={() => toggleBottomSheet("Product")}
+        />
+        <FormInput
+          label="Description"
+          placeholder="Enter Description"
+          value={formData.description}
+          onChangeText={(value) => handleFieldChange('description', value)}
         />
         <FormInput
           label={"Quantity"}

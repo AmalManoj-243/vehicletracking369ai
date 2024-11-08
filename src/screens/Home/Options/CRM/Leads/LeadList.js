@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.urbanistSemiBold,
     textTransform:'capitalize'
   },
- 
   contentRight: {
     color: '#666666',
     fontFamily: FONT_FAMILY.urbanistSemiBold,

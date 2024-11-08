@@ -264,6 +264,7 @@ const PurchaseRequisitionForm = ({ route, navigation }) => {
           isVisible={isDatePickerVisible}
           mode="date"
           onConfirm={handleDateConfirm}
+          minimumDate={new Date()} 
           onCancel={() => setIsDatePickerVisible(false)}
         />
       </RoundedScrollContainer>

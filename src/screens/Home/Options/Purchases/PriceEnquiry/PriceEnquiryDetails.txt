@@ -15,12 +15,9 @@ import { COLORS } from '@constants/theme';
 import { post, deleteRequest, put } from '@api/services/utils';
 import { ConfirmationModal } from '@components/Modal';
 import { Switch } from 'react-native-paper';
-import { useAuthStore } from '@stores/auth';
 
 const PriceEnquiryDetails = ({ navigation, route }) => {
     const { id: priceId, priceLines: updatedPriceLines } = route?.params || {};
-    const currentUser = useAuthStore((state) => state.user);
-    // console.log("🚀 ~ PriceEnquiryDetails ~ currentUser:", JSON.stringify(currentUser, null, 2));
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,33 +54,36 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
         setIsSubmitting(true); 
         try {
             const purchaseOrderData = {
-                employee_id: currentUser?._id || "",
-                product_purchase_enquiry_id: details?._id,
-                employee_name: currentUser?.user_name || "",
-                bill_date: formatDate(new Date, 'yyyy/MM/dd'),
-                order_date: formatDate(new Date, 'yyyy/MM/dd'),
-                update_date: formatDate(new Date, 'yyyy/MM/dd'),
+                employee_id: "6666eefcaaff742265d7592f",
+                product_purchase_enquiry_id: "672affcc28c26b64dd4941bf",
+                employee_name: "Sherin",
+                bill_date: "2024/11/07",
+                order_date: "2024/11/07",
+                update_date: "2024/11/07",
                 payment_status: "Submitted",
+                purchase_enquiry_lines: [
+                  {
+                    product_id: "66c59e94607e1e2b7e3cbd41",
+                    uom: "units",
+                    qty: 6,
+                    unit_price: 680,
+                    total: 4080,
+                    supplier_id: "670abc184e15450d26bb9c0a",
+                    supplier_name: "AZIZ",
+                    taxes: "648d9b8fef9cd868dfbfa37f",
+                    recieved_quantity: 0,
+                    billed_quantity: 0,
+                    scheduled_date: "2024/11/07",
+                    description: ""
+                  }
+                ],
                 purchase_type: "Local Purchase",
-                // currency: "", // currency id
-                // country: details?.nationality?.nationality_id || "",
-                company: currentUser?.company_id || "",
-                purchase_enquiry_lines: priceLines.map(item => ({
-                    product_id: item?.products?.product_id,
-                    // uom: "", // uom name (units)
-                    qty: item?.quantity,
-                    unit_price: item?.price,
-                    total: (item?.quantity) * (item?.price),
-                    supplier_id: item?.supplier?.suplier_id || "",
-                    supplier_name: item?.supplier?.suplier_name || "",
-                    // taxes: "", // tax id
-                    received_quantity: item?.received_quantity || 0, 
-                    billed_quantity: item?.billed_quantity || 0, 
-                    scheduled_date: formatDate(new Date, 'yyyy/MM/dd'), 
-                    // description: item?.description || "",
-                })),               
-            };
-            console.log("🚀 ~ PriceEnquiryDetails ~ purchaseOrderData:", JSON.stringify(purchaseOrderData, null, 2));
+                currency: "6540b68c05fb79149c3eb7d8",
+                country: "6540b68405fb79149c3eb5c2",
+                company: "66307fc0ceb8eb834bb25507"
+              }
+    
+            console.log("Sending Purchase Order Request:", purchaseOrderData);
             const response = await post('/createPriceEnquiryPurchaseOrder', purchaseOrderData);
             if (response.success === true || response.success === 'true') {
                 showToastMessage('Purchase Order Created Successfully');
@@ -99,7 +99,34 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
         } finally {
             setIsSubmitting(false);
         }
-    };      
+    };    
+
+    // const handlePurchaseOrder = async () => {
+    //     setIsSubmitting(true); 
+    //     try {
+    //         const purchaseOrderData = {
+    //             purchase_enquiry_id: priceId,
+    //             purchase_enquiry_lines: priceLines,
+    //             purchase_order_models: [], 
+    //         };
+    //         console.log(purchaseOrderData);
+            
+    //         const response = await post('/createPriceEnquiryPurchaseOrder', purchaseOrderData); 
+    //         console.log("Purchase Order Response:", response);
+    //         if (response.success === true || response.success === 'true') {
+    //             showToastMessage('Purchase Order Created Successfully');
+    //             await fetchDetails();
+    //             navigation.navigate('PurchaseOrderScreen'); 
+    //         } else {
+    //             showToastMessage('Failed to Create Purchase Order. Please try again.'); 
+    //         }
+    //     } catch (error) {
+    //         console.error('Error creating purchase order:', error);
+    //         showToastMessage('An error occurred. Please try again.'); 
+    //     } finally {
+    //         setIsSubmitting(false); 
+    //     }
+    // };    
     
     const handleDeletePrice = async () => {
         setIsSubmitting(true);

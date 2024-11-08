@@ -55,23 +55,6 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
         setPriceLines(updatedPriceLines);
     };
 
-    // const handleViewPrice = async () => {
-    //     setIsLoading(true);
-    //     try {
-    //         const response = await get(`/viewPriceEnquiry/${priceId}`);
-    //         if (response.success) {
-    //             navigation.navigate('PriceEnquiryDetails', { details: response.data[0] });
-    //         } else {
-    //             showToastMessage('Failed to view purchase details. Please try again.');
-    //         }
-    //     } catch (error) {
-    //         console.error('Error in handleViewPurchase:', error.message || 'Unknown error');
-    //         showToastMessage('An error occurred. Please try again.');
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
     const handleViewPrice = async () => {
         setIsLoading(true);
         try {

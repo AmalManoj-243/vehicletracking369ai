@@ -153,6 +153,7 @@ const PriceEnquiryForm = ({ route, navigation }) => {
           no: index,
           product_name: item?.product_name || null,
           product_id: item?.product_id || null,
+          description: item?.description || null,
           quantity: item?.quantity || '',
           remarks: item?.remarks || '',
           suppliers: item?.suppliers?.map(supplier => ({
@@ -161,7 +162,7 @@ const PriceEnquiryForm = ({ route, navigation }) => {
           })) || [],
         })),
       };
-      console.log(priceData)
+      console.log("🚀 ~ PriceEnquiryForm ~ priceData:", JSON.stringify(priceData, null, 2));
 
       try {
         const response = await post("/createPriceEnquiry", priceData);

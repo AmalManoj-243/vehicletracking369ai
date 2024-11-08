@@ -8,14 +8,19 @@ const PurchaseOrderList = ({ item, onPress }) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
-        <Text style={styles.head}>{item?.sequence_no ||'-'}</Text>
-        <View style={styles.rightColumn}>
-          {/* <Text style={styles.content}>{item?.request_details[0]?.requested_by?.employee_name || '-'}</Text> */}
+        <Text style={styles.head}>{item?.sequence_no || '-'}</Text>
+        <View style={styles.rightColumn}> 
+          <Text style={styles.content}>{formatDate(item?.bill_date) || '-'}</Text>
+          <Text style={styles.content}>{item?.currency?.currency_name || '-'}</Text>
+        </View>       
+        <View style={styles.rightColumn}> 
+          <Text style={styles.contentRight}>{item?.supplier?.supplier_name || '-'}</Text>
+          <Text style={styles.content}>{item?.purchase_type || '-'}</Text>
         </View>
-      </View>
-      <View style={styles.rightColumn}>
-        {/* <Text style={styles.content}>{item?.request_details?.[0]?.warehouse?.warehouse_name || '-'}</Text> */}
-        <Text style={styles.contentRight}>{formatDate(item?.bill_date) || '-'}</Text>
+        <View style={styles.rightColumn}>
+          <Text style={styles.content}>{item?.total_amount || '-'}</Text>
+          <Text style={[styles.contentRight, {color: 'red'}]}>{item?.status || '-'}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -43,9 +48,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rightColumn: {
-    justifyContent: 'space-between', 
-    flexDirection: 'row', 
-    flex: 1 
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    flex: 1,
   },
   head: {
     fontFamily: FONT_FAMILY.urbanistBold,
@@ -55,15 +60,14 @@ const styles = StyleSheet.create({
   content: {
     color: '#666666',
     marginBottom: 5,
-    fontSize:14,
+    fontSize: 14,
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-    textTransform:'capitalize'
+    textTransform: 'capitalize',
   },
- 
   contentRight: {
     color: '#666666',
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-    fontSize:14,
+    fontSize: 14,
   },
 });
 
