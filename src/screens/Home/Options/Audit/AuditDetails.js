@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from '@components/containers';
 import NavigationHeader from '@components/Header/NavigationHeader';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, Linking } from 'react-native';
 import { RoundedScrollContainer } from '@components/containers';
 import { DetailField } from '@components/common/Detail';
 import { showToastMessage } from '@components/Toast';
@@ -15,6 +15,7 @@ const AuditDetails = ({ navigation, route }) => {
     const { id: auditId } = route?.params || {};
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(false);
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -42,6 +43,46 @@ const AuditDetails = ({ navigation, route }) => {
             );
         }
         return <DetailField label={label} value="No signature" />;
+    };
+
+    const handleOpenDocument = (url) => {
+        Linking.canOpenURL(url)
+            .then((supported) => {
+                if (!supported) {
+                    Alert.alert('Error', 'Unable to open document');
+                } else {
+                    return Linking.openURL(url);
+                }
+            })
+            .catch((err) => console.error('Error opening document:', err));
+    };
+    
+    const AttachmentField = ({ label, attachments }) => {
+        if (attachments && attachments.length > 0) {
+            return (
+                <View>
+                    <Text style={styles.attachmentLabel}>{label}</Text>
+                    <FlatList
+                        data={attachments}
+                        keyExtractor={(item, index) => index.toString()}
+                        horizontal
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                onPress={() => handleOpenDocument(item)}
+                                style={styles.documentContainer}
+                            >
+                                <Image
+                                    source={{ uri: item }}
+                                    style={styles.attachmentImage}
+                                />
+                            </TouchableOpacity>
+                        )}
+                        showsHorizontalScrollIndicator={false}
+                    />
+                </View>
+            );
+        }
+        return <DetailField label={label} value="No attachments available" />;
     };
 
     useFocusEffect(
@@ -75,12 +116,8 @@ const AuditDetails = ({ navigation, route }) => {
                 <DetailField label="Company" value={details?.company_name || '-'} />
                 <DetailField label="Invoice No" value={details?.inv_sequence_no || '-'} />
                 <DetailField label="Collection Type" value={details?.collection_type_name || '-'} />
-                <DetailField label="Cheque No" value={details?.chq_no || '-'} />
-                <DetailField label="Cheque Date" value={details?.chq_date || '-'} />
-                <DetailField label="Cheque Type" value={details?.chq_type || '-'} />
-                <DetailField label="Cheque Transaction Type" value={details?.cheque_transaction_type || '-'} />
-                <DetailField label="Chart Of Accounts" value={details?.chart_of_accounts_name || '-'} />
                 <SignatureField label="Customer Signature" signature={details?.customer_vendor_signature} />
+                <AttachmentField label="Attachments" attachments={details?.attachments} />
                 <OverlayLoader visible={isLoading} />
             </RoundedScrollContainer>
         </SafeAreaView>
@@ -115,8 +152,21 @@ const styles = StyleSheet.create({
         borderColor: COLORS.borderGray,
         marginLeft: 10,
     },
-})
+    attachmentLabel: {
+        fontSize: 16,
+        color: COLORS.primaryThemeColor,
+        fontFamily: FONT_FAMILY.urbanistSemiBold,
+        flex: 1,
+        marginVertical: 20,
+    },
+    attachmentImage: {
+        width: 180,
+        height: 100,
+        resizeMode: 'contain',
+        borderWidth: 1,
+        borderColor: COLORS.borderGray,
+        marginLeft: 120,
+    },
+});
 
 export default AuditDetails;
-
-

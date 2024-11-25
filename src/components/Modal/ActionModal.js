@@ -38,7 +38,7 @@ const ActionModal = ({ title, setImageUrl }) => {
     const handleImagePicked = async (pickerResult) => {
         if (!pickerResult.cancelled) {
             const imagePath = pickerResult.assets[0].uri;
-            // console.log("🚀 ~ handleImagePicked ~ imagePath:", imagePath)
+            console.log("🚀 ~ handleImagePicked ~ imagePath:", imagePath)
             try {
                 if (imagePath) {
                     const url = await uploadApi(imagePath);
