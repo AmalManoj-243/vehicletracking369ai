@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { FlatList } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import NavigationHeader from '@components/Header/NavigationHeader';
 import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
 import { DetailField } from '@components/common/Detail';
@@ -9,7 +9,7 @@ import { showToastMessage } from '@components/Toast';
 import { fetchDeliveryNoteDetails } from '@api/details/detailApi';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
-import { COLORS } from '@constants/theme';
+import { COLORS, FONT_FAMILY } from '@constants/theme';
 import DeliveryNoteDetailList from './DeliveryNoteDetailList';
 
 const DeliveryNoteDetails = ({ navigation, route }) => {
@@ -34,7 +34,7 @@ const DeliveryNoteDetails = ({ navigation, route }) => {
             setIsLoading(false);
         }
     };
-
+    
     useFocusEffect(
         useCallback(() => {
             if (deliveryNoteId) {
@@ -44,13 +44,13 @@ const DeliveryNoteDetails = ({ navigation, route }) => {
     );
 
     const hanldePdfDownload = () => {
-        navigation.navigate('EditPriceEnquiryDetails', { id: deliveryNoteId });
+        navigation.navigate('', { id: deliveryNoteId });
     };
 
     return (
         <SafeAreaView>
             <NavigationHeader
-                title={'Delivery Note Creation'}
+                title={details?.sequence_no || 'Delivery Note Details'}
                 onBackPress={() => navigation.goBack()}
                 logo={false}
             />
@@ -60,27 +60,63 @@ const DeliveryNoteDetails = ({ navigation, route }) => {
                 <DetailField label="Ordered Date" value={formatDate(details?.order_date)} />
                 <DetailField label="Bill Date" value={formatDate(details?.bill_date)} />
                 <DetailField label="Purchase Type" value={details?.purchase_type} />
-                <DetailField label="Company" value={details?.company?.company_name} />
                 <DetailField label="Country" value={details?.country?.country_name} />
                 <DetailField label="Currency" value={details?.currency?.currency_name} />
-                <DetailField label="TRN Number" value={details?.Trn_number} />
+                <DetailField label="TRN Number" value={details?.Trn_number?.toString()} />
                 <FlatList
                     data={deliveryNotes}
                     renderItem={({ item }) => <DeliveryNoteDetailList item={item} />}
                     keyExtractor={(item) => item._id}
                 />
 
-                <Button
-                    width={'50%'}
-                    backgroundColor={COLORS.tabIndicator}
-                    title="Submit"
-                    onPress={() => navigation.navigate('VendorBillScreen', { id: details._id })}
-                />
+                <View style={styles.totalSection}>
+                    <Text style={styles.totalLabel}>Total : </Text>
+                    <Text style={styles.totalValue}>{details.total_amount}</Text>
+                </View>
 
+                <View style={{ flexDirection: 'row', marginVertical: 20 }}>
+                    <Button
+                        width={'50%'}
+                        backgroundColor={COLORS.tabIndicator}
+                        title="Vendor Bill"
+                        onPress={() => navigation.navigate('VendorBillScreen', { id: details._id })}
+                    />
+                    <View style={{ width: 5 }} />
+                    <Button
+                        width={'50%'}
+                        backgroundColor={COLORS.tabIndicator}
+                        title="PDF Download"
+                        onPress={hanldePdfDownload}
+                    />
+                </View>
                 <OverlayLoader visible={isLoading || isSubmitting} />
             </RoundedScrollContainer>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    label: {
+      marginVertical: 5,
+      fontSize: 16,
+      color: COLORS.primaryThemeColor,
+      fontFamily: FONT_FAMILY.urbanistSemiBold,
+    },
+    totalSection: {
+      flexDirection: 'row',
+      marginVertical: 5,
+      margin: 10,
+      alignSelf: "center",
+    },
+    totalLabel: {
+      fontSize: 16,
+      fontFamily: FONT_FAMILY.urbanistBold,
+    },
+    totalValue: {
+      fontSize: 16,
+      fontFamily: FONT_FAMILY.urbanistBold,
+      color: '#666666',
+    },
+  });
 
 export default DeliveryNoteDetails;

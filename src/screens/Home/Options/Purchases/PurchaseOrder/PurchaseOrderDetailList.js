@@ -26,7 +26,7 @@ const PurchaseOrderDetailList = ({ item, onPress }) => {
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{product.product_name.trim()}</Text>
         <View style={styles.rightColumn}> 
-          <Text style={styles.content}>{formatDate(scheduled_date)}</Text>
+          <Text style={styles.content}>{scheduled_date}</Text>
           <Text style={styles.contentRight}>{quantity}</Text>
           <Text style={styles.content}>{sub_total}</Text>
         </View>

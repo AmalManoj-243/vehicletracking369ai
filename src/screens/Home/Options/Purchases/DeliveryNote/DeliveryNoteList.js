@@ -14,7 +14,7 @@ const DeliveryNoteList = ({ item, onPress }) => {
         </View>
       </View>
       <View style={styles.rightColumn}>
-        <Text style={styles.content}>{item?.products_lines?.[0]?.sub_total || '-'}</Text>
+        <Text style={styles.content}>{item?.total_amount || '-'}</Text>
         <Text style={styles.contentRight}>{formatDate(item?.order_date) || '-'}</Text>
       </View>
     </TouchableOpacity>

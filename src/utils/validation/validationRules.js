@@ -162,6 +162,10 @@ export const allValidationRules = {
         message: 'Please select Country Of Origin',
         validate: validateRequired,
     },
+    billDate: {
+        message: 'Please select Bill Date',
+        validate: validateRequired,
+    },
 
 
 

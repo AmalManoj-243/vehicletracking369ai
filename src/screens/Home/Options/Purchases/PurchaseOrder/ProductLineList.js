@@ -20,7 +20,7 @@ const ProductLineList = ({ item, onPress }) => {
         <View style={styles.rightColumn}>
           <Text style={styles.content}>{item?.uom?.label || '-'}</Text>
           <Text style={styles.contentRight}>{item?.unitPrice || '-'}</Text>
-          <Text style={styles.contentRight}>{item?.totalAmount || '-'}</Text>
+          <Text style={styles.contentRight}>{item?.untaxedAmount || '-'}</Text>
         </View>
       </View>
     </TouchableOpacity>

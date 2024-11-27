@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, FlatList, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import NavigationHeader from '@components/Header/NavigationHeader';
 import { RoundedScrollContainer } from '@components/containers';
@@ -11,20 +11,18 @@ import { fetchPurchaseOrderDetails } from '@api/details/detailApi';
 import PurchaseOrderDetailList from './PurchaseOrderDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
-import { COLORS } from '@constants/theme';
+import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { post, deleteRequest } from '@api/services/utils';
 import { ConfirmationModal, MenuModal } from '@components/Modal';
 
 const PurchaseOrderDetails = ({ navigation, route }) => {
     const { id: purchaseOrderId } = route?.params || {};
     const [details, setDetails] = useState({});
-    console.log("Purchase Order Details :", details)
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [purchaseOrderLines, setPurchaseOrderLines] = useState([]);
     const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
-    const [isMenuVisible, setIsMenuVisible] = useState(false);
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -86,8 +84,18 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
         }
     };
 
+    const { taxTotal } = useMemo(() => {
+        let taxes = 0;
+        purchaseOrderLines.forEach((item) => {
+          taxes += item.tax_value || 0;
+        });
+        return {
+          taxTotal: taxes.toFixed(2),
+        };
+      }, [purchaseOrderLines]);
+
     const handleEditPrice = () => {
-        navigation.navigate('EditPriceEnquiryDetails', { id: purchaseOrderId });
+        navigation.navigate('EditPurchaseOrderDetails', { id: purchaseOrderId });
     };
 
     const handleDeliveryNote = () => {
@@ -102,7 +110,6 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                 status: "Cancelled",
                 payment_status: "Cancelled",
             });
-            console.log("handleCancelPurchaseOrder : ",response)
             if (response.success || response === success) {
                 showToastMessage('Purchase Order Cancelled Successfully');
                 fetchDetails();
@@ -131,7 +138,6 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                 <DetailField label="Ordered Date" value={formatDate(details?.order_date)} />
                 <DetailField label="Bill Date" value={formatDate(details?.bill_date)} />
                 <DetailField label="Purchase Type" value={details?.purchase_type || '-'} />
-                <DetailField label="Company" value={details?.company?.company_name || '-'} />
                 <DetailField label="Country" value={details?.country?.country_name || '-'} />
                 <DetailField label="Currency" value={details?.currency?.currency_name || '-'} />
                 <DetailField label="TRN Number" value={details?.Trn_number?.toString() || '-'} />
@@ -140,6 +146,21 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                     renderItem={({ item }) => <PurchaseOrderDetailList item={item} />}
                     keyExtractor={(item) => item._id}
                 />
+
+            <View style={{ marginVertical: 2 }}>
+                <View style={styles.totalSection}>
+                    <Text style={styles.totalLabel}>Untaxed Amount : </Text>
+                    <Text style={styles.totalValue}>{details.untaxed_total_amount}</Text>
+                </View>
+                <View style={styles.totalSection}>
+                    <Text style={styles.totalLabel}>Taxes : </Text>
+                    <Text style={styles.totalValue}>{taxTotal}</Text>
+                </View>
+                <View style={styles.totalSection}>
+                    <Text style={styles.totalLabel}>Total : </Text>
+                    <Text style={styles.totalValue}>{details.total_amount}</Text>
+                </View>
+            </View>
 
                 <View style={{ flexDirection: 'row', marginVertical: 20 }}>
                     <Button
@@ -192,5 +213,29 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    label: {
+      marginVertical: 5,
+      fontSize: 16,
+      color: COLORS.primaryThemeColor,
+      fontFamily: FONT_FAMILY.urbanistSemiBold,
+    },
+    totalSection: {
+      flexDirection: 'row',
+      marginVertical: 5,
+      margin: 10,
+      alignSelf: "center",
+    },
+    totalLabel: {
+      fontSize: 16,
+      fontFamily: FONT_FAMILY.urbanistBold,
+    },
+    totalValue: {
+      fontSize: 16,
+      fontFamily: FONT_FAMILY.urbanistBold,
+      color: '#666666',
+    },
+  });
 
 export default PurchaseOrderDetails;

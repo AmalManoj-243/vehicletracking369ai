@@ -31,7 +31,6 @@ const AddPurchaseLines = ({ navigation }) => {
     productName: '',
     description: '',
     scheduledDate: new Date(),
-    company: 'Danat Mobiles LLC',
     quantity: '0',
     uom: '',
     unitPrice: '',
@@ -185,7 +184,6 @@ const AddPurchaseLines = ({ navigation }) => {
         product_id: formData.productId,
         description: formData.description || '',
         scheduledDate: formatDate(formData.scheduledDate || ''),
-        comnpany:formData.company || '',
         quantity: formData.quantity || '',
         uom: formData.uom || '',
         unitPrice: formData.unitPrice || '',
@@ -271,11 +269,6 @@ const AddPurchaseLines = ({ navigation }) => {
           editable={false}
           value={formatDate(formData.scheduledDate)}
           onPress={() => setIsDatePickerVisible(true)}
-        />
-        <FormInput
-          label="Company"
-          editable={false}
-          value={formData.company}
         />
         <FormInput
           label="Quantity"

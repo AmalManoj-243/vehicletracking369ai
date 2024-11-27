@@ -6,7 +6,7 @@ import { fetchSupplierDropdown, fetchCurrencyDropdown, fetchCountryDropdown, fet
 import { purchaseType } from "@constants/dropdownConst";
 import { DropdownSheet } from "@components/common/BottomSheets";
 import { TextInput as FormInput } from "@components/common/TextInput";
-import { LoadingButton } from "@components/common/Button";
+import { Button } from "@components/common/Button";
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { formatDate } from "@utils/common/date";
 import { useAuthStore } from "@stores/auth";
@@ -25,7 +25,6 @@ const PurchaseOrderForm = ({ route, navigation }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [productLines, setProductLines] = useState([]);
-  console.log("🚀 ~ PurchaseOrderForm ~ productLines:", JSON.stringify(productLines, null, 2));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [dropdown, setDropdown] = useState({
@@ -47,30 +46,31 @@ const PurchaseOrderForm = ({ route, navigation }) => {
     billDate: "",
     warehouse: { id: currentUser?.warehouse?.warehouse_id || '', label: currentUser?.warehouse?.warehouse_name },
     untaxedAmount: 0,
+    taxTotal: 0,
     totalAmount: 0
   });
 
   const calculateTotals = () => {
-    let untaxedAmount = 0;
+    let untaxed = 0;
     let taxes = 0;
-
     productLines.forEach((line) => {
-      untaxedAmount += line.subTotal || 0;
-      taxes += line.tax || 0;
+      untaxed += Number(line.subTotal || 0);
+      taxes += Number(line.tax || 0);
     });
-
-    const totalAmount = untaxedAmount + taxes;
+    const total = untaxed + taxes;
 
     setFormData((prevFormData) => ({
       ...prevFormData,
-      untaxedAmount,
-      totalAmount,
+      untaxedAmount: untaxed.toFixed(2),
+      taxTotal: taxes.toFixed(2), 
+      totalAmount: total.toFixed(2),
     }));
   };
-
+  
   useEffect(() => {
     calculateTotals();
   }, [productLines]);
+  
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -142,7 +142,6 @@ const PurchaseOrderForm = ({ route, navigation }) => {
       tax: newProductLine.tax || 0,
       totalAmount: newProductLine.totalAmount || 0,
     };
-    // console.log("Products :", productLineData)
     setProductLines((prevLines) => [...prevLines, productLineData]);
   };
 
@@ -216,8 +215,10 @@ const PurchaseOrderForm = ({ route, navigation }) => {
     );
   };
 
+  const isSubmitDisabled = productLines.length < 0;
+
   const handleSubmit = async () => {
-    const fieldsToValidate = ['vendorName', 'trnNumber', 'currency', 'countryOfOrigin', 'warehouse'];
+    const fieldsToValidate = ['vendorName', 'trnNumber', 'currency', 'purchaseType', 'countryOfOrigin', 'billDate', 'warehouse'];
     if (validateForm(fieldsToValidate)) {
       Keyboard.dismiss();
       setIsSubmitting(true);
@@ -250,7 +251,7 @@ const PurchaseOrderForm = ({ route, navigation }) => {
           tax_type_id: line?.taxes?.id,
         }))
       }
-      console.log("🚀 ~ PurchaseOrderForm ~ purchaseOrderData:", JSON.stringify(purchaseOrderData, null, 2));
+      // console.log("🚀 ~ PurchaseOrderForm ~ purchaseOrderData:", JSON.stringify(purchaseOrderData, null, 2));
       try {
         const response = await post("/createPurchaseOrder", purchaseOrderData);
         if (response.success) {
@@ -379,11 +380,11 @@ const PurchaseOrderForm = ({ route, navigation }) => {
         {productLines.length > 0 && <>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Untaxed Amount : </Text>
-            <Text style={styles.totalValue}>{formData.untaxedAmount.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>{formData.untaxedAmount}</Text>
           </View>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Taxes : </Text>
-            <Text style={styles.totalValue}>{(formData.totalAmount - formData.untaxedAmount).toFixed(2)}</Text>
+            <Text style={styles.totalValue}>{formData.taxTotal}</Text>
           </View>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Total : </Text>
@@ -393,11 +394,13 @@ const PurchaseOrderForm = ({ route, navigation }) => {
         }
 
         {renderBottomSheet()}
-        <LoadingButton
+        <Button
           title="SAVE"
           onPress={handleSubmit}
           marginTop={10}
           loading={isSubmitting}
+          backgroundColor={COLORS.tabIndicator}
+          disabled={isSubmitDisabled}
         />
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
@@ -421,9 +424,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.primaryThemeColor,
     fontFamily: FONT_FAMILY.urbanistSemiBold,
-  },
-  total: {
-    marginTop: 10,
   },
   totalSection: {
     flexDirection: 'row',

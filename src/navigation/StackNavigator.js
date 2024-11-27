@@ -39,10 +39,9 @@ import { VisitFormTabs } from "@screens/Home/Options/Visits/VisitFormTabs";
 import { PurchasesScreen } from "@screens/Home/Options/Purchases";
 import { AddPriceLines, EditPriceEnquiryDetails, PriceEnquiryDetails, PriceEnquiryForm, PriceEnquiryScreen } from "@screens/Home/Options/Purchases/PriceEnquiry";
 import { AddProductLines, EditPurchaseRequisitionDetails, PurchaseRequisitionDetails, PurchaseRequisitionForm, PurchaseRequisitionScreen } from "@screens/Home/Options/Purchases/PurchaseRequisition";
-import { AddPurchaseLines, PurchaseOrderDetails, PurchaseOrderForm, PurchaseOrderList, PurchaseOrderScreen } from "@screens/Home/Options/Purchases/PurchaseOrder";
-import { DeliveryNoteDetails, DeliveryNoteScreen } from "@screens/Home/Options/Purchases/DeliveryNote";
+import { AddPurchaseLines, EditPurchaseOrderDetails, PurchaseOrderDetails, PurchaseOrderForm, PurchaseOrderList, PurchaseOrderScreen } from "@screens/Home/Options/Purchases/PurchaseOrder";
+import { DeliveryNoteCreation, DeliveryNoteDetails, DeliveryNoteScreen } from "@screens/Home/Options/Purchases/DeliveryNote";
 import { VendorBillScreen } from "@screens/Home/Options/Purchases/VendorBill";
-import DeliveryNoteCreation from "@screens/Home/Options/Purchases/DeliveryNote/DeliveryNoteCreation";
 
 const Stack = createNativeStackNavigator();
 
@@ -463,6 +462,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="PurchaseOrderDetails"
         component={PurchaseOrderDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditPurchaseOrderDetails"
+        component={EditPurchaseOrderDetails}
         options={{ headerShown: false }}
       />
       <Stack.Screen

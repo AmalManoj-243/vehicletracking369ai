@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, FlatList } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { SafeAreaView } from '@components/containers';
 import NavigationHeader from '@components/Header/NavigationHeader';
-import { RoundedScrollContainer } from '@components/containers';
+import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
 import { DetailField } from '@components/common/Detail';
 import { formatDate } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';

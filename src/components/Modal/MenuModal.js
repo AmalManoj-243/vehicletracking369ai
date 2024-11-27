@@ -13,7 +13,7 @@ const MenuModal = ({ isVisible, onCancel, onOptionSelect, headerMessage = 'Selec
             isVisible={isVisible}
             animationIn="slideInDown"
             animationOut="slideOutDown"
-            backdropOpacity={0.7}
+            backdropOpacity={0.9}
             animationInTiming={400}
             animationOutTiming={300}
             backdropTransitionInTiming={100}
@@ -55,8 +55,7 @@ const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: 'white',
         padding: 20,
-        borderRadius: 10,
-        width: '80%',
+        width: '100%',
     },
     modalHeader: {
         fontSize: 18,
