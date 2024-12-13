@@ -187,7 +187,10 @@ const AddPriceLines = ({ navigation, route }) => {
           label="Description"
           placeholder="Enter Description"
           value={formData.description}
-          onChangeText={(value) => handleFieldChange('description', value)}
+          // onChangeText={(value) => handleFieldChange('description', value)}
+          onChangeText={(value) =>
+            setFormData((prevFormData) => ({ ...prevFormData, description: value }))
+          }
         />
         <FormInput
           label={"Quantity"}

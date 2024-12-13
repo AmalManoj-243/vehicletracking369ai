@@ -38,7 +38,7 @@ const NavigationHeader = ({
                     <AntDesign name={iconOneName} size={25} color={color} />
                 </TouchableOpacity>
             }
-            <View style={{ width: 5 }} />
+            <View style={{ width: 15 }} />
             {iconTwoName &&
                 <TouchableOpacity activeOpacity={0.8} onPress={iconTwoPress}>
                     <AntDesign name={iconTwoName} size={25} color={color} />

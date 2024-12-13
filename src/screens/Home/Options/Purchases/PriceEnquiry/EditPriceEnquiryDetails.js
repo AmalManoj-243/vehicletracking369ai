@@ -6,9 +6,8 @@ import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
 import { DetailField } from '@components/common/Detail';
 import { formatDate } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';
-import { TextInput as FormInput } from "@components/common/TextInput";
 import { fetchPriceEnquiryDetails } from '@api/details/detailApi';
-import PriceEnquiryDetailList from './PriceEnquiryDetailList';
+import EditPriceEnquiryDetailList from './EditPriceEnquiryDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS } from '@constants/theme';
@@ -20,7 +19,6 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [priceLines, setPriceLines] = useState([]);
-    const [inputPrice, setInputPrice] = useState('');
 
     const fetchDetails = async () => {
         setIsLoading(true);
@@ -44,15 +42,6 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
             }
         }, [priceId])
     );
-
-    const handlePriceChange = (value) => {
-        setInputPrice(value);
-        const updatedPriceLines = priceLines.map((line) => ({
-            ...line,
-            price: parseFloat(value) || line.price,
-        }));
-        setPriceLines(updatedPriceLines);
-    };
 
     const handleViewPrice = async () => {
         setIsLoading(true);
@@ -112,18 +101,21 @@ const EditPriceEnquiryDetails = ({ navigation, route }) => {
                 <DetailField label="Request Date" value={formatDate(details?.request_details?.[0]?.request_date)} />
                 <DetailField label="Warehouse" value={details?.request_details?.[0]?.warehouse?.warehouse_name || '-'} />
                 <DetailField label="Require By" value={formatDate(details?.request_details?.[0]?.require_by)} />
-                <FormInput
-                    label={"Price"}
-                    placeholder={"Enter Price"}
-                    editable={true}
-                    keyboardType="numeric"
-                    value={inputPrice}
-                    onChangeText={handlePriceChange}
-                />
 
                 <FlatList
                     data={priceLines}
-                    renderItem={({ item }) => <PriceEnquiryDetailList item={item} />}
+                    renderItem={({ item }) => (
+                        <EditPriceEnquiryDetailList
+                            item={item}
+                            onPriceChange={(id, newPrice) => {
+                                setPriceLines((prevLines) =>
+                                    prevLines.map((line) =>
+                                        line._id === id ? { ...line, price: parseFloat(newPrice) || line.price } : line
+                                    )
+                                );
+                            }}
+                        />
+                    )}
                     keyExtractor={(item) => item._id}
                 />
 

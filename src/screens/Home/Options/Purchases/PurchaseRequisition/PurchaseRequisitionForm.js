@@ -167,8 +167,8 @@ const PurchaseRequisitionForm = ({ route, navigation }) => {
           })) || [],
         })),
       };
-      console.log(purchaseData)
-
+      console.log("Purchase Data :", purchaseData)
+ 
       try {
         const response = await post("/createPurchaseRequest", purchaseData);
         if (response.success === 'true' || response.success === true) {

@@ -31,14 +31,16 @@ const {
   GET_INVENTORY_DETAILS,
   GET_PRODUCT_DETAILS,
   GET_STOCK_TRANSFER_DETAILS,
-  GET_FUND_TRANSFER_DETAILS
+  GET_FUND_TRANSFER_DETAILS,
+  GET_JOB_REGISTER_PAYMENT_DETAILS,
+  GET_SERVICE_RETURN_DETAILS,
+  GET_PAYMENT_RECEIPT_DETAILS
 } = DETAIL_API_ENDPOINTS;
 
-
-// Fetches details for a given endpoint and sequence number.
-const fetchAuditDetails = async (endpoint, sequenceNo) => {
+// fetch stock transfer details
+const fetchAuditDetail = async (endpoint, sequenceNo) => {
   try {
-    const response = await get(`${endpoint}?sequence_no=${sequenceNo}`);
+    const response = await get(`${endpoint}?qr_sequence_no=${sequenceNo}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -46,10 +48,10 @@ const fetchAuditDetails = async (endpoint, sequenceNo) => {
   }
 };
 
-// fetch stock transfer details
-const fetchAuditDetailss = async (endpoint, sequenceNo) => {
+// Fetches details for a given endpoint and sequence number.
+const fetchAuditDetails = async (endpoint, sequenceNo) => {
   try {
-    const response = await get(`${endpoint}?qr_sequence_no=${sequenceNo}`);
+    const response = await get(`${endpoint}?sequence_no=${sequenceNo}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -114,15 +116,15 @@ const fetchLedgerDetail = async (ledgerId) => {
 
 // Object containing functions to fetch transaction auditing details
 export const fetchBills = {
-  invoiceDetails: async (sequenceNo) => fetchAuditDetailss(GET_INVOICE_DETAILS, sequenceNo),
-  vendorDetails: async (sequenceNo) => fetchAuditDetailss(GET_VENDOR_DETAILS, sequenceNo),
+  invoiceDetails: async (sequenceNo) => fetchAuditDetail(GET_INVOICE_DETAILS, sequenceNo),
+  vendorDetails: async (sequenceNo) => fetchAuditDetail(GET_VENDOR_DETAILS, sequenceNo),
   salesReturnDetails: async (sequenceNo) => fetchAuditDetails(GET_SALES_RETURN_DETAILS, sequenceNo),
   purchaseReturnDetails: async (sequenceNo) => fetchAuditDetails(GET_PURCHASE_RETURN_DETAILS, sequenceNo),
   capitalPaymentDetails: async (sequenceNo) => fetchAuditDetails(GET_CAPITAL_PAYMENT_DETAILS, sequenceNo),
-  jobInvoiceDetails: async (sequenceNo) => fetchAuditDetailss(GET_JOB_INVOICE_DETAILS, sequenceNo),
-  stockTransferDetails: async (sequenceNo) => fetchAuditDetailss(GET_STOCK_TRANSFER_DETAILS, sequenceNo),
+  jobInvoiceDetails: async (sequenceNo) => fetchAuditDetail(GET_JOB_INVOICE_DETAILS, sequenceNo),
+  stockTransferDetails: async (sequenceNo) => fetchAuditDetail(GET_STOCK_TRANSFER_DETAILS, sequenceNo),
   fundTransferDetails: async (sequenceNo) => fetchAuditDetails(GET_FUND_TRANSFER_DETAILS, sequenceNo),
-  sparePartsIssueDetails: async (sequenceNo) => fetchAuditDetailss(GET_SPARE_PARTS_ISSUE_DETAILS, sequenceNo),
+  sparePartsIssueDetails: async (sequenceNo) => fetchAuditDetail(GET_SPARE_PARTS_ISSUE_DETAILS, sequenceNo),
   sparePartsIssueAuditDetails: async (issueId) => fetchDetails(GET_SPARE_PARTS_ISSUE_AUDIT_DETAILS, issueId),
   pettyCashAllotmentDetails: async (sequenceNo) => fetchAuditDetails(GET_PETTY_CASH_ALLOTMENT_DETAILS, sequenceNo),
   pettyCashExpenseDetails: async (sequenceNo) => fetchAuditDetails(GET_PETTY_CASH_EXPENSE_DETAILS, sequenceNo),
@@ -131,15 +133,18 @@ export const fetchBills = {
   pettyCashTransferDetails: async (sequenceNo) => fetchAuditDetails(GET_PETTY_CASH_TRANSFER_DETAILS, sequenceNo),
   pettyCashReturnDetails: async (sequenceNo) => fetchAuditDetails(GET_PETTY_CASH_RETURN_DETAILS, sequenceNo),
   capitalRecieptsDetails: async (sequenceNo) => fetchAuditDetails(GET_CAPITAL_RECEIPTS_DETAILS, sequenceNo),
-  customerReceiptsDetails: async (sequenceNo) => fetchAuditDetailss(GET_CUSTOMER_RECEIPTS_DETAILS, sequenceNo),
-  customerPaymentDetails: async (sequenceNo) => fetchAuditDetailss(GET_CUSTOMER_PAYMENT_DETAILS, sequenceNo),
+  customerReceiptsDetails: async (sequenceNo) => fetchAuditDetail(GET_CUSTOMER_RECEIPTS_DETAILS, sequenceNo),
+  customerPaymentDetails: async (sequenceNo) => fetchAuditDetail(GET_CUSTOMER_PAYMENT_DETAILS, sequenceNo),
   cashReceiptsDetails: async (sequenceNo) => fetchAuditDetails(GET_CASH_RECEIPTS_DETAILS, sequenceNo),
   cashPaymentsDetails: async (sequenceNo) => fetchAuditDetails(GET_CASH_PAYMENTS_DETAILS, sequenceNo),
   expenseDetails: async (sequenceNo) => fetchAuditDetails(GET_EXPENSE_DETAILS, sequenceNo),
-  supplierReceiptsDetails: async (sequenceNo) => fetchAuditDetailss(GET_SUPPLIER_RECEIPTS_DETAILS, sequenceNo),
-  supplierPaymentsDetails: async (sequenceNo) => fetchAuditDetailss(GET_SUPPLIER_PAYMENTS_DETAILS, sequenceNo),
+  supplierReceiptsDetails: async (sequenceNo) => fetchAuditDetail(GET_SUPPLIER_RECEIPTS_DETAILS, sequenceNo),
+  supplierPaymentsDetails: async (sequenceNo) => fetchAuditDetail(GET_SUPPLIER_PAYMENTS_DETAILS, sequenceNo),
   ledgerTypeDetails: async (sequenceNo) => fetchAuditDetails(GET_LEDGER_TYPE_DETAILS, sequenceNo),
   chequeLedgerDetails: async (sequenceNo) => fetchAuditDetails(GET_CHEQUE_LEDGER, sequenceNo),
+  jobRegisterPaymentDetails: async (sequenceNo) => fetchAuditDetails(GET_JOB_REGISTER_PAYMENT_DETAILS, sequenceNo),
+  serviceReturnDetails: async (sequenceNo) => fetchAuditDetail(GET_SERVICE_RETURN_DETAILS, sequenceNo),
+  paymentReceiptDetails: async (sequenceNo) => fetchAuditDetails(GET_PAYMENT_RECEIPT_DETAILS, sequenceNo),
   collectionTypeDetails: async (businessTypeId, paymentMethodId) => fetchCollectionType(businessTypeId, paymentMethodId),
   ledgerTypeDetails: async (ledgerId) => fetchLedgerDetail(ledgerId),
 };

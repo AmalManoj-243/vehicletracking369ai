@@ -27,18 +27,18 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
     const fetchDetails = async () => {
         setIsLoading(true);
         try {
-          const updatedDetails = await fetchPurchaseRequisitionDetails(purchaseId);
-          const requestDetails = updatedDetails[0]?.request_details?.[0];
-          setDetails(updatedDetails[0] || {});
-          setProductLines(requestDetails?.products_lines || []); 
+            const updatedDetails = await fetchPurchaseRequisitionDetails(purchaseId);
+            const requestDetails = updatedDetails[0]?.request_details?.[0];
+            setDetails(updatedDetails[0] || {});
+            setProductLines(requestDetails?.products_lines || []);
         } catch (error) {
-          console.error('Error fetching service details:', error);
-          showToastMessage('Failed to fetch service details. Please try again.');
+            console.error('Error fetching service details:', error);
+            showToastMessage('Failed to fetch service details. Please try again.');
         } finally {
-          setIsLoading(false);
+            setIsLoading(false);
         }
     };
-      
+
     useFocusEffect(
         useCallback(() => {
             if (purchaseId) {
@@ -49,7 +49,7 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
 
     const handleSendPurchase = async () => {
         try {
-            const data = { _id: details._id };  
+            const data = { _id: details._id };
             const response = await post('/updatePurchaseRequest/push_to_price_enquiry', data);
             if (response.success === true || response.success === 'true') {
                 showToastMessage('Purchase Succesfully added to Price Enquiry');
@@ -62,14 +62,14 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
             showToastMessage('An error occurred. Please try again.');
         }
     };
-    
+
     const handleDeletePurchase = async () => {
         setIsSubmitting(true);
         try {
             const { _id } = details;
             const response = await deleteRequest(`/viewPurchaseRequest/${_id}`);
             if (response.success === true || response.success === 'true') {
-                showToastMessage('Purchase Deleted Successfully');
+                showToastMessage('Purchase Requisition Deleted Successfully');
                 navigation.navigate('PurchaseRequisitionScreen');
             } else {
                 showToastMessage('Failed to Delete Purchase. Please try again.');
@@ -81,10 +81,6 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
             setIsSubmitting(false);
         }
     };
-         
-    const handleEditPurchase = () => {
-        navigation.navigate('EditPurchaseRequisitionDetails', { id: purchaseId });
-    };
 
     const isSendEnquiry = details?.status === 'Approved';
 
@@ -94,6 +90,13 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
                 title={details?.sequence_no || 'Purchase Requisition Details'}
                 onBackPress={() => navigation.goBack()}
                 logo={false}
+                iconOneName='edit'
+                iconOnePress={() => navigation.navigate('EditPurchaseRequisitionDetails', { id: purchaseId })}
+                iconTwoName='delete'
+                iconTwoPress={() => {
+                    setActionToPerform('delete');
+                    setIsConfirmationModalVisible(true);
+                }}
             />
             <RoundedScrollContainer>
                 <DetailField label="Requested By" value={details?.request_details?.[0]?.requested_by?.employee_name || '-'} />
@@ -106,32 +109,12 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
                     keyExtractor={(item) => item._id}
                 />
 
-                <View style={{ flexDirection: 'row', marginVertical: 20 }}>
-                    <Button
-                        width={'25%'}
-                        backgroundColor={COLORS.lightRed}
-                        title="DELETE"
-                        onPress={() => {
-                            setActionToPerform('delete');
-                            setIsConfirmationModalVisible(true);
-                        }}
-                    />
-                <View style={{ width: 5 }} />
-                    <Button
-                        width={'50%'}
-                        backgroundColor={COLORS.tabIndicator}
-                        title="Send To Price Enquiry"
-                        onPress={handleSendPurchase}
-                        disabled={isSendEnquiry}
-                    />
-                <View style={{ width: 5 }} />
-                    <Button
-                        width={'25%'}
-                        backgroundColor={COLORS.green}
-                        title="EDIT"
-                        onPress={handleEditPurchase}
-                    />
-                </View>
+                <Button
+                    backgroundColor={COLORS.orange}
+                    title="Send To Price Enquiry"
+                    onPress={handleSendPurchase}
+                    disabled={isSendEnquiry}
+                />
 
                 <ConfirmationModal
                     isVisible={isConfirmationModalVisible}
@@ -142,7 +125,6 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
                         setIsConfirmationModalVisible(false);
                     }}
                 />
-
                 <OverlayLoader visible={isLoading || isSubmitting} />
             </RoundedScrollContainer>
         </SafeAreaView>

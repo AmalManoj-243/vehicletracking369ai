@@ -9,17 +9,19 @@ const PurchaseOrderList = ({ item, onPress }) => {
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{item?.sequence_no || '-'}</Text>
+          <Text style={[styles.content, {color: 'red'}]}>{item?.status || '-'}</Text>
         <View style={styles.rightColumn}> 
           <Text style={styles.content}>{formatDate(item?.bill_date) || '-'}</Text>
           <Text style={styles.content}>{item?.currency?.currency_name || '-'}</Text>
         </View>       
         <View style={styles.rightColumn}> 
-          <Text style={styles.contentRight}>{item?.supplier?.supplier_name || '-'}</Text>
+          <Text style={styles.content}>{item?.total_amount || '-'}</Text>
           <Text style={styles.content}>{item?.purchase_type || '-'}</Text>
         </View>
         <View style={styles.rightColumn}>
-          <Text style={styles.content}>{item?.total_amount || '-'}</Text>
-          <Text style={[styles.contentRight, {color: 'red'}]}>{item?.status || '-'}</Text>
+        </View>
+        <View style={styles.rightColumn}>
+          <Text style={styles.content}>{item?.supplier?.supplier_name || '-'}</Text>
         </View>
       </View>
     </TouchableOpacity>

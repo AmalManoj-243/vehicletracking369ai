@@ -9,19 +9,19 @@ const VendorBillList = ({ item, onPress }) => {
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{item?.sequence_no || '-'}</Text>
-        <View style={styles.rightColumn}> 
-          <Text style={styles.content}>{formatDate(item?.date) || '-'}</Text>
-          <Text style={styles.content}>{item?.total_amount || '-'}</Text>
-          <Text style={styles.content}>{item?.payment_status || '-'}</Text>
-        </View>
-        <View style={styles.rightColumn}>
-          <Text style={styles.content}>{item?.due_amount || '-'}</Text>
-          <Text style={styles.content}>{item?.payment_method_name || '-'}</Text>
-          <Text style={styles.content}>{item?.warehouse?.warehouses_name || '-'}</Text>
-        </View> 
         <View style={styles.rightColumn}>
           <Text style={styles.content}>{item?.supplier?.supplier_name || '-'}</Text>
         </View>
+        <View style={styles.rightColumn}> 
+          <Text style={styles.content}>{formatDate(item?.date) || '-'}</Text>
+          <Text style={styles.content}>{item?.total_amount || '-'}</Text>
+          <Text style={styles.content}>{item?.due_amount || '-'}</Text>
+        </View>
+        <View style={styles.rightColumn}>
+          <Text style={styles.content}>{item?.payment_method_name || '-'}</Text>
+          <Text style={styles.content}>{item?.warehouse?.warehouses_name || '-'}</Text>
+          <Text style={[styles.content, {color: 'red'}]}>{item?.payment_status || '-'}</Text>
+        </View> 
       </View>
     </TouchableOpacity>
   );

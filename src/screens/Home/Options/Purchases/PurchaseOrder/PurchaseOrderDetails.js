@@ -69,10 +69,10 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
     const handleDeletePrice = async () => {
         setIsSubmitting(true);
         try {
-            const response = await deleteRequest(`//${details._id}`);
+            const response = await deleteRequest(`/viewPurchaseOrder/${details._id}`);
             if (response.success) {
-                showToastMessage('Price Enquiry Deleted Successfully');
-                navigation.navigate('PriceEnquiryScreen');
+                showToastMessage('Purchase Order Deleted Successfully');
+                navigation.navigate('PurchaseOrderScreen');
             } else {
                 showToastMessage('Failed to Delete Price Enquiry. Please try again.');
             }
@@ -93,10 +93,6 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
           taxTotal: taxes.toFixed(2),
         };
       }, [purchaseOrderLines]);
-
-    const handleEditPrice = () => {
-        navigation.navigate('EditPurchaseOrderDetails', { id: purchaseOrderId });
-    };
 
     const handleDeliveryNote = () => {
         navigation.navigate('DeliveryNoteCreation', { id: purchaseOrderId });
@@ -130,7 +126,9 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                 onBackPress={() => navigation.goBack()}
                 logo={false}
                 iconOneName='edit'
-                iconOnePress={() => setIsMenuModalVisible(true)}
+                iconOnePress={() => navigation.navigate('EditPurchaseOrderDetails', { id: purchaseOrderId })}
+                iconTwoName='menu-fold'
+                iconTwoPress={() => setIsMenuModalVisible(true)}
             />
             <RoundedScrollContainer>
                 <DetailField label="Sequence No" value={details?.sequence_no || '-'} />
@@ -147,10 +145,14 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                     keyExtractor={(item) => item._id}
                 />
 
-            <View style={{ marginVertical: 2 }}>
+                <View style={{ marginVertical: 2 }}>
                 <View style={styles.totalSection}>
                     <Text style={styles.totalLabel}>Untaxed Amount : </Text>
-                    <Text style={styles.totalValue}>{details.untaxed_total_amount}</Text>
+                    <Text style={styles.totalValue}>
+                    {details.untaxed_total_amount 
+                    ? details.untaxed_total_amount 
+                    : details?.products_lines?.reduce((total, line) => total + (line?.sub_total || 0), 0)}
+                    </Text>
                 </View>
                 <View style={styles.totalSection}>
                     <Text style={styles.totalLabel}>Taxes : </Text>
@@ -162,54 +164,46 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
                 </View>
             </View>
 
-                <View style={{ flexDirection: 'row', marginVertical: 20 }}>
-                    <Button
-                        width={'30%'}
-                        backgroundColor={COLORS.lightRed}
-                        title="DELETE"
-                        onPress={() => {
-                            setIsConfirmationModalVisible(true);
-                        }}
-                    />
-                    <View style={{ width: 5 }} />
-                    <Button
-                        width={'40%'}
-                        backgroundColor={COLORS.tabIndicator}
-                        title="Vendor Bills"
-                        onPress={handleVendorBill}
-                    />
-                    <View style={{ width: 5 }} />
-                    <Button
-                        width={'30%'}
-                        backgroundColor={COLORS.green}
-                        title="EDIT"
-                        onPress={handleEditPrice}
-                    />
-                </View>
-
-                <ConfirmationModal
-                    isVisible={isConfirmationModalVisible}
-                    onCancel={() => setIsConfirmationModalVisible(false)}
-                    headerMessage="Are you sure you want to delete this?"
-                    onConfirm={() => {
-                        handleDeletePrice();
-                        setIsConfirmationModalVisible(false);
+            <View style={{ flexDirection: 'row', marginVertical: 5 }}>
+                <Button
+                    width={'50%'}
+                    backgroundColor={COLORS.lightRed}
+                    title="DELETE"
+                    onPress={() => {
+                        setIsConfirmationModalVisible(true);
                     }}
                 />
-
-                <MenuModal
-                    isVisible={isMenuModalVisible}
-                    onCancel={() => setIsMenuModalVisible(false)}
-                    onOptionSelect={(option) => {
-                        if (option === 'Delivery Note') handleDeliveryNote();
-                        else if (option === 'PO Cancel') handleCancelPurchaseOrder();
-                        // else if (option === 'Send PO') handleSendPO();
-                        // else if (option === 'Shipment') handleShipment();
-                    }}
+                <View style={{ width: 5 }} />
+                <Button
+                    width={'50%'}
+                    backgroundColor={COLORS.tabIndicator}
+                    title="Vendor Bills"
+                    onPress={handleVendorBill}
                 />
+            </View>
 
-                <OverlayLoader visible={isLoading || isSubmitting} />
-            </RoundedScrollContainer>
+            <ConfirmationModal
+                isVisible={isConfirmationModalVisible}
+                onCancel={() => setIsConfirmationModalVisible(false)}
+                headerMessage="Are you sure you want to delete this?"
+                onConfirm={() => {
+                    handleDeletePrice();
+                    setIsConfirmationModalVisible(false);
+                }}
+            />
+
+            <MenuModal
+                isVisible={isMenuModalVisible}
+                onCancel={() => setIsMenuModalVisible(false)}
+                onOptionSelect={(option) => {
+                    if (option === 'Delivery Note') handleDeliveryNote();
+                    else if (option === 'PO Cancel') handleCancelPurchaseOrder();
+                    // else if (option === 'Send PO') handleSendPO();
+                    // else if (option === 'Shipment') handleShipment();
+                }}
+            />
+            <OverlayLoader visible={isLoading || isSubmitting} />
+          </RoundedScrollContainer>
         </SafeAreaView>
     );
 };

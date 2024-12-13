@@ -119,10 +119,6 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
         }
     };
 
-    const handleEditPrice = () => {
-        navigation.navigate('EditPriceEnquiryDetails', { id: priceId });
-    };
-
     const isPurchaseOrderDisabled = responseData?.purchase_order_models?.[0]?.status === "purchase_order";
 
     const handleUpdateStatus = async (id, price, isSwitchOn) => {
@@ -141,6 +137,13 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
                 title={details?.sequence_no || 'Price Enquiry Details'}
                 onBackPress={() => navigation.goBack()}
                 logo={false}
+                iconOneName='edit'
+                iconOnePress={() => navigation.navigate('EditPriceEnquiryDetails', { id: priceId })}
+                iconTwoName='delete'
+                iconTwoPress={() => {
+                    setActionToPerform('delete');
+                    setIsConfirmationModalVisible(true);
+                }}
             />
             <RoundedScrollContainer>
                 <DetailField label="Requested By" value={details?.request_details?.[0]?.requested_by?.employee_name || '-'} />
@@ -153,32 +156,12 @@ const PriceEnquiryDetails = ({ navigation, route }) => {
                     keyExtractor={(item) => item._id}
                 />
 
-                <View style={{ flexDirection: 'row', marginVertical: 20 }}>
-                    <Button
-                        width={'30%'}
-                        backgroundColor={COLORS.lightRed}
-                        title="DELETE"
-                        onPress={() => {
-                            setActionToPerform('delete');
-                            setIsConfirmationModalVisible(true);
-                        }}
-                    />
-                    <View style={{ width: 5 }} />
-                    <Button
-                        width={'40%'}
-                        backgroundColor={COLORS.tabIndicator}
-                        title="Purchase Order"
-                        onPress={handlePurchaseOrder}
-                        disabled={isPurchaseOrderDisabled}
-                    />
-                    <View style={{ width: 5 }} />
-                    <Button
-                        width={'30%'}
-                        backgroundColor={COLORS.green}
-                        title="EDIT"
-                        onPress={handleEditPrice}
-                    />
-                </View>
+                <Button
+                    backgroundColor={COLORS.tabIndicator}
+                    title="Purchase Order"
+                    onPress={handlePurchaseOrder}
+                    disabled={isPurchaseOrderDisabled}
+                />
 
                 <ConfirmationModal
                     isVisible={isConfirmationModalVisible}

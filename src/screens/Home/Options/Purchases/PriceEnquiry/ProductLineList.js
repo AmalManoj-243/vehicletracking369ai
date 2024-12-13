@@ -10,10 +10,10 @@ const ProductLineList = ({ item, onPress }) => {
         <Text style={styles.head}>{item?.product_name?.trim() || '-'}</Text>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>{item?.quantity || '-'}</Text>
+          <Text style={styles.content}>{item?.remarks || '-'}</Text>
         </View>
       </View>
       <View style={styles.rightColumn}>
-        <Text style={styles.content}>{item?.remarks || '-'}</Text>
         <View style={styles.contentRight}>
           {item?.suppliers?.length > 0 ? (
             item.suppliers.map((supplier, index) => (

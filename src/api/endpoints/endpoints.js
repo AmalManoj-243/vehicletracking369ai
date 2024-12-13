@@ -100,7 +100,10 @@ export const DETAIL_API_ENDPOINTS = {
     GET_CHEQUE_LEDGER: '/viewChequeLedger',
     GET_STOCK_TRANSFER_DETAILS: '/viewStockTransfer',
     GET_FUND_TRANSFER_DETAILS: '/viewFundTransfer',
-    // OTHERS DETAILS
     GET_INVENTORY_DETAILS: '/viewInventoryBox',
     GET_PRODUCT_DETAILS: '/viewProducts',
+    // latest updates keys
+    GET_JOB_REGISTER_PAYMENT_DETAILS: '/viewJobRegisterPayment',
+    GET_SERVICE_RETURN_DETAILS: '/viewServiceReturn/service_return/service_return_dropdown',
+    GET_PAYMENT_RECEIPT_DETAILS: '/viewJobRegisterPayment',
 };

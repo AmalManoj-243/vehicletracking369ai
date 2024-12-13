@@ -3,7 +3,7 @@ import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import Text from '@components/Text';
 import { FONT_FAMILY } from '@constants/theme';
 
-const PurchaseOrderDetailList = ({ item, onPress }) => {
+const VendorBillDetailList = ({ item, onPress }) => {
 
   const {
     product = { product_name: '-', product_description: '-' },
@@ -89,4 +89,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PurchaseOrderDetailList;
+export default VendorBillDetailList;

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import NavigationHeader from '@components/Header/NavigationHeader';
 import { RoundedScrollContainer } from '@components/containers';
@@ -8,6 +8,7 @@ import { DetailField } from '@components/common/Detail';
 import { formatDate } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';
 import { fetchVendorBillDetails } from '@api/details/detailApi';
+import VendorBillDetailList from './VendorBillDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
@@ -17,7 +18,7 @@ const VendorBillDetails = ({ navigation, route }) => {
     const [details, setDetails] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [purchaseOrderLines, setPurchaseOrderLines] = useState([]);
+    const [vendorBills, setVendorBills] = useState([]);
     const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
 
@@ -27,7 +28,7 @@ const VendorBillDetails = ({ navigation, route }) => {
             const updatedDetails = await fetchVendorBillDetails(vendorBillId);
             if (updatedDetails && updatedDetails[0]) {
                 setDetails(updatedDetails[0]);
-                setPurchaseOrderLines(updatedDetails[0]?.products_lines || []);
+                setVendorBills(updatedDetails[0]?.products_lines || []);
             }
         } catch (error) {
             console.error('Error fetching Vendor Bill details:', error);
@@ -62,13 +63,18 @@ const VendorBillDetails = ({ navigation, route }) => {
             <DetailField label="Ordered Date" value={formatDate(details?.order_date)} />
             <DetailField label="Bill Date" value={formatDate(details?.bill_date)} />
             <DetailField label="Purchase Type" value={details?.purchase_type || '-'} />
-            <DetailField label="Sales Person" value={details?.purchase_type || '-'} />
-            <DetailField label="Warehouse" value={details?.purchase_type || '-'} />
+            <DetailField label="Sales Person" value={details?.sales_person_name || '-'} />
+            <DetailField label="Warehouse" value={details?.warehouse_name || '-'} />
             <DetailField label="Country" value={details?.country?.country_name || '-'} />
             <DetailField label="Currency" value={details?.currency?.currency_name || '-'} />
             <DetailField label="TRN Number" value={details?.Trn_number?.toString() || '-'} />
-            <DetailField label="Payment Status" value={details?.currency?.currency_name || '-'} />
-            <DetailField label="Payment Method" value={details?.currency?.currency_name || '-'} />
+            <DetailField label="Payment Status" value={details?.payment_status || '-'} />
+            <DetailField label="Payment Method" value={details?.payment_method_name || '-'} />
+            <FlatList
+              data={vendorBills}
+              renderItem={({ item }) => <VendorBillDetailList item={item} />}
+              keyExtractor={(item) => item._id}
+            />
 
           {/* <View style={{ marginVertical: 2 }}>
               <View style={styles.totalSection}>

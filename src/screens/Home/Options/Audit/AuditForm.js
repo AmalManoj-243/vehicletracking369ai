@@ -25,6 +25,7 @@ const AuditForm = ({ navigation }) => {
   const [imageUrls, setImageUrls] = useState([])
   const [displayBillDetails, setDisplayBillDetails] = useState({})
   const [collectionType, setCollectionType] = useState(null);
+  console.log("Collection Type: ", collectionType)
   const [errors, setErrors] = useState({});
   const [ledger, setLedger] = useState({})
   const [imageLoading, setImageLoading] = useState(true);
@@ -51,7 +52,8 @@ const AuditForm = ({ navigation }) => {
   };
 
   // Function to handle scanned data
-  const handleScan = async (data) => {     // VB 203
+  const handleScan = async (data) => {  // VB 203 
+    console.log("Data : ", data) 
     const billParts = data.split('-')      // VB-203
     const billName = billParts[0]
     console.log("BillName : ", billName)
@@ -190,6 +192,22 @@ const AuditForm = ({ navigation }) => {
           billDetails = response[0];
           break;
 
+        // latest update keys  
+        case "JOBREC":
+          response = await fetchBills.jobRegisterPaymentDetails(billSequence);
+          billDetails = response[0];
+          break;  
+
+        case "Service ReturnSRN":
+          response = await fetchBills.serviceReturnDetails(billSequence);
+          billDetails = response[0];
+          break;  
+
+        case "PAYMENT RECIEPTRP":
+          response = await fetchBills.paymentReceiptDetails(billSequence);
+          billDetails = response[0];
+          break;     
+
         default:
           console.log("Unknown bill type");
       }
@@ -238,7 +256,6 @@ const AuditForm = ({ navigation }) => {
           setLedger(ledgerTypeResponseData);
         }
         setDisplayBillDetails(transactionDetails);
-
 
         // Clear errors for all fields if they are not empty
         for (const field in transactionDetails) {
@@ -655,11 +672,35 @@ const AuditForm = ({ navigation }) => {
           auditingData.un_taxed_amount = scannedBillDetails?.amount ?? 0;
           break;
 
+        // case "JOBREC":
+        //   auditingData.amount = scannedBillDetails?.amount ?? 0;
+        //   auditingData.to_warehouse_id = scannedBillDetails?.to_warehouse_id ?? null;
+        //   auditingData.to_warehouse_name = scannedBillDetails?.to_warehouse_name ?? null;
+        //   auditingData.un_taxed_amount = scannedBillDetails?.amount ?? 0;
+        // break;
+
+        // case "Service ReturnSRN":
+        //   auditingData.amount = scannedBillDetails?.amount ?? 0;
+        //   auditingData.to_warehouse_id = scannedBillDetails?.to_warehouse_id ?? null;
+        //   auditingData.to_warehouse_name = scannedBillDetails?.to_warehouse_name ?? null;
+        //   auditingData.un_taxed_amount = scannedBillDetails?.amount ?? 0;
+        // break;
+
+        case "PAYMENT RECIEPTRP":
+          auditingData.customer_id = scannedBillDetails?.customer?.customer_id ?? null;
+          auditingData.customer_name = scannedBillDetails?.customer?.customer_name ?? null;
+          auditingData.ledger_id = ledger?.ledger_id ?? null;
+          auditingData.ledger_type = ledger?.ledger_type ?? null;
+          auditingData.ledger_name = ledger?.ledger_name ?? null;
+          auditingData.ledger_display_name = ledger?.ledger_display_name ?? null;
+          auditingData.un_taxed_amount = displayBillDetails?.totalAmount ?? 0;
+        break;
+
         default:
           break;
       }
       setIsSubmiting(true);
-      console.log("handle Auditing DATA:", JSON.stringify(auditingData, null, 2));
+      console.log("handle Auditing Data:", JSON.stringify(auditingData, null, 2));
       // return auditingData;
       const response = await post('/createAuditing', auditingData);
       if (response.success === 'true') {
