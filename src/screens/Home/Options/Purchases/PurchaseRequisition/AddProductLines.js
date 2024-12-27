@@ -14,7 +14,6 @@ const AddProductLines = ({ navigation, route }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedSuppliers, setSelectedSuppliers] = useState([]);
-  console.log("🚀 ~ AddProductLines ~ selectedSuppliers:", selectedSuppliers)
   const [errors, setErrors] = useState({});
   const [dropdown, setDropdown] = useState({
     products: [],

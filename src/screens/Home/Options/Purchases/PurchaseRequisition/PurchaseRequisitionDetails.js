@@ -21,6 +21,7 @@ const PurchaseRequisitionDetails = ({ navigation, route }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [productLines, setProductLines] = useState([]);
+    // console.log("Product Lines :", JSON.stringify(productLines, null, 2));
     const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
     const [actionToPerform, setActionToPerform] = useState(null);
 

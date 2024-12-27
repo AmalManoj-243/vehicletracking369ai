@@ -5,8 +5,9 @@ import { TextInput as FormInput } from "@components/common/TextInput";
 import { MultiSelectDropdownSheet } from "@components/common/BottomSheets";
 import { fetchSupplierDropdown } from "@api/dropdowns/dropdownApi";
 
-const EditPurchaseDetailList = ({ item, onPress }) => {
+const EditPurchaseDetailList = ({ item, onPress, onSupplierChange }) => {
   const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  // console.log("Selected Suppliers :", selectedSuppliers)
   const [dropdownSuppliers, setDropdownSuppliers] = useState([]);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -42,7 +43,6 @@ const EditPurchaseDetailList = ({ item, onPress }) => {
     }
   };
 
-  // Toggle dropdown visibility
   const toggleDropdown = () => {
     if (!isVisible) {
       fetchDropdownSuppliers();
@@ -51,8 +51,23 @@ const EditPurchaseDetailList = ({ item, onPress }) => {
   };
 
   // Handle supplier selection
+  // const handleSupplierSelection = (selectedValues) => {
+  //   setSelectedSuppliers(selectedValues);
+  // };
+
   const handleSupplierSelection = (selectedValues) => {
     setSelectedSuppliers(selectedValues);
+
+    const updatedItem = {
+      ...item,
+      suppliers: selectedValues.map((supplier) => ({
+        supplier_id: supplier.id,
+        supplier_name: supplier.label,
+      })),
+    };
+    if (onSupplierChange) {
+      onSupplierChange(updatedItem);
+    }
   };
 
   return (
@@ -64,11 +79,24 @@ const EditPurchaseDetailList = ({ item, onPress }) => {
           <Text style={styles.content}>{item?.remarks || "-"}</Text>
         </View>
       </View>
+      {/* <FormInput
+        label="Supplier"
+        value={
+          selectedSuppliers.length > 0
+            ? selectedSuppliers.map((supplier) => supplier.label).join(", ")
+            : "No suppliers selected"
+        }
+        editable={false}
+        dropIcon="menu-down"
+        multiline={true}
+        onPress={toggleDropdown}
+      /> */}
       <FormInput
         label="Supplier"
         value={selectedSuppliers.map((s) => s.label).join(", ")}
         editable={false}
         dropIcon="menu-down"
+        multiline={true}
         onPress={toggleDropdown}
       />
       {isVisible && (
@@ -77,6 +105,7 @@ const EditPurchaseDetailList = ({ item, onPress }) => {
           items={dropdownSuppliers}
           previousSelections={selectedSuppliers}
           title="Select Supplier"
+          refreshIcon={false}
           onValueChange={handleSupplierSelection}
           onClose={toggleDropdown}
         />

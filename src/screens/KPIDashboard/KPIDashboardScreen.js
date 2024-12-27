@@ -16,8 +16,8 @@ const KPIDashboardScreen = ({ navigation }) => {
     const currentUserId = currentUser?.related_profile?._id || '';
     const [dashBoardDetails, setDashBoardDetails] = useState({
         assignedKpiData: [],
-        importantKpiData: [],
         urgentKpiData: [],
+        importantKpiData: [],
         serviceKpiData: [],
         taskManagements: [],
         inProgressKpi: [],
@@ -29,8 +29,8 @@ const KPIDashboardScreen = ({ navigation }) => {
             const data = await fetchKPIDashboard({ userId: currentUserId });
             setDashBoardDetails({
                 assignedKpiData: data.assigned_kpi_data || [],
-                importantKpiData: data.important_kpi_data || [],
                 urgentKpiData: data.urgent_kpi_data || [],
+                importantKpiData: data.important_kpi_data || [],
                 serviceKpiData: data.service_kpi_data || [],
                 taskManagements: data.task_managments || [],
                 inProgressKpi: data.in_progress_kpi || [],

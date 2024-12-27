@@ -3,17 +3,27 @@ import { View, StyleSheet, Platform, TouchableOpacity, TextInput } from 'react-n
 import Text from '@components/Text';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 
-const EditPurchaseOrderList = ({ item, onPress }) => {
+const EditPurchaseOrderList = ({ item, onPress, onQuantityChange }) => {
+  // Destructure the fields for easier access
   const {
     product = { product_name: '-', product_description: '-' },
     scheduled_date = '-',
     quantity = '-',
     recieved_quantity = '-',
     product_unit_of_measure = '-',
-    sub_total = '-',
     unit_price = '-',
     taxes = { taxes_name: '-' },
   } = item || {};
+
+  const [editableQuantity, setEditableQuantity] = useState(quantity.toString());
+  const sub_total = parseFloat(unit_price || 0) * parseFloat(editableQuantity || 0);
+
+  const handleQuantityChange = (text) => {
+    setEditableQuantity(text);
+    if (onQuantityChange) {
+      onQuantityChange(text);
+    }
+  };
 
   const pendingQuantity = quantity - recieved_quantity;
 
@@ -25,8 +35,16 @@ const EditPurchaseOrderList = ({ item, onPress }) => {
           <Text style={styles.content}>Scheduled Date: {scheduled_date}</Text>
         </View>
         <View style={styles.rightColumn}>
+          <Text style={styles.content}>Edit Quantity</Text>
+          <TextInput
+            style={[styles.contentRight, styles.quantityInput]}
+            value={editableQuantity}
+            onChangeText={handleQuantityChange}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={styles.rightColumn}>
           <Text style={styles.content}>Sub Total: {sub_total}</Text>
-          <Text style={styles.content}>Quantity: {quantity}</Text>
         </View>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>Description: {product.product_description || '-'}</Text>

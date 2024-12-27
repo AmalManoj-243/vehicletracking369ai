@@ -46,26 +46,29 @@ const EditPurchaseRequisitionDetails = ({ navigation, route }) => {
         }, [purchaseId])
     );
 
-    const handleEditPurchase = async () => {
+    const handleSubmitPurchase = async () => {
         setIsSubmitting(true);
         try {
-            const updateData = {
-                _id: details._id,
-                supplier_id: selectedSuppliers.map(supplier => supplier.id),
-                product_lines: productLines,
-            };
-            console.log("Updated Suppliers : ", updateData)
-            const response = await put('/updatePurchaseRequest', updateData);
-            if (response.success === "true") {
-                showToastMessage('Successfully Added Suppliers');
-                navigation.navigate('PurchaseRequisitionDetails', { id: purchaseId });
-            } else {
-                showToastMessage('Failed to update purchase. Please try again.');
-            }
+          const updateData = {
+            _id: details._id,
+            // supplier_id: selectedSuppliers.map(supplier => supplier.id),
+            supplier_id: productLines.flatMap((line) =>
+              line.suppliers?.map((supplier) => supplier.supplier_id) || []
+            ),
+            product_lines: productLines,
+          };
+          console.log("🚀 ~ EditPurchaseRequisitionDetails ~ Updated Suppliers:", JSON.stringify(updateData, null, 2));
+          const response = await put('/updatePurchaseRequest', updateData);
+          if (response.success === "true") {
+            showToastMessage('Successfully Added Suppliers');
+            navigation.navigate('PurchaseRequisitionDetails', { id: purchaseId });
+          } else {
+            showToastMessage('Failed to update purchase. Please try again.');
+          }
         } catch (error) {
-            showToastMessage('An error occurred. Please try again.');
+          showToastMessage('An error occurred. Please try again.');
         } finally {
-            setIsSubmitting(false);
+          setIsSubmitting(false);
         }
     };
 
@@ -81,27 +84,29 @@ const EditPurchaseRequisitionDetails = ({ navigation, route }) => {
                 <DetailField label="Request Date" value={formatDate(details?.request_details?.[0]?.request_date)} />
                 <DetailField label="Warehouse" value={details?.request_details?.[0]?.warehouse?.warehouse_name || '-'} />
                 <DetailField label="Require By" value={formatDate(details?.request_details?.[0]?.require_by)} />
-                <FlatList
+                {/* <FlatList
                     data={productLines}
                     renderItem={({ item }) => <EditPurchaseDetailList item={item} />}
                     keyExtractor={(item) => item._id}
+                /> */}
+                <FlatList
+                    data={productLines}
+                    renderItem={({ item }) => ( <EditPurchaseDetailList item={item}
+                        onSupplierChange={(selectedValues) => {
+                            setProductLines((prevLines) =>
+                            prevLines.map((line) =>
+                                line._id === selectedValues._id ? selectedValues : line
+                            ));
+                        }} />
+                    )}
+                    keyExtractor={(item) => item._id}
                 />
 
-                <View style={{ flexDirection: 'row', marginVertical: 20 }}>
-                    <Button
-                        width={'50%'}
-                        backgroundColor={COLORS.tabIndicator}
-                        title="VIEW"
-                        onPress={() => navigation.navigate('PurchaseRequisitionDetails', { id: purchaseId })}
-                    />
-                    <View style={{ width: 5 }} />
-                    <Button
-                        width={'50%'}
-                        backgroundColor={COLORS.green}
-                        title="SAVE"
-                        onPress={handleEditPurchase}
-                    />
-                </View>
+                <Button
+                    backgroundColor={COLORS.tabIndicator}
+                    title="SUBMIT"
+                    onPress={handleSubmitPurchase}
+                />
                 <OverlayLoader visible={isLoading || isSubmitting} />
             </RoundedScrollContainer>
         </SafeAreaView>

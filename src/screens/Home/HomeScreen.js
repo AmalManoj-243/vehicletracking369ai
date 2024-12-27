@@ -143,7 +143,7 @@ const HomeScreen = ({ navigation }) => {
         {/* Navigation Header */}
         <NavigationBar
           onSearchPress={() => navigation.navigate("")}
-          onOptionsPress={() => navigation.navigate("PurchaseRequisitionScreen")}
+          onOptionsPress={() => navigation.navigate("OptionsScreen")}
           onScannerPress={() => navigation.navigate("Scanner", { onScan: handleScan })}
         />
         {/* Carousel */}

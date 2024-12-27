@@ -74,11 +74,12 @@ const EditPurchaseOrderDetails = ({ navigation, route }) => {
         <DetailField label="Warehouse" value={details?.warehouse_name} />
         <TitleWithButton
           label="Add an item"
-          onPress={() => navigation.navigate('AddPurchaseLines')}
+          onPress={() => navigation.navigate('AddEditPurchaseLines')}
         />
         <FlatList
           data={purchaseOrderLines}
-          renderItem={({ item }) => <EditPurchaseOrderList item={item} />}
+          renderItem={({ item }) => <EditPurchaseOrderList item={item} 
+          onPress={() => navigation.navigate('EditPurchaseLines', { id: item._id })} />}
           keyExtractor={(item) => item._id}
         />
 
@@ -148,28 +149,63 @@ const styles = StyleSheet.create({
 
 export default EditPurchaseOrderDetails;
 
-// import React, { useState, useCallback, useMemo } from 'react';
+// import { View, Keyboard, FlatList, StyleSheet, Text } from "react-native";
+// import React, { useEffect, useState, useCallback } from "react";
 // import { useFocusEffect } from '@react-navigation/native';
-// import { View, FlatList, Text, StyleSheet } from 'react-native';
-// import { SafeAreaView } from '@components/containers';
-// import { TitleWithButton, NavigationHeader } from "@components/Header";
-// import { RoundedScrollContainer } from '@components/containers';
-// import { DetailField } from '@components/common/Detail';
-// import { formatDate } from '@utils/common/date';
-// import { showToastMessage } from '@components/Toast';
+// import { RoundedScrollContainer, SafeAreaView } from "@components/containers";
+// import { NavigationHeader, TitleWithButton } from "@components/Header";
+// import { fetchSupplierDropdown, fetchCurrencyDropdown, fetchCountryDropdown, fetchWarehouseDropdown } from "@api/dropdowns/dropdownApi";
+// import { purchaseType } from "@constants/dropdownConst";
+// import { DropdownSheet } from "@components/common/BottomSheets";
+// import { TextInput as FormInput } from "@components/common/TextInput";
+// import { Button } from "@components/common/Button";
+// import DateTimePickerModal from 'react-native-modal-datetime-picker';
 // import { fetchPurchaseOrderDetails } from '@api/details/detailApi';
+// import { formatDate } from "@utils/common/date";
+// import { useAuthStore } from "@stores/auth";
+// import { post } from "@api/services/utils";
+// import { OverlayLoader } from "@components/Loader";
 // import EditPurchaseOrderList from './EditPurchaseOrderList';
-// import { OverlayLoader } from '@components/Loader';
-// import { Button } from '@components/common/Button';
-// import { COLORS, FONT_FAMILY } from '@constants/theme';
+// import { validateFields } from '@utils/validation';
+// import { showToast } from '@utils/common';
+// import { showToastMessage } from '@components/Toast';
+// import { COLORS, FONT_FAMILY } from "@constants/theme";
 
-// const EditPurchaseOrderDetails = ({ navigation, route }) => {
+// const EditPurchaseOrderDetails = ({ route, navigation }) => {
+//   const currentUser = useAuthStore((state) => state.user);
 //   const { id: purchaseOrderId } = route?.params || {};
-//   const [details, setDetails] = useState({});
+//   const [isVisible, setIsVisible] = useState(false);
+//   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+//   const [selectedType, setSelectedType] = useState(null);
+//   const [errors, setErrors] = useState({});
 //   const [isLoading, setIsLoading] = useState(false);
-//   const [isSubmitting, setIsSubmitting] = useState(false);
+//   const [productLines, setProductLines] = useState([]);
 //   const [purchaseOrderLines, setPurchaseOrderLines] = useState([]);
-//   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+//   const [details, setDetails] = useState({});
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+//   const [searchText, setSearchText] = useState("");
+//   const [dropdown, setDropdown] = useState({
+//     vendorName: [],
+//     currency: [],
+//     purchaseType: [],
+//     countryOfOrigin: [],
+//     warehouse: [],
+//   });
+
+//   const [formData, setFormData] = useState({
+//     vendorName: "",
+//     trnNumber: "",
+//     company: "",
+//     currency: "",
+//     orderDate: new Date(),
+//     purchaseType: "",
+//     countryOfOrigin: "",
+//     billDate: "",
+//     warehouse: { id: currentUser?.warehouse?.warehouse_id || '', label: currentUser?.warehouse?.warehouse_name },
+//     untaxedAmount: 0,
+//     taxTotal: 0,
+//     totalAmount: 0
+//   });
 
 //   const fetchDetails = async () => {
 //     setIsLoading(true);
@@ -195,15 +231,110 @@ export default EditPurchaseOrderDetails;
 //     }, [purchaseOrderId])
 //   );
 
-//   const { taxTotal } = useMemo(() => {
-//     let taxes = 0;
-//     purchaseOrderLines.forEach((item) => {
-//       taxes += item.tax_value || 0;
-//     });
-//     return {
-//       taxTotal: taxes.toFixed(2),
+//   useEffect(() => {
+//     const fetchSuppliers = async () => {
+//       if (selectedType === "Vendor Name") {
+//         try {
+//           const vendorData = await fetchSupplierDropdown(searchText);
+//           setDropdown((prevDropdown) => ({
+//             ...prevDropdown,
+//             vendorName: vendorData?.map((data) => ({
+//               id: data._id,
+//               label: data.name?.trim(),
+//             })),
+//           }));
+//         } catch (error) {
+//           console.error("Error fetching Supplier dropdown data:", error);
+//         }
+//       }
 //     };
-//   }, [purchaseOrderLines]);
+//     fetchSuppliers();
+//   }, [searchText, selectedType]);
+
+//   useEffect(() => {
+//     const fetchDropdownData = async () => {
+//       try {
+//         const [currencyData, countryData, warehouseData] = await Promise.all([
+//           fetchCurrencyDropdown(),
+//           fetchCountryDropdown(),
+//           fetchWarehouseDropdown(),
+//         ]);
+//         setDropdown({
+//           currency: currencyData.map(data => ({
+//             id: data._id,
+//             label: data.currency_name,
+//           })),
+//           countryOfOrigin: countryData.map(data => ({
+//             id: data._id,
+//             label: data.country_name,
+//           })),
+//           warehouse: warehouseData.map(data => ({
+//             id: data._id,
+//             label: data.warehouse_name,
+//           })),
+//         });
+//       } catch (error) {
+//         console.error("Error fetching dropdown data:", error);
+//       }
+//     };
+
+//     fetchDropdownData();
+//   }, []);
+
+//   const toggleBottomSheet = (type) => {
+//     setSelectedType(type);
+//     setIsVisible(!isVisible);
+//   };
+
+//   const handleAddProductLine = (newProductLine) => {
+//     const productLineData = {
+//       product_id: newProductLine.product_id,
+//       product_name: newProductLine.product_name,
+//       description: newProductLine.description || '',
+//       scheduledDate: newProductLine.scheduledDate || '',
+//       quantity: newProductLine.quantity || 0,
+//       uom: newProductLine.uom || { id: '', label: '' },
+//       unitPrice: newProductLine.unitPrice || 0,
+//       taxes: newProductLine.taxes || { id: '', label: '' },
+//       subTotal: newProductLine.subTotal || 0,
+//       untaxedAmount: newProductLine.untaxedAmount || 0,
+//       tax: newProductLine.tax || 0,
+//       totalAmount: newProductLine.totalAmount || 0,
+//     };
+//     setProductLines((prevLines) => [...prevLines, productLineData]);
+//   };
+
+//   useEffect(() => {
+//     if (route.params?.newProductLine) {
+//       setPurchaseOrderLines((prevLines) => [...prevLines, route.params.newProductLine]);
+//     }
+//   }, [route.params?.newProductLine]);
+  
+
+//   // useEffect(() => {
+//   //   if (route.params?.newProductLine) {
+//   //     handleAddProductLine(route.params.newProductLine);
+//   //   }
+//   // }, [route.params?.newProductLine]);
+
+//   const handleFieldChange = (field, value) => {
+//     setFormData((prevFormData) => ({
+//       ...prevFormData,
+//       [field]: value,
+//     }));
+//     if (errors[field]) {
+//       setErrors((prevErrors) => ({
+//         ...prevErrors,
+//         [field]: null,
+//       }));
+//     }
+//   };
+
+//   const validateForm = (fieldsToValidate) => {
+//     const { isValid, errors } = validateFields(formData, fieldsToValidate);
+//     setErrors(errors);
+//     return isValid;
+//   };
 
 //   const renderBottomSheet = () => {
 //     let items = [];
@@ -250,10 +381,78 @@ export default EditPurchaseOrderDetails;
 //     );
 //   };
 
+//   const handleSubmit = async () => {
+//     const fieldsToValidate = ['vendorName', 'trnNumber', 'currency', 'purchaseType', 'countryOfOrigin', 'billDate', 'warehouse'];
+//     if (purchaseOrderLines.length === 0) {
+//       showToastMessage('Please Add Products');
+//       return;
+//     }
+//     if (validateForm(fieldsToValidate)) {
+//       Keyboard.dismiss();
+//       setIsSubmitting(true);
+//       const purchaseOrderData = {
+//         supplier: formData?.vendorName?.id ?? null,
+//         currency: formData?.currency?.id ?? null,
+//         purchase_type: formData?.purchaseType?.label ?? null,
+//         country: formData?.countryOfOrigin?.id ?? null,
+//         bill_date: formData?.billDate ?? null,
+//         company: formData?.company?.company_id ?? null,
+//         order_date: formData?.orderDate ?? null,
+//         Trn_number: formData?.trnNumber || null,
+//         untaxed_total_amount: formData?.untaxedAmount || null,
+//         total_amount: formData?.totalAmount || null,
+//         warehouse_id: formData?.warehouse?.id ?? null,
+//         products_lines: productLines.map((line) => ({
+//           product: line?.product_id,
+//           description: line?.description,
+//           quantity: line?.quantity,
+//           unit_price: line?.unitPrice,
+//           sub_total: line?.untaxedAmount,
+//           tax_value: line?.tax,
+//           scheduled_date: line?.scheduledDate,
+//           recieved_quantity: 0,
+//           billed_quantity: 0,
+//           uom: line?.uom?.label,
+//           product_unit_of_measure: line?.uom?.label,
+//           taxes: line?.taxes?.id,
+//           tax_type_name: line?.taxes?.label,
+//           tax_type_id: line?.taxes?.id,
+//         }))
+//       }
+//       // console.log("🚀 ~ EditPurchaseOrderDetails ~ purchaseOrderData:", JSON.stringify(purchaseOrderData, null, 2));
+//       try {
+//         const response = await post("/createPurchaseOrder", purchaseOrderData);
+//         if (response.success) {
+//           showToast({
+//             type: "success",
+//             title: "Success",
+//             message: response.message || "Purchase Order created successfully",
+//           });
+//           navigation.navigate("PurchaseOrderScreen");
+//         } else {
+//           showToast({
+//             type: "error",
+//             title: "ERROR",
+//             message: response.message || "Purchase Order Creation failed",
+//           });
+//         }
+//       } catch (error) {
+//         console.error("Error Creating Purchase Order:", error);
+//         showToast({
+//           type: "error",
+//           title: "ERROR",
+//           message: "An unexpected error occurred. Please try again later.",
+//         });
+//       } finally {
+//         setIsSubmitting(false);
+//       }
+//     }
+//   };
+
 //   return (
 //     <SafeAreaView>
 //       <NavigationHeader
-//         title={'Edit Purchase Order Details'}
+//         title="Purchase Order Creation"
 //         onBackPress={() => navigation.goBack()}
 //         logo={false}
 //       />
@@ -264,7 +463,7 @@ export default EditPurchaseOrderDetails;
 //           dropIcon="menu-down"
 //           editable={false}
 //           validate={errors.vendorName}
-//           value={details?.supplier?.supplier_name || '-'}
+//           value={formData.vendorName?.label}
 //           required
 //           multiline={true}
 //           onPress={() => toggleBottomSheet("Vendor Name")}
@@ -275,7 +474,6 @@ export default EditPurchaseOrderDetails;
 //           editable
 //           keyboardType="numeric"
 //           validate={errors.trnNumber}
-//           value={details?.Trn_number?.toString() || '-'}
 //           required
 //           onChangeText={(value) => handleFieldChange('trnNumber', value)}
 //         />
@@ -285,7 +483,7 @@ export default EditPurchaseOrderDetails;
 //           dropIcon="menu-down"
 //           editable={false}
 //           validate={errors.currency}
-//           value={details?.currency?.currency_name || '-'}
+//           value={formData.currency?.label}
 //           required
 //           onPress={() => toggleBottomSheet("Currency")}
 //         />
@@ -301,7 +499,7 @@ export default EditPurchaseOrderDetails;
 //           items={purchaseType}
 //           editable={false}
 //           validate={errors.purchaseType}
-//           value={details?.purchase_type || '-'}
+//           value={formData.purchaseType?.label}
 //           required
 //           onPress={() => toggleBottomSheet("Purchase Type")}
 //         />
@@ -311,7 +509,7 @@ export default EditPurchaseOrderDetails;
 //           dropIcon="menu-down"
 //           editable={false}
 //           validate={errors.countryOfOrigin}
-//           value={details?.country?.country_name || '-'}
+//           value={formData.countryOfOrigin?.label}
 //           required
 //           onPress={() => toggleBottomSheet("Country Of Origin")}
 //         />
@@ -322,7 +520,7 @@ export default EditPurchaseOrderDetails;
 //           editable={false}
 //           required
 //           validate={errors.billDate}
-//           value={formatDate(details?.bill_date)}
+//           value={formatDate(formData.billDate)}
 //           onPress={() => setIsDatePickerVisible(true)}
 //         />
 //         <FormInput
@@ -331,42 +529,35 @@ export default EditPurchaseOrderDetails;
 //           dropIcon="menu-down"
 //           editable={false}
 //           validate={errors.warehouse}
-//           value={details?.warehouse_name}
+//           value={formData.warehouse?.label}
 //           required
 //           onPress={() => toggleBottomSheet("Warehouse")}
 //         />
 //         <TitleWithButton
 //           label="Add an item"
-//           onPress={() => navigation.navigate('AddPurchaseLines')}
+//           onPress={() => navigation.navigate('AddEditPurchaseLines')}
 //         />
-//                 <FlatList
+//         <FlatList
 //           data={purchaseOrderLines}
 //           renderItem={({ item }) => <EditPurchaseOrderList item={item} />}
 //           keyExtractor={(item) => item._id}
 //         />
-//         <FlatList
-//           data={productLines}
-//           renderItem={({ item }) => (
-//             <ProductLineList item={item} />
-//           )}
-//           keyExtractor={(item, index) => index.toString()}
-//         />
 
-//         {productLines.length > 0 && <>
+//         <View style={{ marginVertical: 2 }}>
 //           <View style={styles.totalSection}>
 //             <Text style={styles.totalLabel}>Untaxed Amount : </Text>
-//             <Text style={styles.totalValue}>{formData.untaxedAmount}</Text>
+//             <Text style={styles.totalValue}>{}</Text>
 //           </View>
 //           <View style={styles.totalSection}>
 //             <Text style={styles.totalLabel}>Taxes : </Text>
-//             <Text style={styles.totalValue}>{formData.taxTotal}</Text>
+//             <Text style={styles.totalValue}>{}</Text>
 //           </View>
 //           <View style={styles.totalSection}>
 //             <Text style={styles.totalLabel}>Total : </Text>
-//             <Text style={styles.totalValue}>{formData.totalAmount}</Text>
+//             <Text style={styles.totalValue}>{}</Text>
 //           </View>
-//         </>
-//         }
+//         </View>
+
 //         {renderBottomSheet()}
 //         <Button
 //           title="SAVE"
@@ -374,7 +565,6 @@ export default EditPurchaseOrderDetails;
 //           marginTop={10}
 //           loading={isSubmitting}
 //           backgroundColor={COLORS.tabIndicator}
-//           disabled={isSubmitDisabled}
 //         />
 //         <DateTimePickerModal
 //           isVisible={isDatePickerVisible}
@@ -387,6 +577,7 @@ export default EditPurchaseOrderDetails;
 //           onCancel={() => setIsDatePickerVisible(false)}
 //         />
 //       </RoundedScrollContainer>
+//       <OverlayLoader visible={isLoading || isSubmitting} />
 //     </SafeAreaView>
 //   );
 // };

@@ -12,7 +12,7 @@ import PurchaseOrderDetailList from './PurchaseOrderDetailList';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
-import { post, deleteRequest } from '@api/services/utils';
+import { put, deleteRequest } from '@api/services/utils';
 import { ConfirmationModal, MenuModal } from '@components/Modal';
 
 const PurchaseOrderDetails = ({ navigation, route }) => {
@@ -85,27 +85,31 @@ const PurchaseOrderDetails = ({ navigation, route }) => {
         }
     };
 
-
     const handleCancelPurchaseOrder = async () => {
         setIsSubmitting(true);
         try {
-            const response = await updatePurchaseOrder(details._id, {
+            const response = await put(`/updatePurchaseOrder`, {
                 _id: details._id,
                 status: "Cancelled",
                 payment_status: "Cancelled",
+                update_purchase_line_ids: [],
+                create_purchase_line_ids: [],
+                delete_purchase_line_ids: [],
             });
-            if (response.success || response === success) {
+            if (response.success == true) {
                 showToastMessage('Purchase Order Cancelled Successfully');
+                navigation.navigate("PurchaseOrderScreen")
                 fetchDetails();
             } else {
-                showToastMessage('Failed to Cancel Purchase Order. Please try again.');
+                showToastMessage('Purchase Order Cancelled Successfully.');
+                navigation.navigate("PurchaseOrderScreen")
             }
         } catch (error) {
             showToastMessage('An error occurred. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
-    };
+    };    
 
     return (
         <SafeAreaView>

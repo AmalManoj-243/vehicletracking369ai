@@ -39,7 +39,7 @@ import { VisitFormTabs } from "@screens/Home/Options/Visits/VisitFormTabs";
 import { PurchasesScreen } from "@screens/Home/Options/Purchases";
 import { AddPriceLines, EditPriceEnquiryDetails, PriceEnquiryDetails, PriceEnquiryForm, PriceEnquiryScreen } from "@screens/Home/Options/Purchases/PriceEnquiry";
 import { AddProductLines, EditPurchaseRequisitionDetails, PurchaseRequisitionDetails, PurchaseRequisitionForm, PurchaseRequisitionScreen } from "@screens/Home/Options/Purchases/PurchaseRequisition";
-import { AddPurchaseLines, EditPurchaseOrderDetails, PurchaseOrderDetails, PurchaseOrderForm, PurchaseOrderScreen } from "@screens/Home/Options/Purchases/PurchaseOrder";
+import { AddEditPurchaseLines, AddPurchaseLines, EditPurchaseLines, EditPurchaseOrderDetails, PurchaseOrderDetails, PurchaseOrderForm, PurchaseOrderScreen } from "@screens/Home/Options/Purchases/PurchaseOrder";
 import { DeliveryNoteCreation, DeliveryNoteDetails, DeliveryNoteScreen } from "@screens/Home/Options/Purchases/DeliveryNote";
 import { VendorBillDetails, VendorBillScreen } from "@screens/Home/Options/Purchases/VendorBill";
 import { AddVendorProducts, VendorBillFormTabs } from "@screens/Home/Options/Purchases/VendorBill/VendorBillFormTabs";
@@ -483,6 +483,16 @@ const StackNavigator = () => {
       <Stack.Screen
         name="AddPurchaseLines"
         component={AddPurchaseLines}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddEditPurchaseLines"
+        component={AddEditPurchaseLines}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditPurchaseLines"
+        component={EditPurchaseLines}
         options={{ headerShown: false }}
       />
       <Stack.Screen
