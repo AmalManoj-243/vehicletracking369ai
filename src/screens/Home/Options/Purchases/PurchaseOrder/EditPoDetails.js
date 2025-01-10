@@ -16,11 +16,12 @@ import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { ConfirmationModal } from '@components/Modal';
+import { put } from '@api/services/utils';
 
 const EditPoDetails = ({ navigation, route }) => {
   const { id: purchaseOrderId } = route?.params || {};
   const [detail, setDetail] = useState({});
-  console.log("Details : ", detail)
+  // console.log("🚀 ~ Details ~ detail:", JSON.stringify(detail, null, 2));
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [purchaseOrderLines, setPurchaseOrderLines] = useState([]);
@@ -153,18 +154,114 @@ const EditPoDetails = ({ navigation, route }) => {
     setIsVisible(!isVisible);
   };
 
-  const handleDeleteImage = (index) => {
-    const updatedImages = [...formData.imageUrls];
-    updatedImages.splice(index, 1);
-    handleFieldChange('imageUrls', updatedImages);
-  };
+  const addProducts = (addedItem) => {
+    const structuredProduct = {
+      product_id: addedItem.product_id,
+      product_name: addedItem.product_name, 
+      description: addedItem.description || "",
+      quantity: addedItem.quantity,
+      uom_id: addedItem.uom.id,
+      uom: addedItem.uom.label,
+      product_unit_of_measure: addedItem.uom.label,
+      unit_price: addedItem.unitPrice, 
+      scheduled_date: addedItem.scheduledDate, 
+      tax_type_id: addedItem.taxes.id, 
+      tax_type_name: addedItem.taxes.label,
+      sub_total: addedItem.subTotal, 
+      untaxed_amount: addedItem.untaxedAmount, 
+      tax: parseFloat(addedItem.tax),
+      total: parseFloat(addedItem.totalAmount),
+    };
+    setPurchaseOrderLines((prevItems) => [...prevItems, structuredProduct]);
+  };  
 
-  const validateForm = (fieldsToValidate) => {
-    Keyboard.dismiss();
-    const { isValid, errors } = validateFields(formData, fieldsToValidate);
-    setErrors(errors);
-    return isValid;
-  };
+  useEffect(() => {
+    if (route.params?.newProductLine) {
+      addProducts(route.params.newProductLine);
+    }
+  }, [route.params?.newProductLine]);  
+
+  const handleUpdatePurchaseOrder = async () => {
+    setIsSubmitting(true);
+    const updatedPurchaseOrder = {
+      _id: "677bcd7d3d5403cc4d080057",
+      supplier: "670675464e15450d26ba8eb8",
+      Trn_number: 1222,
+      status: "Pending",
+      currency: "6540b68c05fb79149c3eb7d8",
+      purchase_type: "International Purchase",
+      country: "6540b68405fb79149c3eb5c2",
+      bill_date: "2025-01-30",
+      order_date: "2025-01-06",
+      untaxed_total_amount: 2240,
+      total_amount: 2352,
+      payment_status: "Pending",
+      due_amount: 0,
+      paid_amount: 0,
+      due_date: 0,
+      remarks: "test",
+      date: "2025-01-30",
+      warehouse_id: "66307fc0ceb8eb834bb25509",
+      warehouse_name: "Danat Hub",
+      update_purchase_line_ids: updatedPurchaseOrder.map((item) => ({
+        purchase_line_ids: item.purchase_line_ids,
+        product: item.product_id,
+        taxes: item.tax_type_id,
+        quantity: item.quantity,
+        recieved_quantity: item.recieved_quantity,
+        unit_price: item.unit_price,
+        sub_total: item.unit_price * item.quantity,
+        description: item.description,
+        billed_quantity: item.billed_quantity,
+        product_unit_of_measure: item.uom,
+        scheduled_date: item.scheduled_date,
+      })),
+      create_purchase_line_ids: [
+        {
+          product: "6549fbbc170e1456c861c9ad",
+          taxes: "648d9b54ef9cd868dfbfa37b",
+          quantity: 2,
+          recieved_quantity: 0,
+          unit_price: 120,
+          sub_total: 240,
+          description: "",
+          billed_quantity: 0,
+          product_unit_of_measure: "",
+          scheduled_date: "2025-01-07",
+        },
+      ],
+      delete_purchase_line_ids: [],
+    };
+  console.log("Updated Purchase Order:", updatedPurchaseOrder);
+    try {
+      const response = await put("/updatePurchaseOrder", updatedPurchaseOrder);
+      console.log("Submitting Updated Purchase Order:", updatedPurchaseOrder);
+      if (response.success === 'true') {
+        showToast({
+          type: "success",
+          title: "Success",
+          message: response.message || "Purchase Order Updated Successfully",
+        });
+        navigation.navigate("PurchaseOrderDetails");
+      } else {
+        console.error("Submit Failed:", response.message);
+        showToast({
+          type: "error",
+          title: "ERROR",
+          message: response.message || "Purchase Order update failed",
+        });
+      }
+    } catch (error) {
+      console.error("Error Submitting Purchase Order Update:", error);
+      showToast({
+        type: "error",
+        title: "ERROR",
+        message: "An unexpected error occurred. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };  
 
   const renderBottomSheet = () => {
     let items = [];
@@ -219,13 +316,17 @@ const EditPoDetails = ({ navigation, route }) => {
     }, [purchaseOrderId])
   );
 
-  const { taxTotal } = useMemo(() => {
+  const { untaxedTotal, taxTotal, grandTotal } = useMemo(() => {
     let taxes = 0;
+    let untaxed = 0;
     purchaseOrderLines.forEach((item) => {
+      untaxed += item.sub_total || 0;
       taxes += item.tax_value || 0;
     });
     return {
+      untaxedTotal: untaxed.toFixed(2),
       taxTotal: taxes.toFixed(2),
+      grandTotal: (untaxed + taxes).toFixed(2),
     };
   }, [purchaseOrderLines]);
 
@@ -316,7 +417,7 @@ const EditPoDetails = ({ navigation, route }) => {
         />
         <TitleWithButton
           label="Add an item"
-          onPress={() => navigation.navigate('AddEditPurchaseLines')}
+          onPress={() => navigation.navigate('AddEditPurchaseLines', { purchaseOrderId })}
         />
         <FlatList
           data={purchaseOrderLines}
@@ -328,7 +429,7 @@ const EditPoDetails = ({ navigation, route }) => {
         <View style={{ marginVertical: 2 }}>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Untaxed Amount : </Text>
-            <Text style={styles.totalValue}>{detail.untaxed_total_amount}</Text>
+            <Text style={styles.totalValue}>{untaxedTotal}</Text>
           </View>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Taxes : </Text>
@@ -336,7 +437,7 @@ const EditPoDetails = ({ navigation, route }) => {
           </View>
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Total : </Text>
-            <Text style={styles.totalValue}>{detail.total_amount}</Text>
+            <Text style={styles.totalValue}>{grandTotal}</Text>
           </View>
         </View>
         {renderBottomSheet()}
@@ -351,9 +452,9 @@ const EditPoDetails = ({ navigation, route }) => {
         <ConfirmationModal
           isVisible={isConfirmationModalVisible}
           onCancel={() => setIsConfirmationModalVisible(false)}
-          headerMessage="Are you sure you want to delete this?"
+          headerMessage="Are you sure you want to update this?"
           onConfirm={() => {
-            handleDeletePrice();
+            handleUpdatePurchaseOrder();
             setIsConfirmationModalVisible(false);
           }}
         />

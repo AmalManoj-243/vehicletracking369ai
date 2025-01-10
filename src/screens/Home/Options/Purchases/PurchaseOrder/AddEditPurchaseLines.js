@@ -193,8 +193,9 @@ const AddEditPurchaseLines = ({ navigation }) => {
         tax: formData.tax || '',
         totalAmount: formData.totalAmount || '',
       };
-      console.log("🚀 ~ AddPurchaseLines ~ productLine:", JSON.stringify(productLine, null, 2));
-      navigation.navigate("EditPurchaseOrderDetails", { newProductLine: productLine });
+      console.log("🚀 ~ AddEditPurchaseLines ~ productLine:", JSON.stringify(productLine, null, 2));
+      // navigation.navigate("EditPoDetails", { newProductLine: productLine });
+      navigation.navigate('EditPoDetails', { newProductLine: productLine });
     }
   };
 

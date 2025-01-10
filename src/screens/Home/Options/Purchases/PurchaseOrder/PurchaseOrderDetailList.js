@@ -6,7 +6,8 @@ import { FONT_FAMILY } from '@constants/theme';
 const PurchaseOrderDetailList = ({ item, onPress }) => {
 
   const {
-    product = { product_name: '-', product_description: '-' },
+    product = { product_name: '-'},
+    description = '-',  
     scheduled_date = '-',
     quantity = '-',
     recieved_quantity = 0,
@@ -28,7 +29,7 @@ const PurchaseOrderDetailList = ({ item, onPress }) => {
           <Text style={styles.content}>Sub : {sub_total || '-'}</Text>
         </View>
       <View style={styles.rightColumn}>
-        <Text style={styles.content}>Des : {product.product_description || '-'}</Text>
+        <Text style={styles.content}>Des : {description || '-'}</Text>
         <Text style={styles.content}>RQ : {recieved_quantity || '0'}</Text>
       </View>
       <View style={styles.rightColumn}>

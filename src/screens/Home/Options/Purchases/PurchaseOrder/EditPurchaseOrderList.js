@@ -5,7 +5,8 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 
 const EditPurchaseOrderList = ({ item, onPress }) => {
   const {
-    product = { product_name: '-', product_description: '-' },
+    product = { product_name: '-'},
+    description = '-',
     scheduled_date = '-',
     quantity = '-',
     recieved_quantity = '-',
@@ -13,14 +14,15 @@ const EditPurchaseOrderList = ({ item, onPress }) => {
     sub_total = '-',
     unit_price = '-',
     taxes = { taxes_name: '-' },
+    product_name = '-',
+    tax_type_name = '',
   } = item || {};
 
   const pendingQuantity = quantity - recieved_quantity;
-
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
-        <Text style={styles.head}>{product.product_name.trim()}</Text>
+        <Text style={styles.head}>{product.product_name?.trim()} || {product_name?.trim() || '-'}</Text>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>Scheduled Date: {scheduled_date}</Text>
         </View>
@@ -29,7 +31,7 @@ const EditPurchaseOrderList = ({ item, onPress }) => {
           <Text style={styles.content}>Quantity: {quantity}</Text>
         </View>
         <View style={styles.rightColumn}>
-          <Text style={styles.content}>Description: {product.product_description || '-'}</Text>
+          <Text style={styles.content}>Description: {description || '-'}</Text>
           <Text style={styles.content}>Received Quantity: {recieved_quantity}</Text>
         </View>
         <View style={styles.rightColumn}>
@@ -38,7 +40,7 @@ const EditPurchaseOrderList = ({ item, onPress }) => {
         </View>
         <View style={styles.rightColumn}>
           <Text style={styles.content}>Unit Price: {unit_price}</Text>
-          <Text style={styles.content}>Taxes: {taxes.taxes_name}</Text>
+          <Text style={styles.content}>Taxes: {taxes.taxes_name} || {tax_type_name}</Text>
         </View>
       </View>
     </TouchableOpacity>

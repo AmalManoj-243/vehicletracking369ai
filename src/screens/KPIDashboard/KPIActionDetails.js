@@ -22,6 +22,7 @@ const KPIActionDetails = ({ navigation, route }) => {
   const { id } = route?.params || {};
   const currentUser = useAuthStore((state) => state.user);
   const [details, setDetails] = useState({});
+  console.log("🚀 ~ KPIActionDetails ~ details:", JSON.stringify(details, null, 2));
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
