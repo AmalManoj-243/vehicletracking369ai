@@ -220,8 +220,8 @@ export const fetchVisitPlanDetails = async (detailId) => {
 };
 
 export const fetchKPIDashboardDetails = async (detailId, loginEmployeeId) => {
-  console.log("detailId : ", detailId);
-  console.log("loginEmployeeId : ", loginEmployeeId);
+  // console.log("detailId : ", detailId);
+  // console.log("loginEmployeeId : ", loginEmployeeId);
   return fetchKPIDetail(API_ENDPOINTS.VIEW_KPI, detailId, loginEmployeeId);
 };
 

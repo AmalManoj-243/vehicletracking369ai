@@ -9,6 +9,9 @@ const KPIUpdateList = ({ item }) => {
     <TouchableOpacity activeOpacity={0.8} style={styles.itemContainer}>
       <View style={styles.leftColumn}>
         <Text style={styles.head}>{item?.updateText}</Text>
+        {item?.updateText === 'Pause' && (
+          <Text style={styles.content}>{item?.pause_reason}</Text>
+        )}
       </View>
       <View style={styles.rightColumn}>
         <Text style={styles.content}>{item?.assignee_name || '-'}</Text>

@@ -18,21 +18,20 @@ const PauseModal = ({ isVisible, onClose, onSubmit, title, header = ''}) => {
 
     const handleSave = () => {
         let hasError = false;
-
-        if (!updateText) {
+        if (!updateText || updateText.trim() === '') { 
             setErrorText('Reason Required');
             hasError = true;
         } else {
             setErrorText('');
         }
-
+    
         if (!hasError) {
-            onSubmit(updateText);
-            resetUpdateText()
-            onClose();
+            onSubmit(updateText.trim()); 
+            resetUpdateText(); 
+            onClose(); 
         }
     };
-
+    
     return (
         <Modal
             isVisible={isVisible}

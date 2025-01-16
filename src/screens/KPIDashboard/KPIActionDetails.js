@@ -22,7 +22,6 @@ const KPIActionDetails = ({ navigation, route }) => {
   const { id } = route?.params || {};
   const currentUser = useAuthStore((state) => state.user);
   const [details, setDetails] = useState({});
-  console.log("🚀 ~ KPIActionDetails ~ details:", JSON.stringify(details, null, 2));
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -41,7 +40,7 @@ const KPIActionDetails = ({ navigation, route }) => {
   const fetchDetails = async () => {
     setIsLoading(true);
     try {
-      const [updatedDetails] = await fetchKPIDashboardDetails(id,loginEmployeeId);
+      const [updatedDetails] = await fetchKPIDashboardDetails(id, loginEmployeeId);
       setDetails(updatedDetails || {});
       setKpiUpdates(updatedDetails?.kpiStatusUpdates || []);
       // Map through document uploads and the files
@@ -88,6 +87,26 @@ const KPIActionDetails = ({ navigation, route }) => {
     }
   };
 
+  const handleReAssignAction = async (actionData, successMessage, modalSetter) => {
+    setIsSubmitting(true);
+    try {
+      const response = await put('/updateKpiTasks/reassign', actionData);
+      if (response.message === 'Successfully Updated') {
+        showToastMessage(successMessage);
+        navigation.navigate('KPIListingScreen');
+      } else {
+        showToastMessage('Failed to perform action. Please try again.');
+      }
+    } catch (error) {
+      console.error('API error:', error);
+      showToastMessage('An error occurred. Please try again.');
+    } finally {
+      fetchDetails();
+      setIsSubmitting(false);
+      modalSetter(false);
+    }
+  };
+
   const handleStartTask = () => {
     const data = {
       _id: details._id || id,
@@ -104,6 +123,7 @@ const KPIActionDetails = ({ navigation, route }) => {
   const handlePauseTask = (pauseReason) => {
     const data = {
       pause_reason: pauseReason,
+      // isUrgentPause: false,
       progress_status: 'Pause',
       _id: details._id || id,
       isDeveloper: false,
@@ -113,20 +133,18 @@ const KPIActionDetails = ({ navigation, route }) => {
     handleTaskAction(data, 'Task Paused Successfully', setIsPauseModalVisible);
   };
 
-  const handleReAssignTask = (reAssignReason, selectedAssignee) => {
-    if (!selectedAssignee || !selectedAssignee._id) {
-      return;
-    }
+  const handleReAssignTask = (reAssignReason, assignee, estimatedTime) => {
     const data = {
-      _id: details._id || id,
-      assignee_id: currentUser?.related_profile?._id,
-      assignee_name: currentUser?.related_profile?.name,
+      assignee_id: currentUser?.related_profile?._id || '',
+      assignee_name: currentUser?.related_profile?.name || '',
+      reassign_reason: `${currentUser?.related_profile?.name || 'User'} reassigned the task to ${assignee.label} due to ${reAssignReason}`,
+      _id: details?._id || id,
+      assignedToId: assignee.id,
+      assignedToName: assignee.label,
       estimatedTime: details.totalEstimation?.[0]?.estimated_time || 0,
-      assignedToId: selectedAssignee._id,
-      assignedToName: selectedAssignee.name,
-      reassign_reason: ` ${currentUser?.related_profile?.name} reassigned the task to ${selectedAssignee.name} due to ${reAssignReason}`,
+      isDeveloper: false,
     };
-    handleTaskAction(data, 'Task Re-Assigned Successfully', setIsAssignModalVisible);
+    handleReAssignAction(data, 'Task Re-Assigned Successfully', setIsAssignModalVisible);
   };
 
   const handleCompleteTask = () => {
@@ -242,14 +260,14 @@ const KPIActionDetails = ({ navigation, route }) => {
   const isTaskPaused = details.progress_status === 'Pause';
   const isTaskCompleted = details.progress_status === 'Completed';
   const isNewStatus = details.status === 'New';
-  const isTaskOngoing = 
-  Array.isArray(details.active_tasks) && details.active_tasks.length > 0
-    ? details.active_tasks[0].progress_status === 'Ongoing'
-    : false;
+  const isTaskOngoing =
+    Array.isArray(details.active_tasks) && details.active_tasks.length > 0
+      ? details.active_tasks[0].progress_status === 'Ongoing'
+      : false;
 
-if (isTaskOngoing) {
-  showToastMessage('Task Already Exists');
-}
+  if (isTaskOngoing) {
+    showToastMessage('Task Already Exists');
+  }
 
   return (
     <SafeAreaView>
@@ -378,7 +396,7 @@ if (isTaskOngoing) {
         <View style={{ flexDirection: 'row', marginVertical: 5, padding: 1 }}>
           <Button
             width={'50%'}
-            backgroundColor={COLORS.brightBlue}
+            backgroundColor={COLORS.green}
             onPress={() => {
               if (details?.status === "New") {
                 setIsStartModalVisible(true);
@@ -386,7 +404,6 @@ if (isTaskOngoing) {
                 handleStartTask();
               }
             }}
-            // disabled={isTaskStarted || isTaskCompleted}
             disabled={isTaskStarted || isTaskCompleted || isTaskOngoing}
             title={(
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -403,7 +420,7 @@ if (isTaskOngoing) {
           <View style={{ width: 5 }} />
           <Button
             width={'50%'}
-            backgroundColor={COLORS.yellow}
+            backgroundColor={COLORS.amberYellow}
             onPress={() => {
               setActionToPerform('pause');
               setIsPauseModalVisible(true);
@@ -431,7 +448,7 @@ if (isTaskOngoing) {
               setActionToPerform('reAssign');
               setIsAssignModalVisible(true);
             }}
-            disabled={details?.progress_status !== 'Ongoing' || 'isMeet'}
+            disabled={isTaskStarted || isMeet}
             title={(
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 <AntDesign name="reload1" size={20} color={COLORS.white} />
@@ -447,7 +464,7 @@ if (isTaskOngoing) {
           <View style={{ width: 5 }} />
           <Button
             width={'50%'}
-            backgroundColor={COLORS.green}
+            backgroundColor={COLORS.pewterGray}
             onPress={() => {
               setActionToPerform('complete');
               setIsCompleteModalVisible(true);
@@ -503,7 +520,10 @@ if (isTaskOngoing) {
           isVisible={isAssignModalVisible}
           header='Re-Assigning'
           onClose={() => setIsAssignModalVisible(!isAssignModalVisible)}
-          onSubmit={handleReAssignTask}
+          // setIsVisible={setIsAssignModalVisible}
+          onSubmit={({ selectedAssignee, estimatedTime, reason }) => {
+            handleReAssignTask(reason, selectedAssignee, estimatedTime);
+          }}
         />
         <CompleteModal
           isVisible={isCompleteModalVisible}

@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Modal from 'react-native-modal';
 import { Button } from '@components/common/Button';
-import { FONT_FAMILY, COLORS } from '@constants/theme';
+import { FONT_FAMILY } from '@constants/theme';
 import { NavigationHeader } from '@components/Header';
 import { TextInput } from '@components/common/TextInput';
-import { DropdownSheet } from '@components/common/BottomSheets';
 import { fetchAssigneeDropdown } from '@api/dropdowns/dropdownApi';
 import CustomListModal from './CustomListModal';
 
-const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = '' }) => {
+const ReAssignModal = ({ isVisible, onClose, onSubmit, header = '' }) => {
     const [formState, setFormState] = useState({
         assignee: '',
         estimatedTime: '',
         reason: '',
-        errorText: ''
     });
 
     const [selectedType, setSelectedType] = useState(null);
@@ -42,8 +40,11 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
         fetchDropdownData();
     }, []);
 
-    const handleInputChange = (name, value) => {
-        setFormState((prevState) => ({ ...prevState, [name]: value }));
+    const handleFieldChange = (name, value) => {
+        setFormState((prevState) => ({
+            ...prevState,
+            [name]: value,
+        }));
     };
 
     const handleSave = () => {
@@ -63,7 +64,7 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
 
         if (!hasError) {
             onSubmit({
-                assignee,
+                selectedAssignee: assignee,
                 estimatedTime,
                 reason
             });
@@ -77,7 +78,6 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
             assignee: '',
             estimatedTime: '',
             reason: '',
-            errorText: ''
         });
     };
 
@@ -106,7 +106,7 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                 items={items}
                 title={selectedType}
                 onClose={() => setIsDropdownVisible(false)}
-                onValueChange={(value) => handleInputChange(fieldName, value)}
+                onValueChange={(value) => handleFieldChange(fieldName, value)}
                 onAddIcon={false}
             />
         );
@@ -127,7 +127,7 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                 <NavigationHeader onBackPress={onClose} title={header} />
                 <View style={styles.modalContent}>
                     <TextInput
-                        label={'Assignee'}
+                        label={'Assignee :'}
                         placeholder="Enter Assignee"
                         dropIcon={"menu-down"}
                         value={assignee?.label}
@@ -143,21 +143,21 @@ const ReAssignModal = ({ isVisible, setIsVisible, onClose, onSubmit, header = ''
                     <TextInput
                         column={false}
                         required
-                        label={'Estimated Time'}
-                        dropIcon='clock'
+                        label={'Estimated Time(HR) :'}
                         value={estimatedTime}
-                        onChangeText={(text) => handleInputChange('estimatedTime', text)}
+                        onChangeText={(text) => handleFieldChange('estimatedTime', text)}
                         keyboardType="numeric"
+                        validate={errorText}
                     />
                     <View style={{ height: 5 }} />
                     <TextInput
                         column={false}
                         required
-                        label={'Reason'}
+                        label={'Reason :'}
                         value={reason}
-                        multiline
-                        numberOfLines={3}
-                        onChangeText={(text) => handleInputChange('reason', text)}
+                        multiline={true}
+                        onChangeText={(text) => handleFieldChange('reason', text)}
+                        validate={errorText}
                     />
                     <View style={styles.buttonRow}>
                         <Button title="Assign" onPress={handleSave} />
