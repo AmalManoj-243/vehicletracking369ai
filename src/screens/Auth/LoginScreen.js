@@ -80,6 +80,7 @@ const LoginScreen = () => {
           // await AsyncStorage.setItem("userToken", userToken);
           await AsyncStorage.setItem("userData", JSON.stringify(userData));
           setUser(userData)
+          console.log("userData", userData);
           navigation.navigate("AppNavigator");
         } else {
           showToastMessage("Invalid Details")
