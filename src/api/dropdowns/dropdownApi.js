@@ -1,6 +1,7 @@
 import { DROP_DOWN_API_ENDPOINTS } from "@api/endpoints";
 import { get } from "@api/services/utils";
 import handleApiError from "@api/utils/handleApiError";
+import { fetchProductsOdoo } from "@api/services/generalApi";
 
 const fetchData = async (endpoint) => {
   try {
@@ -123,8 +124,22 @@ export const fetchNonInspectedBoxDropdown = async (id) => {
 }
 
 export const fetchProductsDropdown = async (searchText = '') => {
-  // console.log("🚀 ~ file: dropdownApi.js:126 ~ fetchProductsDropdown ~ searchText:", searchText)
-  return fetchData(`${DROP_DOWN_API_ENDPOINTS.PRODUCTS}?product_name=${searchText}`);
+  // Query Odoo for products and normalize to dropdown shape used by the app
+  try {
+    const products = await fetchProductsOdoo({ offset: 0, limit: 50, searchText });
+    // normalize: backend dropdowns expect items with _id and product_name
+    return products.map(p => ({
+      _id: p.id,
+      product_name: p.product_name || p.name || '',
+      product_description: p.product_description || '',
+      cost: p.price || 0,
+      image_url: p.image_url || null,
+      categ_id: p.categ_id || null,
+    }));
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
 }
 
 export const fetchUomDropdown = async () => {

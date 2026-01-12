@@ -106,7 +106,7 @@ export const DETAIL_API_ENDPOINTS = {
     GET_CHEQUE_LEDGER: '/viewChequeLedger',
     GET_STOCK_TRANSFER_DETAILS: '/viewStockTransfer',
     GET_FUND_TRANSFER_DETAILS: '/viewFundTransfer',
-    GET_INVENTORY_DETAILS: 'https://4d0c42359e62.ngrok-free.app/api/view_inventory_box',
+    GET_INVENTORY_DETAILS: `${require('@api/config/odooConfig').default}/api/viewInventory`,
     GET_PRODUCT_DETAILS: '/viewProducts',
     // Vehicle Tracking endpoints
     GET_VEHICLES_DETAILS: '/viewVehicles',

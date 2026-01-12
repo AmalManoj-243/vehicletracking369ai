@@ -20,6 +20,7 @@ const InputModal = ({ isVisible, onClose, onSubmit }) => {
             setNameError('');
         }
         if (!hasError) {
+            console.log('Submitting box number:', itemName); // Log box number
             onSubmit(itemName);
             onClose();
         }
@@ -43,7 +44,7 @@ const InputModal = ({ isVisible, onClose, onSubmit }) => {
                     <TextInput
                         placeholder={`Enter box no`}
                         autoCapitalize='characters'
-                        value={itemName.name}
+                        value={itemName}
                         onChangeText={(text) => {
                             setItemName(text);
                             setNameError('');

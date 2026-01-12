@@ -5,32 +5,38 @@ import { formatData } from '@utils/formatters';
 import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
 import { EmptyItem, EmptyState } from '@components/common/empty';
 import { NavigationHeader } from '@components/Header';
-import { fetchCustomers } from '@api/services/generalApi';
+// 🔹 changed this line
+import { fetchCustomersOdoo } from '@api/services/generalApi';
+
 import { useDataFetching, useDebouncedSearch } from '@hooks';
 import Text from '@components/Text';
 import { TouchableOpacity, ActivityIndicator, View, Image } from 'react-native';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { Button, FABButton } from '@components/common/Button';
 
-const CustomerScreen = ({ navigation }) => {
+const CustomerScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
-  const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCustomers);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({searchText: text}), 500);
+  const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCustomersOdoo);
+
+  const { searchText, handleSearchTextChange } = useDebouncedSearch(
+    (text) => fetchData({ searchText: text }),
+    500
+  );
 
   useFocusEffect(
     useCallback(() => {
-      fetchData({searchText});
+      fetchData({ searchText });
     }, [searchText])
   );
 
   useEffect(() => {
     if (isFocused) {
-      fetchData({searchText});
+      fetchData({ searchText });
     }
   }, [isFocused, searchText]);
 
   const handleLoadMore = () => {
-    fetchMoreData({searchText});
+    fetchMoreData({ searchText });
   };
 
   const renderItem = ({ item }) => {
@@ -38,19 +44,45 @@ const CustomerScreen = ({ navigation }) => {
       return <EmptyItem />;
     }
     return (
-      <TouchableOpacity activeOpacity={0.7} onPress={()=> navigation.navigate('CustomerDetails', {details: item})}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          // If opened in select mode, call the provided callback and go back
+          if (route?.params?.selectMode && typeof route.params.onSelect === 'function') {
+            route.params.onSelect(item);
+            navigation.goBack();
+            return;
+          }
+          navigation.navigate('CustomerDetails', { details: item });
+        }}
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', margin: 5 }}>
-          <Image source={require('@assets/icons/common/user_bg.png')} tintColor={COLORS.primaryThemeColor} style={{ width: 45, height: 45 }} />
+          <Image
+            source={require('@assets/icons/common/user_bg.png')}
+            tintColor={COLORS.primaryThemeColor}
+            style={{ width: 45, height: 45 }}
+          />
           <View style={{ width: 10 }} />
-          <Text style={{ fontFamily: FONT_FAMILY.urbanistBold, fontSize: 14, flex: 1, color: COLORS.primaryThemeColor }}>{item?.name?.trim() || '-'}</Text>
+          <Text
+            style={{
+              fontFamily: FONT_FAMILY.urbanistBold,
+              fontSize: 14,
+              flex: 1,
+              color: COLORS.primaryThemeColor,
+            }}
+          >
+            {item?.name?.trim() || '-'}
+          </Text>
         </View>
       </TouchableOpacity>
-
     );
   };
 
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty_data.png')} message={''} />
+    <EmptyState
+      imageSource={require('@assets/images/EmptyData/empty_data.png')}
+      message={''}
+    />
   );
 
   const renderContent = () => (
@@ -79,15 +111,14 @@ const CustomerScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView>
-      <NavigationHeader
-        title="Customers"
-        onBackPress={() => navigation.goBack()}
+      <NavigationHeader title="Customers" onBackPress={() => navigation.goBack()} />
+      <SearchContainer
+        placeholder="Search Customers"
+        onChangeText={handleSearchTextChange}
       />
-      <SearchContainer placeholder="Search Customers" onChangeText={handleSearchTextChange} />
       <RoundedContainer>
         {renderCustomers()}
         <FABButton onPress={() => navigation.navigate('CustomerFormTabs')} />
-
       </RoundedContainer>
     </SafeAreaView>
   );

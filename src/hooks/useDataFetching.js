@@ -2,18 +2,29 @@ import { useState, useCallback } from 'react';
 import useLoader from './useLoader';
 
 const useDataFetching = (fetchDataCallback) => {
+  if (typeof fetchDataCallback !== 'function') {
+    console.error('useDataFetching: fetchDataCallback is not a function or is undefined', fetchDataCallback);
+    // Provide safe no-op implementations so callers don't repeatedly crash.
+    const noop = async () => [];
+    fetchDataCallback = noop;
+  }
   const [data, setData] = useState([]);
   const [loading, startLoading, stopLoading] = useLoader(false);
   const [allDataLoaded, setAllDataLoaded] = useState(false);
+  // offset is the item offset (number of items to skip)
   const [offset, setOffset] = useState(0);
 
   const fetchData = useCallback(async (newFilters = {}) => {
     startLoading();
     try {
-      const params = { offset: 0, limit: 20, ...newFilters };
+      const limit = newFilters.limit ?? 50;
+      // fresh fetch: start at item offset 0
+      const params = { offset: 0, limit, ...newFilters };
       const fetchedData = await fetchDataCallback(params);
-      setData(fetchedData);
-      setAllDataLoaded(fetchedData.length === 0);
+      const list = fetchedData || [];
+      setData(list);
+      setAllDataLoaded(list.length < limit);
+      setOffset(0);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -25,13 +36,17 @@ const useDataFetching = (fetchDataCallback) => {
     if (loading || allDataLoaded) return;
     startLoading();
     try {
-      const params = { offset: offset + 1, limit: 20, ...newFilters };
+      const limit = newFilters.limit ?? 50;
+      const nextOffset = offset + limit;
+      const params = { offset: nextOffset, limit, ...newFilters };
       const fetchedData = await fetchDataCallback(params);
-      if (fetchedData.length === 0) {
+      const list = fetchedData || [];
+      if (list.length === 0) {
         setAllDataLoaded(true);
       } else {
-        setData((prevData) => [...prevData, ...fetchedData]);
-        setOffset((prevOffset) => prevOffset + 1);
+        setData((prevData) => [...prevData, ...list]);
+        setOffset(nextOffset);
+        if (list.length < limit) setAllDataLoaded(true);
       }
     } catch (error) {
       console.error('Error fetching more data:', error);

@@ -119,6 +119,12 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.urbanistBlack,
     marginTop: 10, // Add top margin for extra spacing if needed
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    alignItems: 'center',
+  },
 });
 
 

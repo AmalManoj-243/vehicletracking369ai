@@ -124,15 +124,8 @@ const fetchLedgerDetail = async (ledgerId) => {
   }
 }
 
-export const fetchVehicles = async () => {
-  try {
-    const response = await get(GET_VEHICLES_DETAILS);
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
+
+// Deprecated: Use fetchVehiclesOdoo from generalApi.js for Odoo vehicle dropdowns
 
 export const fetchVehicleDetails = async (vehicleId) => {
   return fetchDetails(GET_VEHICLES_DETAILS, vehicleId);

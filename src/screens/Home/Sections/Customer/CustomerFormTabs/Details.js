@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
 import { RoundedScrollContainer } from '@components/containers';
 import { TextInput as FormInput } from '@components/common/TextInput';
 import { DropdownSheet } from '@components/common/BottomSheets';
@@ -9,6 +12,7 @@ import { customerTitles } from '@constants/dropdownConst';
 import { modeOfPayment } from '@constants/dropdownConst';
 
 const Details = ({ formData, onFieldChange, errors }) => {
+  const navigation = useNavigation();
 
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
@@ -90,6 +94,7 @@ const Details = ({ formData, onFieldChange, errors }) => {
       default:
         return null;
     }
+
     return (
       <DropdownSheet
         isVisible={isVisible}
@@ -101,13 +106,18 @@ const Details = ({ formData, onFieldChange, errors }) => {
     );
   };
 
- 
+  // 🔹 Navigate to OCR screen
+  const handleOpenOcr = () => {
+    navigation.navigate('LiveOcr');
+  };
 
   return (
     <RoundedScrollContainer>
-      {/* OCR Button for scanning business cards */}
-     
-      
+      {/* 🔹 OCR Button for scanning business cards */}
+      <TouchableOpacity style={styles.ocrButton} onPress={handleOpenOcr}>
+        <Text style={styles.ocrButtonText}>Scan with OCR</Text>
+      </TouchableOpacity>
+
       <FormInput
         label={"Customer Type "}
         placeholder={"Select Customer Type"}
@@ -213,3 +223,18 @@ const Details = ({ formData, onFieldChange, errors }) => {
 };
 
 export default Details;
+
+const styles = StyleSheet.create({
+  ocrButton: {
+    backgroundColor: '#2563EB',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  ocrButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+});

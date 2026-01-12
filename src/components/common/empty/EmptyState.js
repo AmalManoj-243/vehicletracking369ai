@@ -5,7 +5,7 @@ import { View, Image, Text, StyleSheet, Dimensions } from 'react-native';
 const EmptyState = ({ imageSource, message }) => (
   <View style={styles.container}>
     <Image source={imageSource} style={styles.image} />
-    <Text style={styles.message}>{message}</Text>
+    {/* Message removed intentionally */}
   </View>
 );
 

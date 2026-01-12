@@ -1,34 +1,73 @@
-import React, { useState, useEffect } from "react";
-import { FlatList, View } from "react-native";
-import { RoundedScrollContainer, SafeAreaView } from "@components/containers";
-import { NavigationHeader } from "@components/Header";
-import { TextInput as FormInput } from "@components/common/TextInput";
-import { DropdownSheet } from "@components/common/BottomSheets";
-import {
-  fetchInvoiceDropdown,
-  fetchPurchaseReturnDropdown,
-  fetchSalesReturnDropdown,
-  fetchServiceDropdown,
-  fetchServiceReturnDropdown,
-  fetchStockTransferDropdown,
-  fetchVendorBillDropdown,
-} from "@api/dropdowns/dropdownApi";
-import InventoryRequestItem from "./InventoryRequestItem";
-import Text from "@components/Text";
-import { styles } from "./styles";
-import { Button } from "@components/common/Button";
-import { COLORS } from "@constants/theme";
-import { showToastMessage } from "@components/Toast";
-import { post } from "@api/services/utils";
+import React, { useState, useEffect } from 'react';
+import { FlatList, View, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
+import { NavigationHeader } from '@components/Header';
+import { TextInput as FormInput } from '@components/common/TextInput';
+import { DropdownSheet } from '@components/common/BottomSheets';
+import { fetchInvoiceDropdown, fetchPurchaseReturnDropdown, fetchSalesReturnDropdown, fetchServiceDropdown, fetchServiceReturnDropdown, fetchStockTransferDropdown, fetchVendorBillDropdown } from '@api/dropdowns/dropdownApi';
+import InventoryRequestItem from './InventoryRequestItem';
+import Text from '@components/Text';
+import { styles } from './styles';
+import { Button } from '@components/common/Button';
+import { COLORS } from '@constants/theme';
+import { showToastMessage } from '@components/Toast';
 import axios from 'axios';
+import INVENTORY_API_BASE from '@api/config/inventoryConfig';
 import { useAuthStore } from '@stores/auth';
-import Toast from "react-native-toast-message";
-import { OverlayLoader } from "@components/Loader";
+import Toast from 'react-native-toast-message';
+import { OverlayLoader } from '@components/Loader';
 
 const InventoryForm = ({ navigation, route }) => {
+    // Fetch inventory box details using POST and token
+    const fetchInventoryBoxDetails = async (boxName) => {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('odoo_token');
+      const db = 'odoo19'; // Always use 'odoo19' as db
+      const payload = {
+        box_name: boxName,
+        token,
+        db,
+      };
+      const requestInfo = {
+        url: `${INVENTORY_API_BASE}/api/view_inventory_box`,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Odoo-Database': 'odoo19',
+        },
+        body: payload,
+      };
+      console.log('Request to /api/view_inventory_box:', requestInfo);
+      try {
+        const response = await axios.post(
+          requestInfo.url,
+          payload,
+          { headers: requestInfo.headers }
+        );
+        console.log('Response from /api/view_inventory_box:', response.data);
+        if (response.data.status === 'success' && response.data.inventory_boxes?.length) {
+          // You can update state here, e.g. setItemsList(response.data.inventory_boxes[0].items)
+          // Or navigate to details screen
+          // setItemsList(response.data.inventory_boxes[0].items);
+          // Optionally update inventoryDetails if needed
+        } else {
+          showToastMessage('No inventory box found or error fetching details');
+        }
+      } catch (error) {
+        console.error('Error fetching inventory box details:', error);
+        console.log('Request info (on error):', requestInfo);
+        if (error.response) {
+          console.log('Error response data:', error.response.data);
+        }
+        showToastMessage('Error fetching inventory details');
+      } finally {
+        setLoading(false);
+      }
+    };
   const { inventoryDetails = {}, reason = {} } = route?.params || {};
+console.log('Received Reason:', reason); // This will log the reason value
 
-  // Define initial states for items list, visibility, selected type, and more
+  // States for managing dropdown data and form data
   const [itemsList, setItemsList] = useState([]);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
@@ -36,16 +75,27 @@ const InventoryForm = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
 
+  // Only allow backend-accepted reasons
+  const VALID_REASONS = [
+    { id: 'sales', label: 'Sales' },
+    { id: 'service', label: 'Service' },
+    { id: 'purchase', label: 'Purchase' },
+    { id: 'purchase_return', label: 'Purchase Return' },
+    { id: 'sales_return', label: 'Sales Return' },
+    { id: 'service_return', label: 'Service Return' },
+    { id: 'stock_transfer', label: 'Stock Transfer' },
+  ];
+
   const [formData, setFormData] = useState({
-    reason: reason,
-    sales: "",
-    service: "",
-    purchase: "",
-    serviceReturn: "",
-    purchaseReturn: "",
-    salesReturn: "",
-    stockTransfer: "",
-    remarks: "",
+    reason: VALID_REASONS.find(r => r.id === reason?.id) || null,
+    sales: '',
+    service: '',
+    purchase: '',
+    serviceReturn: '',
+    purchaseReturn: '',
+    salesReturn: '',
+    stockTransfer: '',
+    remarks: '',
   });
 
   const [dropdown, setDropdown] = useState({
@@ -57,7 +107,8 @@ const InventoryForm = ({ navigation, route }) => {
     stockTransfer: [],
     vendorBill: [],
   });
-  // Fetch dropdown options for various inventory types (invoices, services, returns, etc.)
+
+  // Fetch dropdown data for different categories
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -70,37 +121,16 @@ const InventoryForm = ({ navigation, route }) => {
         const vendorBillDropdown = await fetchVendorBillDropdown();
 
         setDropdown({
-          invoice: invoiceDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          purchaseReturn: purchaseReturnDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          salesReturn: salesReturnDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          service: serviceDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          serviceReturn: serviceReturnDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          stockTransfer: stockTransferDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
-          vendorBill: vendorBillDropdown.map((data) => ({
-            id: data._id,
-            label: data.sequence_no,
-          })),
+          invoice: invoiceDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          purchaseReturn: purchaseReturnDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          salesReturn: salesReturnDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          service: serviceDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          serviceReturn: serviceReturnDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          stockTransfer: stockTransferDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
+          vendorBill: vendorBillDropdown.map((data) => ({ id: data._id, label: data.sequence_no })),
         });
       } catch (error) {
-        console.error("Error fetching dropdown data:", error);
+        console.error('Error fetching dropdown data:', error);
       }
     };
 
@@ -112,8 +142,8 @@ const InventoryForm = ({ navigation, route }) => {
     setItemsList(
       inventoryDetails?.items.map((item) => ({
         ...item,
-        quantity: reason.id === "viewing" ? 0 : item.quantity === 0 ? 0 : 1,
-        initialQuantity: item?.quantity
+        quantity: reason.id === 'viewing' ? 0 : item.quantity === 0 ? 0 : 1,
+        initialQuantity: item?.quantity,
       }))
     );
   }, [inventoryDetails?.items, reason.id]);
@@ -139,292 +169,196 @@ const InventoryForm = ({ navigation, route }) => {
     // Toggle chosen state
     if (chosenItem === item) {
       setChosenItem(null);
-      // Unchoose the same item
     } else {
       setChosenItem({ ...item, chosen: true });
     }
   };
 
-  // Handle the quantity change logic, including validation based on reason
+  // Handle the quantity change logic
   const handleQuantityChange = (id, text) => {
     if (!formData.reason) {
-      showToastMessage("Please select a reason first.");
+      showToastMessage('Please select a reason first.');
       return;
     }
     const newQuantity = parseInt(text) || 0;
-    // Extract the maximum quantity from inventoryData
-    const maxQuantity = inventoryDetails?.items.find(
-      (dataItem) => dataItem._id === id
-    )?.quantity;
-    // Check if the reason requires quantity validation
-    const reasonRequiresQuantityCheck = ![
-      "purchase",
-      "salesreturn",
-      "servicereturn",
-      "stocktransferreceive",
-      "viewingreturn",
-    ].includes(formData.reason.id);
-    if (reasonRequiresQuantityCheck && newQuantity > maxQuantity) {
-      showToastMessage(
-        `Please enter a quantity less than or equal to ${maxQuantity}`
-      );
+    const maxQuantity = inventoryDetails?.items.find((dataItem) => dataItem._id === id)?.quantity;
+    if (newQuantity > maxQuantity) {
+      showToastMessage(`Please enter a quantity less than or equal to ${maxQuantity}`);
       return;
     }
-    if (chosenItem) {
-      // Update the chosen item or items list
-      setChosenItem({ ...chosenItem, quantity: newQuantity });
-    }
-    const updatedItems = itemsList.map((oldItem) => {
-      if (oldItem._id === id) {
-        return { ...oldItem, quantity: newQuantity };
-      }
-      return oldItem;
-    });
-    setItemsList(updatedItems);
+    setItemsList((prevItems) =>
+      prevItems.map((item) => (item._id === id ? { ...item, quantity: newQuantity } : item))
+    );
   };
-  // Submit the inventory box request, validating required fields (reason, item)
-  const handleInventoryBoxRequest = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        box_name: inventoryDetails?.box_name || inventoryDetails?.name,
-        product_id: inventoryDetails?.product_id || inventoryDetails?.product?._id,
-        warehouse_id: inventoryDetails?.warehouse_id || inventoryDetails?.warehouse?._id,
-        quantity: chosenItem?.quantity || 1,
-        reason: formData.reason?.name || reason?.name,
-        remarks: formData.remarks || ""
-      };
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      console.log('Sending request to API:', {
-        url: "https://4d0c42359e62.ngrok-free.app/api/create_inventory_request",
-        payload,
-        headers
-      });
-      const response = await axios.post(
-        "https://4d0c42359e62.ngrok-free.app/api/create_inventory_request",
-        payload,
-        { headers }
-      );
-      console.log("Inventory request response:", response?.data || response);
-      if (response?.data?.status === 'success') {
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: response.data.message || 'Inventory request created successfully',
-          position: 'bottom',
-        });
-      }
-    } catch (error) {
-      if (error.response) {
-        console.error("API error response:", error.response.data);
-        console.error("API error status:", error.response.status);
-        console.error("API error headers:", error.response.headers);
-      } else {
-        console.error("Error submitting request:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleInventoryBoxRequest = async () => {
+  setLoading(true);
+  try {
+    // Log the inventoryDetails object to see its structure
+    console.log("Inventory Details:", inventoryDetails);
 
-    const handleSubmit = async () => {
-      setIsSubmitting(true);
-      const requestPayload = {
-        _id: id,
-        job_stage: 'Waiting for spare',
-        create_job_diagnosis: [
-          {
-            job_registration_id: id,
-            proposed_action_id: null,
-            proposed_action_name: null,
-            done_by_id: currentUser?.related_profile?._id || null,
-            done_by_name: currentUser?.related_profile?.name || '',
-            untaxed_total_amount: parseInt(formData.spareTotalPrice, 0),
-            parts_or_service_required: null,
-            service_type: null,
-            service_charge: parseInt(formData.serviceCharge, 0),
-            total_amount: parseInt(formData.total, 0),
-            parts: sparePartsItems.map((items) => ({
-              product_id: items?.product_id,
-              product_name: items?.product_name,
-              description: items?.description,
-              uom_id: items?.uom_id,
-              uom: items?.uom,
-              quantity: items?.quantity,
-              unit_price: items.unit_price,
-              sub_total: items.unit_price,
-              unit_cost: items?.unit_price,
-              // total: items?.total,
-              tax_type_id: items?.tax_type_id,
-              tax_type_name: items?.tax_type_name,
-            }))
-          }
-        ]
-      }
-      try {
-        const response = await put("/updateJobRegistration", requestPayload);
-        if (response.success === 'true') {
-          handleInventoryBoxRequest(response);
-          showToast({
-            type: "success",
-            title: "Success",
-            message: response.message || "Inventory Box Request created successfully",
-          });
-          navigation.navigate("InventoryScreen");
-        } else {
-          console.error("Inventory Box Request:", response.message);
-          showToast({
-            type: "error",
-            title: "ERROR",
-            message: response.message || "Inventory Box Request creation failed",
-          });
-        }
-      } catch (error) {
-        console.error("Error Submitting Request:", error);
-        showToast({
-          type: "error",
-          title: "ERROR",
-          message: "An unexpected error occurred. Please try again later.",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+    // Extract product_id from the first item in the items array (assuming each item has a product_id)
+    const productId = inventoryDetails?.items?.[0]?.id || inventoryDetails?.items?.[0]?._id;
+
+    // Check if productId exists
+    if (!productId) {
+      showToastMessage("Product ID is missing. Please check your inventory details.");
+      return;
+    }
+
+    // Get token from AsyncStorage
+    const token = await AsyncStorage.getItem('odoo_token');
+    const db = 'odoo19';
+
+    // Log the formData reason to ensure it's correct before sending the request
+    console.log('FormData Reason:', formData.reason);  // Add this log to see what the reason value is
+
+
+    // Ensure product_id and warehouse_id are numbers
+    const parsedProductId = Number(productId);
+    const parsedWarehouseId = Number(inventoryDetails?.warehouse_id || inventoryDetails?.warehouse?._id);
+
+    // Only allow valid backend reasons
+    if (!formData.reason || !VALID_REASONS.some(r => r.id === formData.reason.id)) {
+      showToastMessage('Please select a valid reason.');
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      box_name: inventoryDetails?.name || inventoryDetails?.box_name,
+      product_id: parsedProductId,
+      warehouse_id: parsedWarehouseId,
+      quantity: chosenItem?.quantity || 1,
+      reason: formData.reason.id,
+      remark: formData.remarks || '',
+      token,
+      db,
     };
 
-//     const handleInventoryBoxRequest = async () => {
-//   if (!formData.reason) {
-//     showToastMessage("Please select a reason.");
-//     return;
-//   }
+    console.log('Sending request to API:', { payload });
 
-//   if (!chosenItem) {
-//     showToastMessage("Please choose an item.");
-//     return;
-//   }
+    const response = await axios.post(
+      `${INVENTORY_API_BASE}/api/create_inventory_request`,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Odoo-Database': db,
+        },
+      }
+    );
 
-//   setLoading(true);
+    console.log('Inventory request response:', response?.data || response);
 
-//   let itemsToSubmit = displayItems.length > 0 ? displayItems : [];
-//   itemsToSubmit = itemsToSubmit.map(({ chosen, ...rest }) => rest);
+    if (response?.data?.status === 'success') {
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: response.data.message || 'Inventory request created successfully',
+        position: 'bottom',
+      });
+    } else {
+      showToastMessage('Error creating inventory request');
+    }
+  } catch (error) {
+    console.error('Error submitting request:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-//   const getReferenceId = () =>
-//     formData.sales?.id ||
-//     formData.service?.id ||
-//     formData.purchase?.id ||
-//     formData.stockTransfer?.id ||
-//     formData.purchaseReturn?.id ||
-//     formData.salesReturn?.id ||
-//     formData.serviceReturn?.id ||
-//     "";
+  // Render dynamic form fields based on selected reason
+  const renderDynamicField = () => {
+    switch (formData.reason?.id) {
+      case 'sales':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Sales'}
+            placeholder={'Select Sales'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.sales?.label}
+            onPress={() => toggleBottomSheet('Sales')}
+          />
+        );
+      case 'service':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Service'}
+            placeholder={'Select Service'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.service?.label}
+            onPress={() => toggleBottomSheet('Service')}
+          />
+        );
+      case 'purchase':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Purchase'}
+            placeholder={'Select Purchase'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.purchase?.label}
+            onPress={() => toggleBottomSheet('Purchase')}
+          />
+        );
+      case 'purchase_return':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Purchase Return'}
+            placeholder={'Select Purchase Return'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.purchaseReturn?.label}
+            onPress={() => toggleBottomSheet('Purchase Return')}
+          />
+        );
+      case 'sales_return':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Sales Return'}
+            placeholder={'Select Sales Return'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.salesReturn?.label}
+            onPress={() => toggleBottomSheet('Sales Return')}
+          />
+        );
+      case 'service_return':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Service Return'}
+            placeholder={'Select Service Return'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.serviceReturn?.label}
+            onPress={() => toggleBottomSheet('Service Return')}
+          />
+        );
+      case 'stock_transfer':
+        return (
+          <FormInput
+            labelColor={COLORS.boxTheme}
+            label={'Select Stock Transfer'}
+            placeholder={'Select Stock Transfer'}
+            dropIcon={'menu-down'}
+            editable={false}
+            value={formData.stockTransfer?.label}
+            onPress={() => toggleBottomSheet('Stock Transfer')}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
-//   const getReferenceLabel = () =>
-//     formData.sales?.label ||
-//     formData.service?.label ||
-//     formData.purchase?.label ||
-//     formData.stockTransfer?.label ||
-//     formData.salesReturn?.label ||
-//     formData.purchaseReturn?.label ||
-//     formData.serviceReturn?.label ||
-//     "";
-
-//   const inventoryRequestData = {
-//     items: itemsToSubmit,
-//     quantity: itemsToSubmit.reduce((total, item) => total + item.quantity, 0),
-//     reason: formData.reason?.id || "",
-//     reference_id: getReferenceId(),
-//     reference: getReferenceLabel(),
-//     remarks: formData.remarks,
-//     box_id: inventoryDetails?._id,
-//     sales_person_id: currentUser?.related_profile?._id || null,
-//     box_status: "pending",
-//     request_status: "requested",
-//     approver_id: null,
-//     approver_name: "",
-//     warehouse_name: currentUser?.warehouse?.warehouse_name || "",
-//     warehouse_id: currentUser?.warehouse?.warehouse_id,
-//   };
-
-//   try {
-//     const response = await post("/createInventoryBoxRequest", inventoryRequestData);
-//     if (response.success === true) {
-//       Toast.show({
-//         type: "success",
-//         text1: "Success",
-//         text2: response.message || "Inventory Box Request created successfully",
-//         position: "bottom",
-//       });
-//       navigation.navigate("InventoryScreen");
-//     } else {
-//       Toast.show({
-//         type: "error",
-//         text1: "ERROR",
-//         text2: response.message || "Inventory Box Request creation failed",
-//         position: "bottom",
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error submitting request:", error);
-//   } finally {
-//     setLoading(false);
-//   }
-// };
-
-// const handleSubmit = async () => {
-//   setIsSubmitting(true);
-//   const requestPayload = {
-//     _id: id,
-//     job_stage: 'Waiting for spare',
-//     create_job_diagnosis: [
-//       {
-//         job_registration_id: id,
-//         done_by_id: currentUser?.related_profile?._id || null,
-//         done_by_name: currentUser?.related_profile?.name || '',
-//         untaxed_total_amount: parseInt(formData.spareTotalPrice, 0),
-//         service_charge: parseInt(formData.serviceCharge, 0),
-//         total_amount: parseInt(formData.total, 0),
-//         parts: sparePartsItems.map(item => ({
-//           product_id: item?.product_id,
-//           product_name: item?.product_name,
-//           description: item?.description,
-//           uom_id: item?.uom_id,
-//           uom: item?.uom,
-//           quantity: item?.quantity,
-//           unit_price: item?.unit_price,
-//           sub_total: item?.unit_price,
-//           unit_cost: item?.unit_price,
-//           tax_type_id: item?.tax_type_id,
-//           tax_type_name: item?.tax_type_name,
-//         })),
-//       },
-//     ],
-//   };
-
-//   try {
-//     const response = await put("/updateJobRegistration", requestPayload);
-//     if (response.success === true) {
-//       await handleInventoryBoxRequest();
-//     } else {
-//       showToast({
-//         type: "error",
-//         title: "ERROR",
-//         message: response.message || "Inventory Box Request creation failed",
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error Submitting Request:", error);
-//     showToast({
-//       type: "error",
-//       title: "ERROR",
-//       message: "An unexpected error occurred. Please try again later.",
-//     });
-//   } finally {
-//     setIsSubmitting(false);
-//   }
-// };
-
-  // Render dynamic form fields based on selected reason (e.g., Sales, Service)
   const toggleBottomSheet = (type) => {
     setSelectedType(type);
     setIsVisible(!isVisible);
@@ -432,40 +366,32 @@ const InventoryForm = ({ navigation, route }) => {
 
   const renderBottomSheet = () => {
     let items = [];
-    let fieldName = "";
+    let fieldName = '';
 
     switch (selectedType) {
-      case "Sales":
+      case 'Sales':
         items = dropdown.invoice;
-        fieldName = "sales";
+        fieldName = 'sales';
         break;
-      case "Service":
+      case 'Service':
         items = dropdown.service;
-        fieldName = "service";
+        fieldName = 'service';
         break;
-      case "Service Return":
-        items = dropdown.serviceReturn;
-        fieldName = "serviceReturn";
-        break;
-      case "Sales Return":
-        items = dropdown.salesReturn;
-        fieldName = "salesReturn";
-        break;
-      case "Purchase":
-        items = dropdown.vendorBill; //purchase return
-        fieldName = "purchaseReturn";
-        break;
-      case "Purchase Return":
+      case 'Purchase':
         items = dropdown.purchaseReturn;
-        fieldName = "purchase";
+        fieldName = 'purchaseReturn';
         break;
-      case "Stock Transfer":
+      case 'Sales Return':
+        items = dropdown.salesReturn;
+        fieldName = 'salesReturn';
+        break;
+      case 'Service Return':
+        items = dropdown.serviceReturn;
+        fieldName = 'serviceReturn';
+        break;
+      case 'Stock Transfer':
         items = dropdown.stockTransfer;
-        fieldName = "stockTransfer";
-        break;
-      case "Vendor Bill":
-        items = dropdown.vendorBill;
-        fieldName = "vendorBill";
+        fieldName = 'stockTransfer';
         break;
       default:
         return null;
@@ -481,167 +407,55 @@ const InventoryForm = ({ navigation, route }) => {
     );
   };
 
-  const renderDynamicField = () => {
-    switch (formData.reason?.label?.toLowerCase()) {
-      case "sales":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Sales"}
-            placeholder={"Select Sales"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.sales?.label} //invoice
-            multiline={true}
-            onPress={() => toggleBottomSheet("Sales")}
-          />
-        );
-      case "service":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Service"}
-            placeholder={"Select Service"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.service?.label} //service
-            multiline={true}
-            onPress={() => toggleBottomSheet("Service")}
-          />
-        );
-      case "purchase":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Purchase"}
-            placeholder={"Select Purchase"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.purchase?.label}
-            multiline={true}
-            onPress={() => toggleBottomSheet("Purchase")}
-          />
-        );
-      case "purchase return":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Purchase Return"}
-            placeholder={"Select Purchase Return"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.purchaseReturn?.label}
-            multiline={true}
-            onPress={() => toggleBottomSheet("Purchase Return")}
-          />
-        );
-      case "sales return":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Sales Return"}
-            placeholder={"Select Sales Return"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.salesReturn?.label}
-            multiline={true}
-            onPress={() => toggleBottomSheet("Sales Return")}
-          />
-        );
-      case "service return":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Service Return"}
-            placeholder={"Select Service Return"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.serviceReturn?.label}
-            multiline={true}
-            onPress={() => toggleBottomSheet("Service Return")}
-          />
-        );
-      case "stock transfer":
-        return (
-          <FormInput
-            labelColor={COLORS.boxTheme}
-            label={"Select Stock Transfer"}
-            placeholder={"Select Stock Transfer"}
-            dropIcon={"menu-down"}
-            editable={false}
-            value={formData.stockTransfer?.label}
-            multiline={true}
-            onPress={() => toggleBottomSheet("Stock Transfer")}
-          />
-        );
-      default:
-        break;
-    }
-  };
-
   return (
     <SafeAreaView backgroundColor={COLORS.boxTheme}>
       <NavigationHeader
         backgroundColor={COLORS.boxTheme}
-        logo={false}
-        title={"Box Opening Request"}
+        title={'Box Opening Request'}
         onBackPress={() => navigation.goBack()}
       />
       <RoundedScrollContainer>
-        <OverlayLoader visible={loading} backgroundColor={true} />
+        <OverlayLoader visible={loading} />
         <FormInput
-          label={"Inventory Box"}
+          label={'Inventory Box'}
           labelColor={COLORS.boxTheme}
           editable={false}
-          placeholder={"Box no"}
-          value={inventoryDetails?.name || "-"}
+          placeholder={'Box no'}
+          value={inventoryDetails?.name || '-'}
         />
         <FormInput
-          label={"Reason"}
-          dropIcon="menu-down"
+          label={'Reason'}
           labelColor={COLORS.boxTheme}
           editable={false}
-          placeholder={"reason"}
-          value={formData?.reason ? formData.reason.label : ""}
+          placeholder={'Reason'}
+          value={formData?.reason?.label || ''}
         />
         {renderDynamicField()}
         <Text style={styles.label}>Box Items</Text>
-        <View>
-          <FlatList
-            data={displayItems}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ marginBottom: 0 }}
-            numColumns={1}
-            renderItem={({ item }) => (
-              <InventoryRequestItem
-                item={item}
-                onChoose={() => handleChooseItem(item)}
-                onQuantityChange={(id, text) => handleQuantityChange(id, text)}
-              />
-            )}
-            keyExtractor={(item) => item._id}
-          />
-        </View>
+        <FlatList
+          data={displayItems}
+          numColumns={1}
+          renderItem={({ item }) => (
+            <InventoryRequestItem item={item} onChoose={() => handleChooseItem(item)} onQuantityChange={handleQuantityChange} />
+          )}
+          keyExtractor={(item) => item._id}
+        />
         <FormInput
-          label={"Remarks"}
+          label={'Remarks'}
           labelColor={COLORS.boxTheme}
           multiline={true}
           numberOfLines={5}
-          placeholder={"Enter remarks"}
-          onChangeText={(text) => handleFieldChange("remarks", text)}
+          placeholder={'Enter remarks'}
+          onChangeText={(text) => handleFieldChange('remarks', text)}
         />
-        {/* {showSubmitButton ? ( */}
         <Button
           backgroundColor={loading ? COLORS.lightenBoxTheme : COLORS.boxTheme}
-          title={"Submit"}
+          title={'Submit'}
           disabled={loading}
           onPress={handleInventoryBoxRequest}
           style={styles.submitButton}
         />
-        {/* ) : null} */}
-        <View style={{ flex: 1, marginBottom: "20%" }} />
       </RoundedScrollContainer>
-      {renderBottomSheet()}
     </SafeAreaView>
   );
 };

@@ -10,6 +10,7 @@ const Button = ({
   backgroundColor = COLORS.button,
   disabled = false,
   loading = false,
+  textStyle,
   ...props
 }) => {
   return (
@@ -29,10 +30,10 @@ const Button = ({
         paddingHorizontal:8,
         ...props
       }}>
-       {loading ? (
+      {loading ? (
         <ActivityIndicator size="small" color={color} animating={loading} />
       ) : (
-        <Text style={[styles.title, { color: color }]}>
+        <Text style={[styles.title, { color: color }, textStyle] }>
           {title}
         </Text>
       )}

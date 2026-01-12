@@ -4,7 +4,7 @@
     "slug": "369aialphalize",
     "version": "1.0.8",
     "orientation": "portrait",
-    "icon": "./assets/android/icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -29,27 +29,14 @@
         "monochromeImage": "./assets/android/icon_monochrome.png",
         "backgroundColor": "#ffffff"
       },
-      "icon": "./assets/android/icon.png",
+      "icon": "./assets/icon.png",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA"
       ],
       "package": "com.danat.alphalize"
     },
-    "plugins": [
-      [
-        "expo-build-properties",
-      
-      ],
-      "expo-font",
-     
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-        }
-      ]
-    ],
+    "plugins": [],
     "extra": {
       "eas": {
         "projectId": "032682a8-bbb8-403b-8f59-5acc19405566"

@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center',
         textTransform: 'capitalize',
-        color: '#2E2B2B',
+        color: '#1316c5ff',
         fontFamily: FONT_FAMILY.urbanistBold
     },
 });

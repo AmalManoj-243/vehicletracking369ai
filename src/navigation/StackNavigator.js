@@ -11,7 +11,15 @@ import { TaskManagerScreen } from "@screens/Home/Options/TaskManager";
 import { AuditDetails, AuditForm, AuditScreen } from "@screens/Home/Options/Audit";
 import { PrivacyPolicy } from "@screens/Auth";
 import LoginScreenOdoo from "@screens/Auth/LoginScreenOdoo";
-import { Barcode, Scanner } from "@components/Scanner";
+import CategoriesScreen from "@screens";
+import Scanner from "@components/Scanner";
+// import Barcode from "@components/Scanner"; // Uncomment and fix if Barcode is a named export or separate file
+import SalesOrderChoice from "@screens/Home/Sections/Customer/SalesOrderChoice";
+import POSRegister from "@screens/Home/Sections/Customer/POSRegister";
+import POSOpenAmount from "@screens/Home/Sections/Customer/POSOpenAmount";
+import POSProducts from "@screens/Home/Sections/Customer/POSProducts";
+import POSCartSummary from "@screens/Home/Sections/Customer/POSCartSummary";
+import POSPayment from "@screens/Home/Sections/Customer/POSPayment";
 import { InventoryDetails, InventoryForm, InventoryScreen } from "@screens/Home/Options/Inventory";
 import { ProductDetail } from "@components/common/Detail";
 import { CustomerDetails, CustomerScreen } from "@screens/Home/Sections/Customer";
@@ -37,7 +45,7 @@ import { SparePartsIssueCreation, SparePartsRequestDetails, SparePartsRequestScr
 import { AddSpareParts, QuickServiceDetails, QuickServiceScreen, QuickServiceUpdateDetails } from "@screens/Home/Sections/Services/Service/QuickService";
 import { SpareManagementsScreen } from "@screens/Home/Sections/Services/SpareManagements";
 import { QuickServiceFormTabs } from "@screens/Home/Sections/Services/Service/QuickService/QuickServiceFormTabs";
-import {  EditPickupDetails, PickupDetails, PickupScreen } from "@screens/Home/Sections/Services/Service/Pickup";
+import { EditPickupDetails, PickupDetails, PickupScreen } from "@screens/Home/Sections/Services/Service/Pickup";
 import { VisitFormTabs } from "@screens/Home/Options/Visits/VisitFormTabs";
 import { PurchasesScreen } from "@screens/Home/Options/Purchases";
 import { AddPriceLines, EditPriceEnquiryDetails, PriceEnquiryDetails, PriceEnquiryForm, PriceEnquiryScreen } from "@screens/Home/Options/Purchases/PriceEnquiry";
@@ -47,12 +55,52 @@ import { DeliveryNoteCreation, DeliveryNoteDetails, DeliveryNoteScreen } from "@
 import { VendorBillDetails, VendorBillScreen } from "@screens/Home/Options/Purchases/VendorBill";
 import { AddVendorProducts, VendorBillFormTabs } from "@screens/Home/Options/Purchases/VendorBill/VendorBillFormTabs";
 import { SupplierPaymentCreation, SupplierPaymentScreen } from "@screens/Home/Options/Purchases/SupplierPayment";
+import POSReceiptScreen from '@screens/Home/Sections/Customer/POSReceiptScreen';
+
+
+
+
 
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="LoginScreenOdoo">
+      <Stack.Screen
+        name="SalesOrderChoice"
+        component={SalesOrderChoice}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSRegister"
+        component={POSRegister}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSOpenAmount"
+        component={POSOpenAmount}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSProducts"
+        component={POSProducts}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSCartSummary"
+        component={POSCartSummary}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSPayment"
+        component={POSPayment}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="POSReceiptScreen"
+        component={POSReceiptScreen}
+        options={{ headerShown: false }}
+      />
       {/* Splash Screen */}
       <Stack.Screen
         name="Splash"
@@ -64,11 +112,10 @@ const StackNavigator = () => {
         component={Scanner}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="Barcode"
-        component={Barcode}
-        options={{ headerShown: false }}
-      />
+
+
+    
+
       <Stack.Screen
         name="MapViewScreen"
         component={MapViewScreen}
@@ -181,7 +228,7 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
-      {/* Service          Service          Service*/}
+      {/* Service */}
       <Stack.Screen
         name="ServiceScreens"
         component={ServiceScreens}
@@ -313,7 +360,7 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
-      {/* leads */}
+      {/* Leads */}
       <Stack.Screen
         name="LeadScreen"
         component={LeadScreen}
@@ -335,7 +382,7 @@ const StackNavigator = () => {
         options={{ headerShown: false }}
       />
 
-      {/*Pipeline*/}
+      {/* Pipeline */}
       <Stack.Screen
         name="PipelineScreen"
         component={PipelineScreen}
@@ -392,7 +439,7 @@ const StackNavigator = () => {
         component={AttendanceScreen}
         options={{ headerShown: false }}
       />
-      {/* [Punching] */}
+      {/* Punching */}
       <Stack.Screen
         name="PunchingScreen"
         component={PunchingScreen}

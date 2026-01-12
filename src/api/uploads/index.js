@@ -1,2 +1,2 @@
-import uploadApi from "./ uploadApi";
+import uploadApi from "./uploadApi";
 export { uploadApi }

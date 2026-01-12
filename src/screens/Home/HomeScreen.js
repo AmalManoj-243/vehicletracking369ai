@@ -14,7 +14,7 @@ import {
   NavigationBar,
 } from "@components/Home";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { fetchCategories } from "@api/services/generalApi";
+import { fetchCategoriesOdoo as fetchCategories } from "@api/services/generalApi";
 import { RoundedContainer, SafeAreaView } from "@components/containers";
 import { formatData } from "@utils/formatters";
 import { COLORS } from "@constants/theme";
@@ -171,7 +171,7 @@ const HomeScreen = ({ navigation }) => {
           />
           <ImageContainer
             source={require("@assets/images/Home/section/customer.png")}
-            onPress={() => navigateToScreen("CustomerScreen")}
+            onPress={() => navigateToScreen("SalesOrderChoice")}
             backgroundColor="#f37021"
             title="Sales Order"
           />

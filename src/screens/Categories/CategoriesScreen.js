@@ -1,82 +1,78 @@
-import React, { useEffect, useCallback } from 'react';
-import { View } from 'react-native';
-import { NavigationHeader } from '@components/Header';
-import { fetchCategories } from '@api/services/generalApi';
-import { useIsFocused, useFocusEffect } from '@react-navigation/native';
-import { FlashList } from '@shopify/flash-list';
-import { formatData } from '@utils/formatters';
-import { AnimatedLoader } from '@components/Loader';
-import { RoundedContainer, SafeAreaView, SearchContainer } from '@components/containers';
-import { CategoryList } from '@components/Categories';
-import { EmptyState } from '@components/common/empty';
-import { useDataFetching, useDebouncedSearch } from '@hooks';
-import styles from './styles';
+// src/screens/Home/Options/CategoriesScreen.js
+
+//import React, { useEffect, useCallback } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { NavigationHeader } from "@components/Header";
+import { useDataFetching } from '@hooks';
+import { fetchCategoriesOdoo } from "@api/services/generalApi"; // Correct import
+import { SafeAreaView } from "@components/containers";
+import { CategoryList } from "@components/Categories"; // Component to render each category
+import { EmptyState } from "@components/common/empty"; // Empty state component
+import { FlashList } from "@shopify/flash-list"; // FlashList for optimized scrolling
 
 
 const CategoriesScreen = ({ navigation }) => {
+  // Fetch categories using useDataFetching hook
+  const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCategoriesOdoo);
 
-  const isFocused = useIsFocused();
-  const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchCategories);
-  const { searchText, handleSearchTextChange } = useDebouncedSearch((text) => fetchData({ searchText: text }));
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchData({ searchText });
-    }, [searchText])
-  );
-
+  // Fetch categories when screen is focused
   useEffect(() => {
-    if (isFocused) {
-      fetchData({ searchText });
-    }
-  }, [isFocused, searchText]);
+    fetchData();
+  }, [fetchData]);
 
   const handleLoadMore = () => {
-    fetchMoreData({ searchText });
+    fetchMoreData(); // Load more categories when reaching the bottom of the list
   };
 
+  // Render each category using CategoryList component
   const renderItem = ({ item }) => {
     if (item.empty) {
       return <View style={[styles.itemStyle, styles.itemInvisible]} />;
     }
-    return <CategoryList item={item} onPress={() => navigation.navigate('Products', { id: item._id })} />;
+    return (
+      <CategoryList
+        item={item}
+        onPress={() => navigation.navigate("Products", { id: item._id })} // Navigate to Products screen on category press
+      />
+    );
   };
 
+  // Show empty state if no categories are available
   const renderEmptyState = () => (
-    <EmptyState imageSource={require('@assets/images/EmptyData/empty_data.png')} message={''} /> //no items found 
+    <EmptyState imageSource={require("@assets/images/EmptyData/empty_data.png")} message={"No categories available"} />
   );
-
-  const renderContent = () => (
-    <FlashList
-      data={formatData(data, 3)}
-      numColumns={3}
-      renderItem={renderItem}
-      keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={{ padding: 10, paddingBottom: 100 }}
-      onEndReached={handleLoadMore}
-      showsVerticalScrollIndicator={false}
-      onEndReachedThreshold={0.2}
-      ListFooterComponent={loading && <AnimatedLoader visible={loading} animationSource={require('@assets/animations/loading_up_down.json')} />}
-    />
-  );
-
-  // Check if categories are empty and not loading to avoid brief display of empty state during initial load
-  const renderCategories = () => {
-    if (data.length === 0 && !loading) {
-      return renderEmptyState();
-    }
-    return renderContent();
-  };
 
   return (
     <SafeAreaView>
       <NavigationHeader title="Categories" onBackPress={() => navigation.goBack()} />
-      <SearchContainer placeholder="Search Categories" onChangeText={handleSearchTextChange} />
-      <RoundedContainer>
-        {renderCategories()}
-      </RoundedContainer>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlashList
+          data={data} // Display fetched categories
+          renderItem={renderItem} // Render each category
+          keyExtractor={(item) => item._id.toString()}
+          onEndReached={handleLoadMore} // Trigger load more when end is reached
+          onEndReachedThreshold={0.2}
+          ListFooterComponent={loading && <ActivityIndicator size="large" color="#0000ff" />}
+        />
+      )}
     </SafeAreaView>
   );
 };
 
-export default CategoriesScreen;
+const styles = StyleSheet.create({
+  itemInvisible: {
+    backgroundColor: "transparent",
+  },
+  itemStyle: {
+    flex: 1,
+    alignItems: "center",
+    margin: 6,
+    borderRadius: 8,
+    marginTop: 5,
+    backgroundColor: "white",
+  },
+});
+
+export default CategoriesScreen;//

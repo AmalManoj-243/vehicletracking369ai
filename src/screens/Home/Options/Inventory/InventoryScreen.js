@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAB, Portal } from "react-native-paper";
 import { RoundedContainer, SafeAreaView } from "@components/containers";
 import { NavigationHeader } from "@components/Header";
@@ -27,6 +28,7 @@ import { reasons } from "@constants/dropdownConst";
 import { fetchEmployeesDropdown } from "@api/dropdowns/dropdownApi";
 import { Text, View, Pressable } from 'react-native';
 import axios from 'axios';
+import INVENTORY_API_BASE from '@api/config/inventoryConfig';
 
 const InventoryScreen = ({ navigation }) => {
   // Managing modal, loading, and state variables
@@ -141,14 +143,30 @@ const InventoryScreen = ({ navigation }) => {
   const handleModalInput = async (boxNumber) => {
     setModalLoading(true);
     try {
-      const response = await axios.get(`https://d3ba3b9573cc.ngrok-free.app/api/view_inventory_box/${boxNumber}`);
-      console.log('API response:', response.data); // <-- Log the response structure
-      // Fix: Use response.data.inventory_boxes if present
-      let boxes = Array.isArray(response.data.inventory_boxes)
-        ? response.data.inventory_boxes
-        : (Array.isArray(response.data) ? response.data : [response.data]);
-      if (boxes && boxes.length > 0 && boxes[0] && Object.keys(boxes[0]).length > 0) {
-        setDemoBoxes(boxes);
+      const token = await AsyncStorage.getItem('odoo_token');
+      console.log('Retrieved odoo_token from AsyncStorage:', token);
+      const db = 'odoo19';
+      const payload = {
+        box_name: boxNumber,
+        token: token,
+        db: db,
+      };
+      console.log('Request payload:', payload);
+      const url = `${INVENTORY_API_BASE.replace(/\/+$/, '')}/api/view_inventory_box`;
+      console.log('Request URL:', url);
+      const response = await axios.post(
+        url,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Odoo-Database': db,
+          },
+        }
+      );
+      console.log('API response:', response.data);
+      if (response.data.status === 'success' && Array.isArray(response.data.inventory_boxes) && response.data.inventory_boxes.length > 0) {
+        setDemoBoxes(response.data.inventory_boxes);
         setShowBoxSelection(true);
       } else {
         setDemoBoxes([]);
@@ -156,9 +174,26 @@ const InventoryScreen = ({ navigation }) => {
         showToastMessage("No inventory box found");
       }
     } catch (error) {
+      console.error('Inventory API error:', error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
+        // log final redirected URL if present
+        try {
+          const finalUrl = error.response.request?.res?.responseUrl || error.request?.responseURL;
+          if (finalUrl) console.error('Final response URL:', finalUrl);
+        } catch (e) {}
+        showToastMessage(`Error: ${error.response.data?.message || 'API error'} (${error.response.status})`);
+      } else if (error.request) {
+        console.error('Error request:', error.request);
+        showToastMessage('No response from server');
+      } else {
+        console.error('Error message:', error.message);
+        showToastMessage(`Error: ${error.message}`);
+      }
       setDemoBoxes([]);
       setShowBoxSelection(false);
-      showToastMessage("Error fetching inventory details");
     } finally {
       setModalLoading(false);
     }
@@ -171,9 +206,49 @@ const InventoryScreen = ({ navigation }) => {
     setIsVisibleCustomListModal(true);
   };
 
-  // Render inventory items or empty state
+  // Handle item press: fetch details and navigate or show modal (mirrors handleScan behaviour)
+  const handleItemPress = async (item) => {
+    setScanLoading(true);
+    try {
+      // Try to derive an identifier for the inventory detail
+      const id = item?._id || item?.id || item?.boxes?._id || item?.boxes?.id;
+      let inventoryDetails = [];
+
+      if (id) {
+        // If we have an id, fetch by id
+        const resp = await fetchInventoryDetails(id);
+        inventoryDetails = resp && resp.data ? resp.data : resp;
+      } else {
+        // Fallback: search by box name or item name
+        const name = item?.boxes?.name || item?.name || item?.box_no || '';
+        const resp = await fetchInventoryDetailsByName(name, warehouseId);
+        inventoryDetails = resp && resp.data ? resp.data : resp;
+      }
+
+      if (inventoryDetails && inventoryDetails.length > 0) {
+        const details = inventoryDetails[0];
+        setGetDetail(details);
+        if (isResponsibleOrEmployee(details)) {
+          setIsVisibleCustomListModal(true);
+        } else {
+          navigation.navigate('InventoryDetails', {
+            inventoryDetails: details,
+          });
+        }
+      } else {
+        showToastMessage('No inventory box found for this item');
+      }
+    } catch (error) {
+      console.error('Error fetching inventory details on item press:', error);
+      showToastMessage('Error fetching inventory details');
+    } finally {
+      setScanLoading(false);
+    }
+  };
+
+  // Render inventory items or empty state (pass onPress handler)
   const renderItem = ({ item }) =>
-    item.empty ? <EmptyItem /> : <InventoryList item={item} />;
+    item.empty ? <EmptyItem /> : <InventoryList item={item} onPress={() => handleItemPress(item)} />;
 
   const renderEmptyState = () => (
     <EmptyState
