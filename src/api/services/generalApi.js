@@ -52,10 +52,14 @@ export const fetchVehicleTrackingTripsOdoo = async (params = {}) => {
   const vehicleIdRaw = params.vehicleId ?? params.vehicle_id ?? vIdFromCamel;
   const vehicleId = vehicleIdRaw != null && vehicleIdRaw !== '' ? (Number.isNaN(Number(vehicleIdRaw)) ? undefined : Number(vehicleIdRaw)) : undefined;
   try {
-    // Filter by date and vehicleId if provided (Odoo expects YYYY-MM-DD)
+    // Filter by date and vehicleId if provided (Odoo often stores `date` as datetime)
+    // Use a date range (start/end of day) so comparisons match datetime values
     let domain = [];
     if (date) {
-      domain.push(["date", "=", date]);
+      const startOfDay = `${date} 00:00:00`;
+      const endOfDay = `${date} 23:59:59`;
+      domain.push(["date", ">=", startOfDay]);
+      domain.push(["date", "<=", endOfDay]);
     }
     if (typeof vehicleId !== 'undefined') {
       domain.push(["vehicle_id", "=", vehicleId]);
@@ -74,7 +78,7 @@ export const fetchVehicleTrackingTripsOdoo = async (params = {}) => {
             fields: [
               "id", "vehicle_id", "driver_id", "date", "number_plate", "start_km", "end_km", "start_trip", "end_trip", "source_id", "destination_id",
               "coolant_water", "oil_checking", "tyre_checking", "battery_checking", "fuel_checking", "daily_checks", "purpose_of_visit_id", "estimated_time",
-              "pre_trip_litres", "start_latitude", "start_longitude"
+              "start_latitude", "start_longitude", "trip_cancel"
             ],
             offset,
             limit,
@@ -89,14 +93,17 @@ export const fetchVehicleTrackingTripsOdoo = async (params = {}) => {
       throw new Error("Odoo JSON-RPC error");
     }
     const trips = response.data.result || [];
-    // Filter out cancelled trips from in-progress
+    
+    // Filter out cancelled trips and properly handle many2one fields
     return trips
       .filter(trip => !trip.trip_cancel)
       .map(trip => ({
         estimated_time: trip.estimated_time || '',
         id: trip.id,
-        vehicle_id: Array.isArray(trip.vehicle_id) ? trip.vehicle_id[0] : undefined,
+        // ✅ Fix: Handle many2one fields properly (they return [id, name] or false)
+        vehicle_id: Array.isArray(trip.vehicle_id) ? trip.vehicle_id[0] : (trip.vehicle_id ? trip.vehicle_id : null),
         vehicle_name: Array.isArray(trip.vehicle_id) ? trip.vehicle_id[1] : '',
+        driver_id: Array.isArray(trip.driver_id) ? trip.driver_id[0] : (trip.driver_id ? trip.driver_id : null),
         driver_name: Array.isArray(trip.driver_id) ? trip.driver_id[1] : '',
         date: trip.date,
         number_plate: trip.number_plate,
@@ -104,7 +111,9 @@ export const fetchVehicleTrackingTripsOdoo = async (params = {}) => {
         end_km: trip.end_km,
         start_trip: trip.start_trip,
         end_trip: trip.end_trip,
+        source_id: Array.isArray(trip.source_id) ? trip.source_id[0] : (trip.source_id ? trip.source_id : null),
         source_name: Array.isArray(trip.source_id) ? trip.source_id[1] : '',
+        destination_id: Array.isArray(trip.destination_id) ? trip.destination_id[0] : (trip.destination_id ? trip.destination_id : null),
         destination_name: Array.isArray(trip.destination_id) ? trip.destination_id[1] : '',
         vehicleChecklist: {
           coolentWater: trip.coolant_water || false,
@@ -125,6 +134,7 @@ export const fetchVehicleTrackingTripsOdoo = async (params = {}) => {
     throw error;
   }
 };
+
 // Fetch sources (locations) from Odoo using JSON-RPC (vehicle.location model)
 export const fetchSourcesOdoo = async ({ offset = 0, limit = 50, searchText = "" } = {}) => {
   try {
@@ -170,12 +180,17 @@ export const fetchSourcesOdoo = async ({ offset = 0, limit = 50, searchText = ""
   }
 };
 // Create vehicle tracking trip in Odoo (test-vehicle DB) using JSON-RPC
+// Create vehicle tracking trip in Odoo (test-vehicle DB) using JSON-RPC
 export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin', password = 'admin', db = DEFAULT_VEHICLE_TRACKING_DB } = {}) => {
   const baseUrl = (VEHICLE_TRACKING_BASE_URL || '').replace(/\/$/, '');
   // Defensive: ensure payload is a valid object
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     console.error('createVehicleTrackingTripOdoo: Invalid payload', payload);
     throw new Error('Trip payload is invalid (must be a non-null object)');
+  }
+  // Ensure vehicle_id is present for updates
+  if (typeof payload.id !== 'undefined' && (typeof payload.vehicle_id === 'undefined' || payload.vehicle_id === null || payload.vehicle_id === '')) {
+    console.warn('createVehicleTrackingTripOdoo: vehicle_id is missing in update payload. This will result in missing vehicle info for the trip.');
   }
   // Log payload before sending
   console.log('createVehicleTrackingTripOdoo: Sending payload to Odoo:', payload);
@@ -184,6 +199,38 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
     const loginResp = await loginVehicleTrackingOdoo({ username, password, db });
     // Build trip payload by removing fields that belong to vehicle.fuel.log or are invalid for vehicle.tracking
     const tripPayload = { ...payload };
+    
+    // ✅ FIX: Convert many2one field IDs to integers BEFORE removing fuel fields
+    if (tripPayload.vehicle_id) {
+      tripPayload.vehicle_id = typeof tripPayload.vehicle_id === 'string' 
+        ? parseInt(tripPayload.vehicle_id, 10) 
+        : tripPayload.vehicle_id;
+    }
+    
+    if (tripPayload.driver_id) {
+      tripPayload.driver_id = typeof tripPayload.driver_id === 'string'
+        ? parseInt(tripPayload.driver_id, 10)
+        : tripPayload.driver_id;
+    }
+    
+    if (tripPayload.source_id) {
+      tripPayload.source_id = typeof tripPayload.source_id === 'string'
+        ? parseInt(tripPayload.source_id, 10)
+        : tripPayload.source_id;
+    }
+    
+    if (tripPayload.destination_id) {
+      tripPayload.destination_id = typeof tripPayload.destination_id === 'string'
+        ? parseInt(tripPayload.destination_id, 10)
+        : tripPayload.destination_id;
+    }
+    
+    if (tripPayload.purpose_of_visit_id) {
+      tripPayload.purpose_of_visit_id = typeof tripPayload.purpose_of_visit_id === 'string'
+        ? parseInt(tripPayload.purpose_of_visit_id, 10)
+        : tripPayload.purpose_of_visit_id;
+    }
+    
     const removeKeys = [
       'fuel_amount', 'fuel_liters', 'fuel_litres', 'invoice_number', 'odometer_image',
       'odometer_image_filename', 'odometer_image_uri', 'current_odometer',
@@ -193,34 +240,83 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
     // Debug: show sanitized trip payload that will be sent to Odoo (should include image_url if provided)
     console.log('createVehicleTrackingTripOdoo: Sanitized tripPayload:', JSON.stringify(tripPayload));
 
-    // Step 2: Create trip record via JSON-RPC
+    // Step 2: Create or update trip record via JSON-RPC
     const headers = await getOdooAuthHeaders();
     if (loginResp && loginResp.cookies) headers.Cookie = loginResp.cookies;
-    const response = await axios.post(
-      `${baseUrl}/web/dataset/call_kw`,
-      {
-        jsonrpc: '2.0',
-        method: 'call',
-        params: {
-          model: 'vehicle.tracking',
-          method: 'create',
-          args: [[tripPayload]],
-          kwargs: {},
-        },
-      },
-      {
-        headers,
-        withCredentials: true,
-        timeout: 15000,
+
+    let tripId;
+    
+    // If payload includes an `id`, perform an update (write) on that record
+    if (tripPayload && (typeof tripPayload.id !== 'undefined')) {
+      const recordId = tripPayload.id;
+      // Remove id from payload before sending write
+      const { id: _remove, ...updatePayload } = tripPayload;
+      
+      // CRITICAL: Validate vehicle_id is present in update
+      if (!updatePayload.vehicle_id) {
+        console.error('[createVehicleTrackingTripOdoo] CRITICAL WARNING: vehicle_id is missing from update payload!', {
+          payload_vehicle_id: payload.vehicle_id,
+          tripPayload_vehicle_id: tripPayload.vehicle_id,
+          updatePayload_vehicle_id: updatePayload.vehicle_id,
+        });
+      } else {
+        console.log('[createVehicleTrackingTripOdoo] Update payload includes vehicle_id:', updatePayload.vehicle_id, 'type:', typeof updatePayload.vehicle_id);
       }
-    );
-    if (response.data.error) {
-      console.error('Odoo JSON-RPC error (create trip):', response.data.error);
-      throw new Error('Odoo JSON-RPC error');
+      
+      try {
+        const resp = await axios.post(
+          `${baseUrl}/web/dataset/call_kw`,
+          {
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+              model: 'vehicle.tracking',
+              method: 'write',
+              args: [[recordId], updatePayload],
+              kwargs: {},
+            },
+          },
+          { headers, withCredentials: true, timeout: 15000 }
+        );
+        if (resp.data.error) {
+          console.error('Odoo JSON-RPC error (update trip):', resp.data.error);
+          throw new Error('Odoo JSON-RPC error');
+        }
+        // On success, return the id that was updated
+        console.log('Odoo updateVehicleTrackingTripOdoo wrote id:', recordId);
+        tripId = recordId;
+      } catch (err) {
+        console.error('Odoo updateVehicleTrackingTripOdoo error:', err);
+        throw err;
+      }
+    } else {
+      // Create new record
+      const response = await axios.post(
+        `${baseUrl}/web/dataset/call_kw`,
+        {
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            model: 'vehicle.tracking',
+            method: 'create',
+            args: [[tripPayload]],
+            kwargs: {},
+          },
+        },
+        {
+          headers,
+          withCredentials: true,
+          timeout: 15000,
+        }
+      );
+      if (response.data.error) {
+        console.error('Odoo JSON-RPC error (create trip):', response.data.error);
+        throw new Error('Odoo JSON-RPC error');
+      }
+      const tripIdRaw = response.data.result;
+      tripId = Array.isArray(tripIdRaw) ? tripIdRaw[0] : (Number.isFinite(Number(tripIdRaw)) ? Number(Number(tripIdRaw)) : tripIdRaw);
+      console.log('Odoo createVehicleTrackingTripOdoo response tripIdRaw:', JSON.stringify(tripIdRaw), 'normalized tripId:', tripId);
     }
-    const tripIdRaw = response.data.result;
-    const tripId = Array.isArray(tripIdRaw) ? tripIdRaw[0] : (Number.isFinite(Number(tripIdRaw)) ? Number(tripIdRaw) : tripIdRaw);
-    console.log('Odoo createVehicleTrackingTripOdoo response tripIdRaw:', JSON.stringify(tripIdRaw), 'normalized tripId:', tripId);
 
     // If payload included fuel details, map them to vehicle.fuel.log and create a record
     try {
@@ -296,7 +392,7 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
       console.warn('Failed to create vehicle.fuel.log:', e?.message || e);
     }
 
-    // Read back the created trip record to verify fields like `image_url` were saved
+    // Read back the created trip record to verify fields like `image_url` and `vehicle_id` were saved
     try {
       const readResp = await axios.post(
         `${baseUrl}/web/dataset/call_kw`,
@@ -307,13 +403,13 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
             model: 'vehicle.tracking',
             method: 'search_read',
             args: [[['id', '=', tripId]]],
-            kwargs: { fields: ['id', 'image_url', 'number_plate', 'date'] },
+            kwargs: { fields: ['id', 'image_url', 'number_plate', 'date', 'vehicle_id', 'driver_id'] },
           },
         },
         { headers, withCredentials: true, timeout: 15000 }
       );
       if (readResp.data && Array.isArray(readResp.data.result) && readResp.data.result.length > 0) {
-        console.log('Readback vehicle.tracking record after create:', JSON.stringify(readResp.data.result[0]));
+        console.log('Readback vehicle.tracking record after create/update:', JSON.stringify(readResp.data.result[0]));
       } else {
         console.log('No readback result for created vehicle.tracking. Response:', JSON.stringify(readResp.data));
       }
@@ -330,6 +426,7 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
     }
     throw error;
   }
+  
 };
 // api/services/generalApi.js
 import axios from "axios";
@@ -500,14 +597,114 @@ export const fetchProductsOdoo = async ({ offset, limit, searchText } = {}) => {
     console.error("fetchProductsOdoo error:", error);
     throw error;
   }
-};// src/api/services/generalApi.js
+};
+
+// Fetch users from Odoo using JSON-RPC (res.users model)
+export const fetchUsersOdoo = async ({ offset = 0, limit = 50, searchText = "" } = {}) => {
+  try {
+    let domain = [["active", "=", true]];
+    if (searchText && searchText.trim() !== "") {
+      const term = searchText.trim();
+      domain = ["&", ["active", "=", true], ["name", "ilike", term]];
+    }
+
+    const headers = await getOdooAuthHeaders();
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: "2.0",
+        method: "call",
+        params: {
+          model: "res.users",
+          method: "search_read",
+          args: [domain],
+          kwargs: {
+            fields: ["id", "name", "login", "email", "partner_id", "image_128"],
+            offset,
+            limit,
+            order: "name asc",
+          },
+        },
+      },
+      { headers }
+    );
+
+    if (response.data.error) {
+      console.log("Odoo JSON-RPC error (users):", response.data.error);
+      throw new Error("Odoo JSON-RPC error");
+    }
+
+    const users = response.data.result || [];
+
+    return users.map((u) => ({
+      id: u.id,
+      _id: u.id,
+      name: u.name || "",
+      login: u.login || "",
+      email: u.email || "",
+      partner_id: u.partner_id ? { id: u.partner_id[0], name: u.partner_id[1] } : null,
+      image_url: u.image_128 && typeof u.image_128 === 'string' && u.image_128.length > 0
+        ? `data:image/png;base64,${u.image_128}`
+        : null,
+    }));
+  } catch (error) {
+    console.error("fetchUsersOdoo error:", error);
+    throw error;
+  }
+};
+
+// src/api/services/generalApi.js
 // Ensure this points to your Odoo URL
 
 // Fetch categories directly from Odoo using JSON-RPC
-// NOTE: older code filtered by a non-existent `is_category` field which caused Odoo to raise
-// "Invalid field product.category.is_category". Use a safe domain (empty) and apply
-// `name ilike` only when a searchText is provided.
-// fetchCategoriesOdoo removed: Odoo category fetch disabled as requested
+export const fetchCategoriesOdoo = async ({ offset = 0, limit = 50, searchText = "" } = {}) => {
+  try {
+    let domain = [];
+    if (searchText && searchText.trim() !== "") {
+      const term = searchText.trim();
+      domain = [["name", "ilike", term]];
+    }
+
+    const headers = await getOdooAuthHeaders();
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: "2.0",
+        method: "call",
+        params: {
+          model: "product.category",
+          method: "search_read",
+          args: [domain],
+          kwargs: {
+            fields: ["id", "name", "parent_id"],
+            offset,
+            limit,
+            order: "name asc",
+          },
+        },
+      },
+      { headers }
+    );
+
+    if (response.data.error) {
+      console.log("Odoo JSON-RPC error (categories):", response.data.error);
+      throw new Error("Odoo JSON-RPC error");
+    }
+
+    const categories = response.data.result || [];
+
+    return categories.map((c) => ({
+      _id: c.id,
+      name: c.name || "",
+      category_name: c.name || "",
+      image_url: null,
+      parent_id: c.parent_id ? { id: c.parent_id[0], name: c.parent_id[1] } : null,
+    }));
+  } catch (error) {
+    console.error("fetchCategoriesOdoo error:", error);
+    throw error;
+  }
+};
 
 // Fetch detailed product information for a single Odoo product id
 export const fetchProductDetailsOdoo = async (productId) => {
@@ -783,6 +980,25 @@ export const fetchCustomerVisitList = async ({ offset, limit, fromDate, toDate, 
       ...(toDate !== undefined && { to_date: toDate }),
     };
     const response = await get(API_ENDPOINTS.VIEW_CUSTOMER_VISIT_LIST, queryParams);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const fetchStaffTrackingList = async ({ offset, limit, fromDate, toDate, employeeIds, departmentIds, loginEmployeeId }) => {
+  try {
+    const queryParams = {
+      offset,
+      limit,
+      ...(loginEmployeeId !== undefined && { login_employee_id: loginEmployeeId }),
+      ...(employeeIds !== undefined && employeeIds.length > 0 && { employee_ids: employeeIds.join(',') }),
+      ...(departmentIds !== undefined && departmentIds.length > 0 && { department_ids: departmentIds.join(',') }),
+      ...(fromDate !== undefined && { from_date: fromDate }),
+      ...(toDate !== undefined && { to_date: toDate }),
+    };
+    const response = await get(API_ENDPOINTS.VIEW_STAFF_TRACKING, queryParams);
     return response.data;
   } catch (error) {
     handleApiError(error);

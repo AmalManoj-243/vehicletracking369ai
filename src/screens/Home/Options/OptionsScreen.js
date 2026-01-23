@@ -20,6 +20,11 @@ const OptionsScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const currentUser = useAuthStore(state => state.user);
 
+  // Check if user is admin (works for both UAE admin and Odoo login)
+  const isAdmin = currentUser?.user_name === 'admin' ||
+                  currentUser?.username === 'admin' ||
+                  currentUser?.login === 'admin';
+
   const handleScan = async (code) => {
     startLoading();
     try {
@@ -37,7 +42,7 @@ const OptionsScreen = ({ navigation }) => {
     }
   };
 
-  const options = [
+  const baseOptions = [
     { title: 'Search Products', image: require('@assets/images/Home/options/search_product.png'), onPress: () => navigation.navigate('Products') },
     { title: 'Scan Barcode', image: require('@assets/images/Home/options/scan_barcode.png'), onPress: () => navigation.navigate("Scanner", { onScan: handleScan }) },
     { title: 'Product Enquiry', image: require('@assets/images/Home/options/product_enquiry.png'), onPress: () => navigation.navigate('PriceEnquiryScreen') },
@@ -53,6 +58,15 @@ const OptionsScreen = ({ navigation }) => {
     { title: 'Inventory Management', image: require('@assets/images/Home/options/inventory_management_1.png'), onPress: () => navigation.navigate('InventoryScreen') },
     { title: 'Box Inspection', image: require('@assets/images/Home/options/box_inspection.png'), onPress: () => setIsConfirmationModalVisible(true) },
   ];
+
+  // Add Staff Tracking option only for admin users
+  const options = isAdmin
+    ? [
+        ...baseOptions.slice(0, 7),
+        { title: 'Staff Tracking', image: require('@assets/images/Home/options/attendance.png'), onPress: () => navigation.navigate('StaffTrackingScreen') },
+        ...baseOptions.slice(7),
+      ]
+    : baseOptions;
 
   const renderItem = ({ item }) => {
     if (item.empty) {

@@ -71,6 +71,7 @@ const VehicleTrackingForm = ({ navigation, route }) => {
     return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
   };
   const [currentCoords, setCurrentCoords] = useState(null);
+  const [currentLocationName, setCurrentLocationName] = useState('');
   const [showAddFuel, setShowAddFuel] = useState(false);
   useEffect(() => {
     const fetchCurrentLocation = async () => {
@@ -83,6 +84,28 @@ const VehicleTrackingForm = ({ navigation, route }) => {
         const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         setCurrentCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
         console.log('Current GPS location:', location.coords.latitude, location.coords.longitude);
+
+        // Reverse geocode to get location name
+        try {
+          const reverseGeocode = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+          if (reverseGeocode && reverseGeocode.length > 0) {
+            const addr = reverseGeocode[0];
+            const locationParts = [
+              addr.name,
+              addr.street,
+              addr.city,
+              addr.region,
+            ].filter(Boolean);
+            const locationName = locationParts.join(', ');
+            setCurrentLocationName(locationName);
+            console.log('Current location name:', locationName);
+          }
+        } catch (geocodeError) {
+          console.error('Reverse geocode error:', geocodeError);
+        }
       } catch (error) {
         console.error('Expo Location error (on load):', error);
       }
@@ -299,6 +322,42 @@ const VehicleTrackingForm = ({ navigation, route }) => {
           destinations,
           purposesOfVisit,
         });
+
+        // If editing an existing trip, try to auto-match the vehicle in the loaded dropdowns
+        if (isEditMode && existingTripData?.vehicle_id) {
+          try {
+            const match = (vehicles || []).find(v => String(v._id) === String(existingTripData.vehicle_id) || String(v._id) === String(existingTripData.vehicle_id?.toString()));
+            if (match) {
+              setFormData(prev => ({
+                ...prev,
+                vehicle: match.name || prev.vehicle,
+                driver: match.driver?.name || prev.driver,
+                plateNumber: match.plate_number || prev.plateNumber,
+              }));
+              console.log('[VehicleTrackingForm] Auto-matched vehicle from dropdowns for edit:', match.name, match._id);
+            } else {
+              console.log('[VehicleTrackingForm] No vehicle match found in dropdowns for vehicle_id:', existingTripData.vehicle_id);
+              // Fallback: fetch vehicle details by id and populate form fields
+              try {
+                const details = await fetchVehicleDetailsOdoo({ vehicle_id: existingTripData.vehicle_id });
+                if (details) {
+                  setFormData(prev => ({
+                    ...prev,
+                    vehicle: details.name || prev.vehicle || existingTripData.vehicle_name || '',
+                    driver: details.driver?.name || prev.driver || existingTripData.driver_name || '',
+                    plateNumber: details.license_plate || prev.plateNumber || existingTripData.number_plate || '',
+                    tankCapacity: prev.tankCapacity || details.tank_capacity || prev.tankCapacity || '',
+                  }));
+                  console.log('[VehicleTrackingForm] Populated vehicle from fetchVehicleDetailsOdoo fallback:', details.name, existingTripData.vehicle_id);
+                }
+              } catch (fetchErr) {
+                console.warn('Failed to fetch vehicle details fallback for vehicle_id:', existingTripData.vehicle_id, fetchErr);
+              }
+            }
+          } catch (e) {
+            console.warn('Error auto-matching vehicle for edit:', e);
+          }
+        }
       } catch (error) {
         console.error('Error loading dropdowns:', error);
       }
@@ -847,44 +906,8 @@ const VehicleTrackingForm = ({ navigation, route }) => {
           });
         }
       } else {
-        // Ask user to confirm starting despite mismatch
-        Alert.alert(
-          'Source not matched',
-          `Current location is ${distance ? Math.round(distance) + ' m' : 'unknown'} away from selected source. Start trip anyway?`,
-          [
-            { text: 'No', style: 'cancel' },
-            { text: 'Yes, Start', onPress: async () => {
-                try {
-                  const location = await getCurrentLocation('Start Trip Immediate');
-                  setFormData(prev => {
-                    const updated = {
-                      ...prev,
-                      startTrip: true,
-                      startLatitude: location.latitude,
-                      startLongitude: location.longitude,
-                    };
-                    console.log('Start Trip updated formData:', updated);
-                    return updated;
-                  });
-                  showToastMessage(`Start location captured: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`, 'success');
-                } catch (error) {
-                  console.error('Failed to capture GPS:', error);
-                  showToastMessage('GPS capture failed, using default location', 'warning');
-                  setFormData(prev => {
-                    const updated = {
-                      ...prev,
-                      startTrip: true,
-                      startLatitude: 25.2048,
-                      startLongitude: 55.2708,
-                    };
-                    console.log('Start Trip updated formData (fallback):', updated);
-                    return updated;
-                  });
-                }
-              }
-            },
-          ]
-        );
+        // Source not matched - do not allow starting the trip
+        showToastMessage(`Cannot start trip: You must be at the source location. Current distance: ${distance ? Math.round(distance) + ' m' : 'unknown'}`, 'error');
       }
     } else {
       handleInputChange('startTrip', false);
@@ -1050,11 +1073,16 @@ const VehicleTrackingForm = ({ navigation, route }) => {
         daily_checks: checklist.dailyChecks,
       };
 
-      // Find selected vehicle object from dropdowns
+      // Find selected vehicle object from dropdowns. When editing, preserve existing vehicle_id
       const selectedVehicle = (dropdowns.vehicles || []).find(v => v.name === formData.vehicle);
-      const vehicle_id = selectedVehicle ? selectedVehicle._id : null;
-      // Try to get driver_id from selected vehicle
-      const driver_id = selectedVehicle?.driver?.id || null;
+      // Extract vehicle_id: if it's an array (from API response), take first element
+      let vehicle_id = selectedVehicle ? selectedVehicle._id : null;
+      if (!vehicle_id && isEditMode && existingTripData?.vehicle_id) {
+        vehicle_id = Array.isArray(existingTripData.vehicle_id) ? existingTripData.vehicle_id[0] : existingTripData.vehicle_id;
+        console.log('[VehicleTrackingForm] Using vehicle_id from existingTripData:', vehicle_id, 'original:', existingTripData.vehicle_id);
+      }
+      // Try to get driver_id from selected vehicle or fallback to existing trip driver id
+      const driver_id = selectedVehicle?.driver?.id || (Array.isArray(existingTripData?.driver_id) ? existingTripData.driver_id[0] : existingTripData?.driver_id) || null;
 
       // Map form fields to Odoo model fields
       let submitData = {
@@ -1116,6 +1144,19 @@ const VehicleTrackingForm = ({ navigation, route }) => {
       // Add trip ID if editing existing trip (only id, no is_update/isUpdate/tripId)
       if (isEditMode && existingTripData?.id) {
         submitData.id = existingTripData.id;
+        // Ensure vehicle_id is present when updating - it's critical for the trip record
+        if (!submitData.vehicle_id) {
+          console.error('[VehicleTrackingForm] CRITICAL: vehicle_id is missing in update payload!', {
+            submitData_vehicle_id: submitData.vehicle_id,
+            existingTripData_vehicle_id: existingTripData.vehicle_id,
+            variable_vehicle_id: vehicle_id,
+          });
+          showToastMessage('Vehicle ID missing - please select a vehicle before updating', 'error');
+          setIsSubmitting(false);
+          return;
+        } else {
+          console.log('[VehicleTrackingForm] Update payload includes vehicle_id:', submitData.vehicle_id);
+        }
       }
 
       // If Start Trip is checked (for new trips only)
@@ -1190,6 +1231,7 @@ const VehicleTrackingForm = ({ navigation, route }) => {
       try {
         const { image_128, ...rest } = submitData;
         console.log('[VehicleTrackingForm] Payload sent to Odoo on end trip:', rest);
+        console.log('[VehicleTrackingForm] vehicle_id in update payload:', submitData.vehicle_id);
       } catch (logErr) {
         console.log('Failed to stringify submit payload', logErr);
       }
@@ -1510,7 +1552,7 @@ const VehicleTrackingForm = ({ navigation, route }) => {
             <View style={styles.inputRow}>
               <View style={styles.halfInput}>
                 <FormInput
-                  label="Start Latitude"
+                  label="Fuel Latitude"
                   value={formData.start_latitude || formData.startLatitude || (currentCoords ? String(currentCoords.latitude) : '')}
                   onChangeText={(value) => handleInputChange('start_latitude', value)}
                   placeholder="Latitude"
@@ -1519,7 +1561,7 @@ const VehicleTrackingForm = ({ navigation, route }) => {
               </View>
               <View style={styles.halfInput}>
                 <FormInput
-                  label="Start Longitude"
+                  label="Fuel Longitude"
                   value={formData.start_longitude || formData.startLongitude || (currentCoords ? String(currentCoords.longitude) : '')}
                   onChangeText={(value) => handleInputChange('start_longitude', value)}
                   placeholder="Longitude"
@@ -1529,34 +1571,16 @@ const VehicleTrackingForm = ({ navigation, route }) => {
             </View>
           </View>
         )}
-        {/* Tank Capacity - user input */}
-        <FormInput
-          label="Pre-trip Liters"
-          value={formData.tankCapacity}
-          onChangeText={(value) => handleInputChange('tankCapacity', value)}
-          placeholder="Enter tank capacity"
-          keyboardType="numeric"
-        />
+        
 
-        {/* Start Latitude/Longitude - only for in-progress trips */}
-        {initialTripState === 'in_progress' && (
-          <>
-            <FormInput
-              label="Start Latitude:"
-              value={formData.start_latitude || formData.startLatitude || ''}
-              onChangeText={(value) => handleInputChange('start_latitude', value)}
-              placeholder="Start latitude"
-              keyboardType="numeric"
-            />
-            <FormInput
-              label="Start Longitude:"
-              value={formData.start_longitude || formData.startLongitude || ''}
-              onChangeText={(value) => handleInputChange('start_longitude', value)}
-              placeholder="Start longitude"
-              keyboardType="numeric"
-            />
-          </>
-        )}
+
+        {/* Started Location */}
+        <FormInput
+          label="Started Location:"
+          value={currentLocationName || 'Fetching location...'}
+          editable={false}
+          style={{ backgroundColor: '#f5f5f5' }}
+        />
 
         {/* Source */}
         <FormInput
@@ -1641,12 +1665,8 @@ const VehicleTrackingForm = ({ navigation, route }) => {
             >
               <Text style={styles.cancelButtonText}>Cancel Trip</Text>
             </Pressable>
-            <Pressable
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={handleSubmit}
-            >
-              <Text style={styles.primaryButtonText}>Save Progress</Text>
-            </Pressable>
+           
+           
           </View>
         )}
 
@@ -1660,14 +1680,6 @@ const VehicleTrackingForm = ({ navigation, route }) => {
           editable={formData.tripStatus !== 'in_progress'}
         />
 
-        {/* End Trip */}
-        <View style={styles.checkboxContainer}>
-          <CheckBox
-            label="End Trip"
-            checked={formData.endTrip}
-            onPress={(value) => handleInputChange('endTrip', value)}
-          />
-        </View>
 
         {/* End KM */}
         <FormInput
@@ -1733,46 +1745,7 @@ const VehicleTrackingForm = ({ navigation, route }) => {
           keyboardType="numeric"
         />
 
-        {/* Show post trip fields and invoice upload only when trip is in progress */}
-        {formData.isTripStarted && formData.tripStatus === 'in_progress' && (
-          <>
-            {/* Post Trip Amt */}
-            <FormInput
-              label="Post Trip Amt:"
-              value={formData.postTripAmt || ''}
-              onChangeText={(value) => handleInputChange('postTripAmt', value)}
-              placeholder="Enter post trip amount"
-              keyboardType="numeric"
-            />
-
-            {/* Post Trip Litre */}
-            <FormInput
-              label="Post Trip Litre:"
-              value={formData.postTripLitre || ''}
-              onChangeText={(value) => handleInputChange('postTripLitre', value)}
-              placeholder="Enter post trip litre"
-              keyboardType="numeric"
-            />
-
-            {/* Fuel Invoice Upload Button */}
-            <View style={{ marginTop: 12 }}>
-              <Pressable style={[
-                styles.imagePickerButton,
-                formData.fuelInvoiceUri && styles.imagePickerButtonSelected
-              ]} onPress={handleFuelInvoicePicker}>
-                <Text style={styles.imagePickerIcon}>
-                  {formData.fuelInvoiceUri ? '✓' : '🧾'}
-                </Text>
-                <Text style={styles.imagePickerText}>
-                  {formData.fuelInvoiceUri ? '✓' : '+'}
-                </Text>
-              </Pressable>
-              {formData.fuelInvoiceUri && (
-                <Text style={styles.imageSelectedText}>Fuel invoice selected</Text>
-              )}
-            </View>
-          </>
-        )}
+        
 
         {/* Vehicle Checklist */}
         <Text style={styles.sectionTitle}>Vehicle Checklist :</Text>
@@ -1812,15 +1785,6 @@ const VehicleTrackingForm = ({ navigation, route }) => {
             checked={formData.vehicleChecklist?.dailyChecks ?? false}
             onPress={(value) => handleChecklistChange('dailyChecks', value)}
             editable={formData.tripStatus === 'not_started'}
-          />
-        </View>
-
-        {/* Cancel Trip */}
-        <View style={styles.checkboxContainer}>
-          <CheckBox
-            label="Cancel Trip"
-            checked={formData.cancelTrip}
-            onPress={(value) => handleInputChange('cancelTrip', value)}
           />
         </View>
 
