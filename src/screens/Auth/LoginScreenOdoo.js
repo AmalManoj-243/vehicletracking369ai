@@ -6,6 +6,9 @@ import {
   StyleSheet,
   Image,
   TouchableWithoutFeedback,
+  Alert,
+  Linking,
+  Platform,
 } from "react-native";
 import { COLORS, FONT_FAMILY } from "@constants/theme";
 import { LogBox } from "react-native";
@@ -22,6 +25,8 @@ import { RoundedScrollContainer, SafeAreaView } from "@components/containers";
 import { useAuthStore } from "@stores/auth";
 import { showToastMessage } from "@components/Toast";
 import { Checkbox } from "react-native-paper";
+import { startLocationTracking } from "@services/LocationTrackingService";
+import * as Location from 'expo-location';
 
 import API_BASE_URL from "@api/config";
 import ODOO_DEFAULTS, { DEFAULT_ODOO_BASE_URL, DEFAULT_ODOO_DB } from "@api/config/odooConfig";
@@ -74,7 +79,66 @@ const LoginScreenOdoo = () => {
     setErrors((prevState) => ({ ...prevState, [input]: error }));
   };
 
-  const validate = () => {
+  // Check if location services are enabled and permission is granted
+  const checkLocationEnabled = async () => {
+    try {
+      // Check if location services are enabled on device
+      const isLocationEnabled = await Location.hasServicesEnabledAsync();
+
+      if (!isLocationEnabled) {
+        Alert.alert(
+          'Location Required',
+          'Please turn on location services to login. This app requires location tracking.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+        return false;
+      }
+
+      // Request location permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Location permission is required to login. Please grant location access.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.log('Location check error:', error);
+      showToastMessage('Unable to check location status');
+      return false;
+    }
+  };
+
+  const validate = async () => {
     Keyboard.dismiss();
     let isValid = true;
 
@@ -92,7 +156,11 @@ const LoginScreenOdoo = () => {
     }
 
     if (isValid) {
-      login();
+      // Check location before proceeding with login
+      const locationEnabled = await checkLocationEnabled();
+      if (locationEnabled) {
+        login();
+      }
     }
   };
 
@@ -163,6 +231,11 @@ const LoginScreenOdoo = () => {
               console.warn('Unable to persist Odoo cookie header:', e?.message || e);
             }
             setUser(userData);
+            // Start location tracking for non-admin users only
+            // Check is_admin field from Odoo response
+            if (userData.uid && !userData.is_admin) {
+              startLocationTracking(userData.uid);
+            }
             navigation.navigate("AppNavigator");
           } else {
             showToastMessage("Invalid Odoo credentials or login failed");
@@ -181,6 +254,10 @@ const LoginScreenOdoo = () => {
           const userData = response.data[0];
           await AsyncStorage.setItem("userData", JSON.stringify(userData));
           setUser(userData);
+          // Start location tracking for non-admin UAE users
+          if (userData._id && userData.user_name !== 'admin') {
+            startLocationTracking(userData._id);
+          }
           navigation.navigate("AppNavigator");
         } else {
           showToastMessage("Invalid admin credentials");

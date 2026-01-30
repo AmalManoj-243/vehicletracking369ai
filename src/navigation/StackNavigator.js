@@ -6,7 +6,7 @@ import AppNavigator from "./AppNavigator";
 import { ProductsScreen, SplashScreen } from "@screens";
 import { OptionsScreen } from "@screens/Home/Options";
 import { VehicleTrackingScreen, VehicleTrackingForm } from "@screens/Home/Options/VehicleTracking";
-import { StaffTrackingScreen, StaffTrackingForm, StaffTrackingDetails } from "@screens/Home/Options/StaffTracking";
+import { StaffTrackingScreen, StaffTrackingForm, StaffTrackingDetails, UserLiveLocation, MyLocation } from "@screens/Home/Options/StaffTracking";
 
 import { TaskManagerScreen } from "@screens/Home/Options/TaskManager";
 import { AuditDetails, AuditForm, AuditScreen } from "@screens/Home/Options/Audit";
@@ -173,6 +173,16 @@ const StackNavigator = () => {
       <Stack.Screen
         name="StaffTrackingDetails"
         component={StaffTrackingDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="UserLiveLocation"
+        component={UserLiveLocation}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyLocation"
+        component={MyLocation}
         options={{ headerShown: false }}
       />
 

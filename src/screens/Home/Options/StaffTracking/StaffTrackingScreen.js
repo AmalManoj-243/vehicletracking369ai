@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
@@ -10,9 +10,9 @@ import { fetchStaffTrackingList, fetchUsersOdoo } from '@api/services/generalApi
 import { useDataFetching } from '@hooks';
 import AnimatedLoader from '@components/Loader/AnimatedLoader';
 import Text from '@components/Text';
-import { TouchableOpacity, View, StyleSheet, Platform, Image } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform, Image, TextInput } from 'react-native';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { DropdownSheet, MultiSelectDropdownSheet } from '@components/common/BottomSheets';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
@@ -31,6 +31,7 @@ const StaffTrackingScreen = ({ navigation }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeList, setEmployeeList] = useState([]);
   const [employeeLoading, setEmployeeLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     fromDate: '',
@@ -45,6 +46,19 @@ const StaffTrackingScreen = ({ navigation }) => {
   });
 
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchStaffTrackingList);
+
+  // Filter employees based on search query
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return employeeList;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return employeeList.filter(employee =>
+      employee.name?.toLowerCase().includes(query) ||
+      employee.login?.toLowerCase().includes(query) ||
+      employee.email?.toLowerCase().includes(query)
+    );
+  }, [employeeList, searchQuery]);
 
   // Fetch users from Odoo on mount
   useEffect(() => {
@@ -100,8 +114,16 @@ const StaffTrackingScreen = ({ navigation }) => {
   };
 
   const handleEmployeeSelect = (employee) => {
-    setSelectedEmployee(employee);
-    fetchData({ employeeIds: [employee.id] });
+    console.log('=== User Selected ===');
+    console.log('User ID:', employee.id);
+    console.log('User Name:', employee.name);
+    console.log('User Login:', employee.login);
+    console.log('User Email:', employee.email);
+    console.log('Full User Data:', JSON.stringify(employee, null, 2));
+    console.log('=====================');
+
+    // Navigate to live location map
+    navigation.navigate('UserLiveLocation', { user: employee });
   };
 
   const handleBackToEmployeeList = () => {
@@ -121,14 +143,10 @@ const StaffTrackingScreen = ({ navigation }) => {
         <Image source={{ uri: item.image_url }} style={styles.employeeImage} />
       ) : (
         <View style={styles.employeeIconContainer}>
-          <MaterialIcons name="person" size={28} color={COLORS.primaryThemeColor} />
+          <MaterialIcons name="person" size={32} color={COLORS.primaryThemeColor} />
         </View>
       )}
-      <View style={styles.employeeInfo}>
-        <Text style={styles.employeeName}>{item.name}</Text>
-        {item.login && <Text style={styles.employeeDepartment}>{item.login}</Text>}
-        {item.email && <Text style={styles.employeeEmail}>{item.email}</Text>}
-      </View>
+      <Text style={styles.employeeName}>{item.name}</Text>
       <MaterialIcons name="chevron-right" size={24} color="#999" />
     </TouchableOpacity>
   );
@@ -153,6 +171,28 @@ const StaffTrackingScreen = ({ navigation }) => {
     <EmptyState imageSource={require('@assets/images/EmptyData/empty_data.png')} message={message} />
   );
 
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchInputContainer}>
+        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search users by name, login or email..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
   const renderEmployeeList = () => {
     if (employeeLoading) {
       return (
@@ -169,9 +209,13 @@ const StaffTrackingScreen = ({ navigation }) => {
       return renderEmptyState('No users found');
     }
 
+    if (filteredEmployees.length === 0 && searchQuery.length > 0) {
+      return renderEmptyState(`No users found for "${searchQuery}"`);
+    }
+
     return (
       <FlashList
-        data={formatData(employeeList, 1)}
+        data={formatData(filteredEmployees, 1)}
         numColumns={1}
         renderItem={renderEmployeeItem}
         keyExtractor={(item, index) => index.toString()}
@@ -329,8 +373,9 @@ const StaffTrackingScreen = ({ navigation }) => {
           onBackPress={() => navigation.goBack()}
         />
         <View style={styles.headerInfo}>
-          <Text style={styles.headerInfoText}>Select a user to view their tracking records</Text>
+          <Text style={styles.headerInfoText}>Select a user to view their location</Text>
         </View>
+        {renderSearchBar()}
         <RoundedContainer>
           {renderEmployeeList()}
         </RoundedContainer>
@@ -443,37 +488,61 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   employeeIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   employeeImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-  },
-  employeeInfo: {
-    flex: 1,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 16,
   },
   employeeName: {
+    flex: 1,
     fontFamily: FONT_FAMILY.urbanistBold,
-    fontSize: 16,
+    fontSize: 17,
     color: COLORS.black,
-    marginBottom: 2,
   },
-  employeeDepartment: {
-    fontFamily: FONT_FAMILY.urbanistMedium,
-    fontSize: 13,
-    color: '#666',
+  // Search bar styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
-  employeeEmail: {
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    ...Platform.select({
+      android: {
+        elevation: 3,
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
     fontFamily: FONT_FAMILY.urbanistMedium,
-    fontSize: 12,
-    color: '#888',
+    fontSize: 15,
+    color: '#333',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
   },
 });

@@ -21,7 +21,10 @@ const OptionsScreen = ({ navigation }) => {
   const currentUser = useAuthStore(state => state.user);
 
   // Check if user is admin (works for both UAE admin and Odoo login)
-  const isAdmin = currentUser?.user_name === 'admin' ||
+  // For Odoo: check is_admin field from login response
+  // For UAE: check if user_name/username/login is 'admin'
+  const isAdmin = currentUser?.is_admin === true ||
+                  currentUser?.user_name === 'admin' ||
                   currentUser?.username === 'admin' ||
                   currentUser?.login === 'admin';
 
@@ -59,14 +62,18 @@ const OptionsScreen = ({ navigation }) => {
     { title: 'Box Inspection', image: require('@assets/images/Home/options/box_inspection.png'), onPress: () => setIsConfirmationModalVisible(true) },
   ];
 
-  // Add Staff Tracking option only for admin users
+  // Add Staff Tracking option for admin users, My Location for non-admin users
   const options = isAdmin
     ? [
         ...baseOptions.slice(0, 7),
         { title: 'Staff Tracking', image: require('@assets/images/Home/options/attendance.png'), onPress: () => navigation.navigate('StaffTrackingScreen') },
         ...baseOptions.slice(7),
       ]
-    : baseOptions;
+    : [
+        ...baseOptions.slice(0, 7),
+        { title: 'My Location', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('MyLocation') },
+        ...baseOptions.slice(7),
+      ];
 
   const renderItem = ({ item }) => {
     if (item.empty) {
