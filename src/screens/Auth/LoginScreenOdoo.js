@@ -25,6 +25,7 @@ import { RoundedScrollContainer, SafeAreaView } from "@components/containers";
 import { useAuthStore } from "@stores/auth";
 import { showToastMessage } from "@components/Toast";
 import { Checkbox } from "react-native-paper";
+// ⚠️ Note: Background location tracking is disabled in Expo Go (requires dev build)
 import { startLocationTracking } from "@services/LocationTrackingService";
 import * as Location from 'expo-location';
 

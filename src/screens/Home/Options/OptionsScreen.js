@@ -52,6 +52,7 @@ const OptionsScreen = ({ navigation }) => {
     { title: 'Transaction Auditing', image: require('@assets/images/Home/options/transaction_auditing.png'), onPress: () => navigation.navigate('AuditScreen') },
     { title: 'CRM', image: require('@assets/images/Home/options/crm.png'), onPress: () => navigation.navigate('CRM') },
     { title: 'Purchases', image: require('@assets/images/Home/options/product_purchase_requisition.png'), onPress: () => navigation.navigate('PurchasesScreen') },
+    { title: 'Cash Collection', image: require('@assets/images/Home/options/payment.png'), onPress: () => navigation.navigate('CashCollectionScreen') },
     { title: 'Vehicle Tracking', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('VehicleTrackingScreen') },
     { title: 'Task Manager', image: require('@assets/images/Home/options/tasK_manager_1.png'), onPress: () => navigation.navigate('TaskManagerScreen') },
     { title: 'Visits Plan', image: require('@assets/images/Home/options/visits_plan.png'), onPress: () => navigation.navigate('VisitsPlanScreen') },

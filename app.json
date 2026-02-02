@@ -27,12 +27,6 @@
         "resizeMode": "contain",
         "backgroundColor": "#ffffff"
       },
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/android/icon_foreground.png",
-        "backgroundImage": "./assets/android/icon_background.png",
-        "monochromeImage": "./assets/android/icon_monochrome.png",
-        "backgroundColor": "#ffffff"
-      },
       "icon": "./assets/icon.png",
       "permissions": [
         "android.permission.RECORD_AUDIO",

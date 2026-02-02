@@ -39,6 +39,7 @@ import { PipelineDetailTabs } from "@screens/Home/Options/CRM/Pipeline/PipelineD
 import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/BoxInspection";
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
+import { CashCollectionScreen, CashCollectionForm } from "@screens/Home/Options/CashCollection";
 import { AddParticipants, KPIActionDetails, KPIDashboardScreen, KPIListingScreen } from "@screens/KPIDashboard";
 import { ServicesScreen } from "@screens/Home/Sections/Services";
 import { ServiceScreens } from "@screens/Home/Sections/Services/Service";
@@ -476,6 +477,18 @@ const StackNavigator = () => {
       <Stack.Screen
         name="MarkAttendance"
         component={MarkAttendance}
+        options={{ headerShown: false }}
+      />
+
+      {/* Cash Collection */}
+      <Stack.Screen
+        name="CashCollectionScreen"
+        component={CashCollectionScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CashCollectionForm"
+        component={CashCollectionForm}
         options={{ headerShown: false }}
       />
 

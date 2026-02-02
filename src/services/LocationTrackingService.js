@@ -1,66 +1,13 @@
 // src/services/LocationTrackingService.js
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import ODOO_BASE_URL from '@api/config/odooConfig';
 
 const LOCATION_UPDATE_INTERVAL = 30000; // 30 seconds
-const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
-let locationSubscription = null;
+let locationInterval = null;
 let currentTrackingUserId = null;
-
-// Define background location task (runs even when app is closed)
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  if (error) {
-    console.error('[LocationTracking] Background task error:', error);
-    return;
-  }
-  if (data) {
-    const { locations } = data;
-    const location = locations[0];
-
-    if (location) {
-      console.log('[LocationTracking] Background location update:', location.coords.latitude, location.coords.longitude);
-
-      // Get stored user ID
-      const userId = await AsyncStorage.getItem('tracking_user_id');
-      if (userId) {
-        let locationName = '';
-        try {
-          const reverseGeocode = await Location.reverseGeocodeAsync({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-
-          if (reverseGeocode && reverseGeocode.length > 0) {
-            const address = reverseGeocode[0];
-            const addressParts = [
-              address.name,
-              address.street,
-              address.city,
-            ].filter(Boolean);
-            locationName = addressParts.join(', ');
-          }
-        } catch (e) {
-          // Ignore reverse geocode errors
-        }
-
-        const locationData = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          accuracy: location.coords.accuracy,
-          locationName,
-          timestamp: location.timestamp,
-        };
-
-        // Save to Odoo
-        await saveUserLocationToOdoo(parseInt(userId), locationData);
-      }
-    }
-  }
-});
 
 // Get Odoo auth headers
 const getOdooAuthHeaders = async () => {
@@ -325,24 +272,17 @@ export const getCurrentLocationWithAddress = async () => {
   }
 };
 
-// Start background location tracking (works even when app is closed)
+// Start foreground location tracking (works while app is open)
 export const startLocationTracking = async (userId) => {
   try {
-    // Request foreground permission first
+    // Request foreground permission
     const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
     if (foregroundStatus !== 'granted') {
       console.log('[LocationTracking] Foreground permission denied');
       return false;
     }
 
-    // Request background permission (Android 10+ required for continuous tracking)
-    const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-    if (backgroundStatus !== 'granted') {
-      console.log('[LocationTracking] Background permission denied - tracking will stop when app is closed');
-      // Continue with foreground tracking only
-    }
-
-    // Store user ID for tracking (used by background task)
+    // Store user ID for tracking
     currentTrackingUserId = userId;
     await AsyncStorage.setItem('tracking_user_id', userId.toString());
 
@@ -352,28 +292,27 @@ export const startLocationTracking = async (userId) => {
       await saveUserLocationToOdoo(userId, initialLocation);
     }
 
-    // Check if background task is already registered
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-
-    if (isRegistered) {
-      console.log('[LocationTracking] Background task already registered, stopping previous...');
-      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+    // Stop any existing interval
+    if (locationInterval) {
+      clearInterval(locationInterval);
+      locationInterval = null;
     }
 
-    // Start background location updates (works even when app is closed)
-    await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-      accuracy: Location.Accuracy.BestForNavigation,
-      timeInterval: LOCATION_UPDATE_INTERVAL, // 30 seconds
-      distanceInterval: 10, // Update if moved 10 meters
-      foregroundService: {
-        notificationTitle: 'Location Tracking Active',
-        notificationBody: 'Your location is being tracked for staff monitoring',
-        notificationColor: '#4285F4',
-      },
-    });
+    // Start foreground location updates using interval
+    locationInterval = setInterval(async () => {
+      try {
+        const location = await getCurrentLocationWithAddress();
+        if (location && currentTrackingUserId) {
+          console.log('[LocationTracking] Foreground location update:', location.latitude, location.longitude);
+          await saveUserLocationToOdoo(currentTrackingUserId, location);
+        }
+      } catch (error) {
+        console.error('[LocationTracking] Error updating location:', error?.message || error);
+      }
+    }, LOCATION_UPDATE_INTERVAL);
 
-    console.log('[LocationTracking] Started BACKGROUND tracking for user:', userId);
-    console.log('[LocationTracking] Updates every 30 seconds or 10 meters movement');
+    console.log('[LocationTracking] Started FOREGROUND tracking for user:', userId);
+    console.log('[LocationTracking] Updates every 30 seconds (works while app is open)');
     return true;
   } catch (error) {
     console.error('[LocationTracking] Error starting tracking:', error?.message || error);
@@ -384,17 +323,11 @@ export const startLocationTracking = async (userId) => {
 // Stop location tracking
 export const stopLocationTracking = async () => {
   try {
-    // Stop background location updates
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-    if (isRegistered) {
-      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-      console.log('[LocationTracking] Stopped background task');
-    }
-
-    // Stop foreground subscription if exists
-    if (locationSubscription) {
-      locationSubscription.remove();
-      locationSubscription = null;
+    // Stop interval
+    if (locationInterval) {
+      clearInterval(locationInterval);
+      locationInterval = null;
+      console.log('[LocationTracking] Stopped location interval');
     }
 
     // Clear stored user ID
@@ -411,12 +344,7 @@ export const stopLocationTracking = async () => {
 
 // Check if tracking is active
 export const isTrackingActive = async () => {
-  try {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-    return isRegistered || locationSubscription !== null;
-  } catch (error) {
-    return locationSubscription !== null;
-  }
+  return locationInterval !== null;
 };
 
 // Get last known location (fetches from Odoo)
