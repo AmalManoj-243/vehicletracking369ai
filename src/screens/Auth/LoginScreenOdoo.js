@@ -30,7 +30,7 @@ import { startLocationTracking } from "@services/LocationTrackingService";
 import * as Location from 'expo-location';
 
 import API_BASE_URL from "@api/config";
-import ODOO_DEFAULTS, { DEFAULT_ODOO_BASE_URL, DEFAULT_ODOO_DB } from "@api/config/odooConfig";
+import ODOO_DEFAULTS, { DEFAULT_ODOO_BASE_URL, DEFAULT_ODOO_DB, DEFAULT_USERNAME, DEFAULT_PASSWORD } from "@api/config/odooConfig";
 
 LogBox.ignoreLogs(["new NativeEventEmitter"]);
 LogBox.ignoreAllLogs();
@@ -52,6 +52,7 @@ const LoginScreenOdoo = () => {
   const navigation = useNavigation();
   const setUser = useAuthStore((state) => state.login);
   const [checked, setChecked] = useState(false);
+  const [autofillChecked, setAutofillChecked] = useState(false);
 
   const updateCheckedState = (value) => {
     setChecked(value);
@@ -71,6 +72,31 @@ const LoginScreenOdoo = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  // Handle autofill checkbox toggle
+  const handleAutofillToggle = () => {
+    const newValue = !autofillChecked;
+    setAutofillChecked(newValue);
+
+    if (newValue) {
+      // Autofill with defaults from odooConfig
+      setInputs((prev) => ({
+        ...prev,
+        baseUrl: DEFAULT_ODOO_BASE_URL || prev.baseUrl,
+        db: DEFAULT_ODOO_DB || prev.db,
+        username: DEFAULT_USERNAME || prev.username,
+        password: DEFAULT_PASSWORD || prev.password,
+      }));
+    } else {
+      // Clear fields when unchecked
+      setInputs({
+        baseUrl: "",
+        db: "",
+        username: "",
+        password: "",
+      });
+    }
+  };
 
   const handleOnchange = (text, input) => {
     setInputs((prevState) => ({ ...prevState, [input]: text }));
@@ -343,6 +369,7 @@ const LoginScreenOdoo = () => {
 
               {/* Server URL (optional) */}
               <TextInput
+                value={inputs.baseUrl}
                 onChangeText={(text) => handleOnchange(text, "baseUrl")}
                 onFocus={() => handleError(null, "baseUrl")}
                 label="Server URL (optional)"
@@ -353,6 +380,7 @@ const LoginScreenOdoo = () => {
 
               {/* Username */}
               <TextInput
+                value={inputs.username}
                 onChangeText={(text) => handleOnchange(text, "username")}
                 onFocus={() => handleError(null, "username")}
                 iconName="account-outline"
@@ -365,6 +393,7 @@ const LoginScreenOdoo = () => {
 
               {/* Password */}
               <TextInput
+                value={inputs.password}
                 onChangeText={(text) => handleOnchange(text, "password")}
                 onFocus={() => handleError(null, "password")}
                 error={errors.password}
@@ -404,6 +433,31 @@ const LoginScreenOdoo = () => {
               {/* Login Button */}
               <View style={styles.bottom}>
                 <Button title="Login" onPress={validate} />
+              </View>
+
+              {/* Autofill Checkbox */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 15,
+                }}
+              >
+                <Checkbox
+                  onPress={handleAutofillToggle}
+                  status={autofillChecked ? "checked" : "unchecked"}
+                  color={COLORS.primaryThemeColor}
+                />
+                <Text
+                  style={{
+                    fontFamily: FONT_FAMILY.urbanistMedium,
+                    fontSize: 14,
+                    color: COLORS.grey,
+                  }}
+                >
+                  Autofill test credentials
+                </Text>
               </View>
             </View>
           </View>

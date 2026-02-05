@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions, Modal } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { RoundedScrollContainer } from '@components/containers';
@@ -7,8 +7,9 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { OverlayLoader } from '@components/Loader';
 import { showToastMessage } from '@components/Toast';
 import { useAuthStore } from '@stores/auth';
-import { checkInByEmployeeId, checkOutToOdoo, getTodayAttendanceByEmployeeId, verifyEmployeePin, verifyAttendanceLocation, debugListAllEmployees } from '@services/AttendanceService';
+import { checkInByEmployeeId, checkOutToOdoo, getTodayAttendanceByEmployeeId, verifyEmployeePin, verifyAttendanceLocation, debugListAllEmployees, uploadAttendancePhoto } from '@services/AttendanceService';
 import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
+import { Camera } from 'expo-camera';
 
 const { width } = Dimensions.get('window');
 
@@ -21,6 +22,14 @@ const UserAttendanceScreen = ({ navigation }) => {
   const [verifiedEmployee, setVerifiedEmployee] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null); // { verified, distance, workplaceName }
   const currentUser = useAuthStore(state => state.user);
+
+  // Camera state
+  const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraType, setCameraType] = useState('check_in'); // 'check_in' or 'check_out'
+  const [countdown, setCountdown] = useState(3);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const cameraRef = useRef(null);
 
   // Update time every second
   useEffect(() => {
@@ -35,6 +44,67 @@ const UserAttendanceScreen = ({ navigation }) => {
   useEffect(() => {
     debugListAllEmployees();
   }, []);
+
+  // Camera countdown and auto-capture
+  useEffect(() => {
+    let timer;
+    if (showCamera && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+    } else if (showCamera && countdown === 0 && !isCapturing) {
+      capturePhoto();
+    }
+    return () => clearTimeout(timer);
+  }, [showCamera, countdown, isCapturing]);
+
+  const openCamera = async (type) => {
+    if (!cameraPermission?.granted) {
+      const result = await requestCameraPermission();
+      if (!result.granted) {
+        showToastMessage('Camera permission is required');
+        return false;
+      }
+    }
+    setCameraType(type);
+    setCountdown(3);
+    setIsCapturing(false);
+    setShowCamera(true);
+    return true;
+  };
+
+  const closeCamera = () => {
+    setShowCamera(false);
+    setCountdown(3);
+    setIsCapturing(false);
+  };
+
+  const capturePhoto = async () => {
+    if (isCapturing || !cameraRef.current) return;
+
+    setIsCapturing(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+        base64: true,
+      });
+
+      console.log('[Attendance] Photo captured, size:', photo.base64?.length);
+      closeCamera();
+
+      // Proceed with check-in or check-out
+      if (cameraType === 'check_in') {
+        await processCheckIn(photo.base64);
+      } else {
+        await processCheckOut(photo.base64);
+      }
+    } catch (error) {
+      console.error('Photo capture error:', error);
+      showToastMessage('Failed to capture photo');
+      closeCamera();
+      setLoading(false);
+    }
+  };
 
   // Load today's attendance for employee (called after PIN verification)
   const loadTodayAttendanceForEmployee = async (employeeId, employeeName) => {
@@ -110,6 +180,14 @@ const UserAttendanceScreen = ({ navigation }) => {
     }
 
     setLoading(true);
+    // Open camera for photo capture
+    const cameraOpened = await openCamera('check_in');
+    if (!cameraOpened) {
+      setLoading(false);
+    }
+  };
+
+  const processCheckIn = async (photoBase64) => {
     try {
       // First verify location (use employee's userId if available, otherwise skip user-based lookup)
       const locationResult = await verifyAttendanceLocation(verifiedEmployee.userId || currentUser?.uid);
@@ -142,6 +220,16 @@ const UserAttendanceScreen = ({ navigation }) => {
 
       const result = await checkInByEmployeeId(verifiedEmployee.id, verifiedEmployee.name);
       if (result.success) {
+        // Upload photo to Odoo
+        if (photoBase64) {
+          const uploadResult = await uploadAttendancePhoto(result.attendanceId, photoBase64, 'check_in');
+          if (uploadResult.success) {
+            console.log('[Attendance] Check-in photo uploaded successfully');
+          } else {
+            console.warn('[Attendance] Check-in photo upload failed:', uploadResult.error);
+          }
+        }
+
         showToastMessage('Check-in successful!');
         setTodayAttendance({
           id: result.attendanceId,
@@ -172,6 +260,14 @@ const UserAttendanceScreen = ({ navigation }) => {
     }
 
     setLoading(true);
+    // Open camera for photo capture
+    const cameraOpened = await openCamera('check_out');
+    if (!cameraOpened) {
+      setLoading(false);
+    }
+  };
+
+  const processCheckOut = async (photoBase64) => {
     try {
       // First verify location
       const locationResult = await verifyAttendanceLocation(verifiedEmployee.userId || currentUser?.uid);
@@ -204,6 +300,16 @@ const UserAttendanceScreen = ({ navigation }) => {
 
       const result = await checkOutToOdoo(todayAttendance.id);
       if (result.success) {
+        // Upload photo to Odoo
+        if (photoBase64) {
+          const uploadResult = await uploadAttendancePhoto(todayAttendance.id, photoBase64, 'check_out');
+          if (uploadResult.success) {
+            console.log('[Attendance] Check-out photo uploaded successfully');
+          } else {
+            console.warn('[Attendance] Check-out photo upload failed:', uploadResult.error);
+          }
+        }
+
         showToastMessage('Check-out successful!');
         setTodayAttendance({
           ...todayAttendance,
@@ -451,7 +557,64 @@ const UserAttendanceScreen = ({ navigation }) => {
         </RoundedScrollContainer>
       </KeyboardAvoidingView>
 
-      <OverlayLoader visible={loading} />
+      <OverlayLoader visible={loading && !showCamera} />
+
+      {/* Camera Modal */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={closeCamera}
+      >
+        <View style={styles.cameraContainer}>
+          <Camera
+            ref={cameraRef}
+            style={styles.camera}
+            type={Camera.Constants.Type.front}
+          >
+            <View style={styles.cameraOverlay}>
+              {/* Header */}
+              <View style={styles.cameraHeader}>
+                <TouchableOpacity
+                  style={styles.cameraCloseButton}
+                  onPress={() => {
+                    closeCamera();
+                    setLoading(false);
+                  }}
+                >
+                  <MaterialIcons name="close" size={28} color={COLORS.white} />
+                </TouchableOpacity>
+                <Text style={styles.cameraTitle}>
+                  {cameraType === 'check_in' ? 'Check In Photo' : 'Check Out Photo'}
+                </Text>
+                <View style={{ width: 40 }} />
+              </View>
+
+              {/* Face Guide */}
+              <View style={styles.faceGuideContainer}>
+                <View style={styles.faceGuide}>
+                  <MaterialIcons name="face" size={120} color="rgba(255,255,255,0.3)" />
+                </View>
+                <Text style={styles.faceGuideText}>Position your face in the frame</Text>
+              </View>
+
+              {/* Countdown */}
+              <View style={styles.countdownContainer}>
+                {countdown > 0 ? (
+                  <>
+                    <Text style={styles.countdownNumber}>{countdown}</Text>
+                    <Text style={styles.countdownText}>Taking photo in...</Text>
+                  </>
+                ) : (
+                  <>
+                    <MaterialIcons name="camera" size={48} color={COLORS.white} />
+                    <Text style={styles.countdownText}>Capturing...</Text>
+                  </>
+                )}
+              </View>
+            </View>
+          </Camera>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -842,6 +1005,77 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     fontFamily: FONT_FAMILY.urbanistMedium,
     textAlign: 'center',
+  },
+  // Camera styles
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'space-between',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
+  },
+  cameraCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.urbanistBold,
+  },
+  faceGuideContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  faceGuide: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.5)',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  faceGuideText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.urbanistMedium,
+  },
+  countdownContainer: {
+    alignItems: 'center',
+    paddingBottom: 80,
+  },
+  countdownNumber: {
+    fontSize: 72,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.urbanistBold,
+  },
+  countdownText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.urbanistMedium,
+    marginTop: 8,
   },
 });
 

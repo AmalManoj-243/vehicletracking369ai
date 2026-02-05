@@ -711,6 +711,54 @@ export const getTodayAttendanceByEmployeeId = async (employeeId, employeeName) =
   }
 };
 
+// Upload attendance photo to Odoo as attachment
+export const uploadAttendancePhoto = async (attendanceId, base64Image, type = 'check_in') => {
+  console.log('[Attendance] Uploading photo for attendance:', attendanceId, 'type:', type);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `attendance_${type}_${attendanceId}_${timestamp}.jpg`;
+
+    // Create attachment in Odoo
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'ir.attachment',
+          method: 'create',
+          args: [{
+            name: fileName,
+            type: 'binary',
+            datas: base64Image,
+            res_model: 'hr.attendance',
+            res_id: attendanceId,
+            mimetype: 'image/jpeg',
+          }],
+          kwargs: {},
+        },
+      },
+      { headers }
+    );
+
+    console.log('[Attendance] Photo upload response:', JSON.stringify(response.data, null, 2));
+
+    if (response.data?.result) {
+      return {
+        success: true,
+        attachmentId: response.data.result,
+      };
+    }
+
+    return { success: false, error: 'Failed to upload photo' };
+  } catch (error) {
+    console.error('[Attendance] Photo upload error:', error?.message);
+    return { success: false, error: error?.message || 'Failed to upload photo' };
+  }
+};
+
 export default {
   checkInToOdoo,
   checkInByEmployeeId,
@@ -722,4 +770,5 @@ export default {
   verifyAttendanceLocation,
   getWorkplaceLocation,
   debugListAllEmployees,
+  uploadAttendancePhoto,
 };
