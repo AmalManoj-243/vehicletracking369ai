@@ -18,7 +18,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to track your position for staff monitoring.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to track your position for staff monitoring."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to track your position for staff monitoring.",
+        "UIBackgroundModes": ["location", "fetch"]
       }
     },
     "android": {
@@ -48,9 +49,12 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for staff tracking."
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for staff tracking.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
         }
-      ]
+      ],
+      "expo-task-manager"
     ],
     "extra": {
       "eas": {

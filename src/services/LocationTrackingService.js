@@ -1,13 +1,18 @@
 // src/services/LocationTrackingService.js
 import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { AppState } from 'react-native';
 import ODOO_BASE_URL from '@api/config/odooConfig';
 
 const LOCATION_UPDATE_INTERVAL = 30000; // 30 seconds
+const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
 let locationInterval = null;
 let currentTrackingUserId = null;
+let appStateSubscription = null;
+let lastAppState = 'active';
 
 // Get Odoo auth headers
 const getOdooAuthHeaders = async () => {
@@ -16,6 +21,18 @@ const getOdooAuthHeaders = async () => {
     'Content-Type': 'application/json',
     ...(cookie ? { Cookie: cookie } : {}),
   };
+};
+
+// Format date for Odoo (YYYY-MM-DD HH:MM:SS)
+const formatDateForOdoo = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 // Save location to Odoo
@@ -51,18 +68,6 @@ export const saveUserLocationToOdoo = async (userId, locationData) => {
     console.log('[LocationTracking] Search response:', JSON.stringify(searchResponse.data, null, 2));
 
     const existingRecords = searchResponse.data?.result || [];
-
-    // Format date for Odoo (YYYY-MM-DD HH:MM:SS)
-    const formatDateForOdoo = (date) => {
-      const d = new Date(date);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      const seconds = String(d.getSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
 
     const locationPayload = {
       user_id: userId,
@@ -272,7 +277,72 @@ export const getCurrentLocationWithAddress = async () => {
   }
 };
 
-// Start foreground location tracking (works while app is open)
+// Define the background location task
+TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
+  if (error) {
+    console.error('[LocationTracking] Background task error:', error);
+    return;
+  }
+
+  if (data) {
+    const { locations } = data;
+    const location = locations[0];
+
+    if (location) {
+      console.log('[LocationTracking] 📍 BACKGROUND location received:', location.coords.latitude, location.coords.longitude);
+
+      // Get stored user ID
+      const storedUserId = await AsyncStorage.getItem('tracking_user_id');
+
+      if (storedUserId) {
+        const locationData = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          accuracy: location.coords.accuracy,
+          locationName: '', // Skip reverse geocoding in background for efficiency
+          timestamp: location.timestamp,
+        };
+
+        await saveUserLocationToOdoo(parseInt(storedUserId), locationData);
+        console.log('[LocationTracking] ✅ Background location saved to Odoo');
+      }
+    }
+  }
+});
+
+// Handle app state changes - send location when app comes to foreground
+const handleAppStateChange = async (nextAppState) => {
+  console.log('[LocationTracking] App state changed:', lastAppState, '->', nextAppState);
+
+  // When app comes back to foreground from background
+  if (lastAppState.match(/inactive|background/) && nextAppState === 'active') {
+    console.log('[LocationTracking] App returned to foreground - sending location');
+    try {
+      const location = await getCurrentLocationWithAddress();
+      if (location && currentTrackingUserId) {
+        await saveUserLocationToOdoo(currentTrackingUserId, location);
+        console.log('[LocationTracking] Location sent on foreground return');
+      }
+    } catch (error) {
+      console.error('[LocationTracking] Error sending location on foreground:', error?.message);
+    }
+  }
+
+  lastAppState = nextAppState;
+};
+
+// Check if background location is available (not in Expo Go)
+const isBackgroundLocationAvailable = async () => {
+  try {
+    const isTaskDefined = TaskManager.isTaskDefined(BACKGROUND_LOCATION_TASK);
+    return isTaskDefined;
+  } catch (error) {
+    console.log('[LocationTracking] Background location not available (Expo Go?):', error?.message);
+    return false;
+  }
+};
+
+// Start location tracking (background + foreground)
 export const startLocationTracking = async (userId) => {
   try {
     // Request foreground permission
@@ -292,27 +362,80 @@ export const startLocationTracking = async (userId) => {
       await saveUserLocationToOdoo(userId, initialLocation);
     }
 
-    // Stop any existing interval
-    if (locationInterval) {
-      clearInterval(locationInterval);
-      locationInterval = null;
+    // Stop any existing tracking
+    await stopLocationTracking();
+
+    // Try to start background location tracking
+    let backgroundStarted = false;
+    try {
+      // Request background permission
+      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+
+      if (backgroundStatus === 'granted') {
+        // Check if background location task is available (not in Expo Go)
+        const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK).catch(() => false);
+
+        if (!hasStarted) {
+          await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: LOCATION_UPDATE_INTERVAL,
+            distanceInterval: 50, // Update every 50 meters
+            deferredUpdatesInterval: LOCATION_UPDATE_INTERVAL,
+            foregroundService: {
+              notificationTitle: 'Location Tracking Active',
+              notificationBody: 'Your location is being tracked for staff monitoring',
+              notificationColor: '#007AFF',
+            },
+            pausesUpdatesAutomatically: false,
+            showsBackgroundLocationIndicator: true,
+          });
+          backgroundStarted = true;
+          console.log('[LocationTracking] ✅ BACKGROUND tracking started');
+        }
+      } else {
+        console.log('[LocationTracking] Background permission denied');
+      }
+    } catch (bgError) {
+      console.log('[LocationTracking] Background tracking not available:', bgError?.message);
+      console.log('[LocationTracking] Falling back to foreground-only tracking');
     }
 
-    // Start foreground location updates using interval
+    // Setup AppState listener for foreground detection
+    if (appStateSubscription) {
+      appStateSubscription.remove();
+    }
+    appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    lastAppState = AppState.currentState;
+
+    // Start foreground interval as fallback/supplement
+    if (locationInterval) {
+      clearInterval(locationInterval);
+    }
+
     locationInterval = setInterval(async () => {
       try {
-        const location = await getCurrentLocationWithAddress();
-        if (location && currentTrackingUserId) {
-          console.log('[LocationTracking] Foreground location update:', location.latitude, location.longitude);
-          await saveUserLocationToOdoo(currentTrackingUserId, location);
+        // Only update if app is active
+        if (AppState.currentState === 'active') {
+          const location = await getCurrentLocationWithAddress();
+          if (location && currentTrackingUserId) {
+            console.log('[LocationTracking] Foreground location update:', location.latitude, location.longitude);
+            await saveUserLocationToOdoo(currentTrackingUserId, location);
+          }
         }
       } catch (error) {
         console.error('[LocationTracking] Error updating location:', error?.message || error);
       }
     }, LOCATION_UPDATE_INTERVAL);
 
-    console.log('[LocationTracking] Started FOREGROUND tracking for user:', userId);
-    console.log('[LocationTracking] Updates every 30 seconds (works while app is open)');
+    if (backgroundStarted) {
+      console.log('[LocationTracking] ✅ Started BACKGROUND + FOREGROUND tracking for user:', userId);
+      console.log('[LocationTracking] Location updates every 30 seconds, even when app is minimized');
+    } else {
+      console.log('[LocationTracking] ⚠️ Started FOREGROUND-ONLY tracking for user:', userId);
+      console.log('[LocationTracking] Updates every 30 seconds (only while app is open)');
+      console.log('[LocationTracking] For background tracking, use a development build');
+    }
+
     return true;
   } catch (error) {
     console.error('[LocationTracking] Error starting tracking:', error?.message || error);
@@ -323,18 +446,36 @@ export const startLocationTracking = async (userId) => {
 // Stop location tracking
 export const stopLocationTracking = async () => {
   try {
-    // Stop interval
+    // Stop foreground interval
     if (locationInterval) {
       clearInterval(locationInterval);
       locationInterval = null;
-      console.log('[LocationTracking] Stopped location interval');
+      console.log('[LocationTracking] Stopped foreground interval');
+    }
+
+    // Remove AppState listener
+    if (appStateSubscription) {
+      appStateSubscription.remove();
+      appStateSubscription = null;
+      console.log('[LocationTracking] Removed AppState listener');
+    }
+
+    // Stop background location updates
+    try {
+      const hasStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK).catch(() => false);
+      if (hasStarted) {
+        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+        console.log('[LocationTracking] Stopped background location updates');
+      }
+    } catch (bgError) {
+      console.log('[LocationTracking] No background task to stop:', bgError?.message);
     }
 
     // Clear stored user ID
     await AsyncStorage.removeItem('tracking_user_id');
     currentTrackingUserId = null;
 
-    console.log('[LocationTracking] Stopped all tracking');
+    console.log('[LocationTracking] ✅ Stopped all tracking');
     return true;
   } catch (error) {
     console.error('[LocationTracking] Error stopping tracking:', error?.message || error);
@@ -344,7 +485,12 @@ export const stopLocationTracking = async () => {
 
 // Check if tracking is active
 export const isTrackingActive = async () => {
-  return locationInterval !== null;
+  try {
+    const hasBackgroundStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK).catch(() => false);
+    return hasBackgroundStarted || locationInterval !== null;
+  } catch (error) {
+    return locationInterval !== null;
+  }
 };
 
 // Get last known location (fetches from Odoo)

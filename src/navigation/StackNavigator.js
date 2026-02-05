@@ -40,6 +40,7 @@ import { BoxInspectionForm, BoxInspectionScreen } from "@screens/Home/Options/Bo
 import { AttendanceScreen } from "@screens/Home/Options/Attendance";
 import { MarkAttendance, PunchingScreen } from "@screens/Home/Options/Attendance/Punching";
 import { CashCollectionScreen, CashCollectionForm } from "@screens/Home/Options/CashCollection";
+import { UserAttendanceScreen, UserAttendanceForm } from "@screens/Home/Options/UserAttendance";
 import { AddParticipants, KPIActionDetails, KPIDashboardScreen, KPIListingScreen } from "@screens/KPIDashboard";
 import { ServicesScreen } from "@screens/Home/Sections/Services";
 import { ServiceScreens } from "@screens/Home/Sections/Services/Service";
@@ -489,6 +490,18 @@ const StackNavigator = () => {
       <Stack.Screen
         name="CashCollectionForm"
         component={CashCollectionForm}
+        options={{ headerShown: false }}
+      />
+
+      {/* User Attendance */}
+      <Stack.Screen
+        name="UserAttendanceScreen"
+        component={UserAttendanceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="UserAttendanceForm"
+        component={UserAttendanceForm}
         options={{ headerShown: false }}
       />
 
