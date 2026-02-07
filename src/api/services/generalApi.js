@@ -523,18 +523,23 @@ export const fetchProducts = async ({ offset, limit, categoryId, searchText }) =
 
 
 // 🔹 NEW: Fetch products directly from Odoo 19 via JSON-RPC
-export const fetchProductsOdoo = async ({ offset, limit, searchText } = {}) => {
+export const fetchProductsOdoo = async ({ offset, limit, searchText, categoryId } = {}) => {
   try {
     // Base domain: active salable products
     let domain = [["sale_ok", "=", true]];
 
+    // Filter by category if provided
+    if (categoryId) {
+      domain = ["&", ["sale_ok", "=", true], ["categ_id", "=", Number(categoryId)]];
+    }
+
     if (searchText && searchText.trim() !== "") {
       const term = searchText.trim();
-      domain = [
-        "&",
-        ["sale_ok", "=", true],
-        ["name", "ilike", term],     // filter by product name
-      ];
+      if (categoryId) {
+        domain = ["&", "&", ["sale_ok", "=", true], ["categ_id", "=", Number(categoryId)], ["name", "ilike", term]];
+      } else {
+        domain = ["&", ["sale_ok", "=", true], ["name", "ilike", term]];
+      }
     }
 
     const odooLimit = limit || 50;
@@ -676,7 +681,7 @@ export const fetchCategoriesOdoo = async ({ offset = 0, limit = 50, searchText =
           method: "search_read",
           args: [domain],
           kwargs: {
-            fields: ["id", "name", "parent_id"],
+            fields: ["id", "name", "parent_id", "image_128", "sequence_no"],
             offset,
             limit,
             order: "name asc",
@@ -693,13 +698,62 @@ export const fetchCategoriesOdoo = async ({ offset = 0, limit = 50, searchText =
 
     const categories = response.data.result || [];
 
-    return categories.map((c) => ({
-      _id: c.id,
-      name: c.name || "",
-      category_name: c.name || "",
-      image_url: null,
-      parent_id: c.parent_id ? { id: c.parent_id[0], name: c.parent_id[1] } : null,
-    }));
+    const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+    const mapped = categories.map((c) => {
+      const hasBase64 = c.image_128 && typeof c.image_128 === 'string' && c.image_128.length > 0;
+      const imageUrl = hasBase64
+        ? `data:image/png;base64,${c.image_128}`
+        : `${baseUrl}/web/image?model=product.category&id=${c.id}&field=image_128`;
+      const seq = c.sequence_no && c.sequence_no !== false ? parseInt(c.sequence_no, 10) : null;
+      return {
+        _id: c.id,
+        name: c.name || "",
+        category_name: c.name || "",
+        image_url: imageUrl,
+        parent_id: c.parent_id ? { id: c.parent_id[0], name: c.parent_id[1] } : null,
+        sequence_no: isNaN(seq) ? null : seq,
+      };
+    });
+    // Place categories at exact positions based on sequence_no
+    // e.g. sequence_no=3 goes in 3rd cell, sequence_no=7 goes in 7th cell
+    // Duplicate sequence numbers: both appear at that position (consecutive)
+    const withSeq = mapped.filter((c) => c.sequence_no !== null);
+    const withoutSeq = mapped.filter((c) => c.sequence_no === null);
+    withoutSeq.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Group sequenced items by position, sort within each group by name
+    const seqMap = {};
+    withSeq.forEach((c) => {
+      if (!seqMap[c.sequence_no]) seqMap[c.sequence_no] = [];
+      seqMap[c.sequence_no].push(c);
+    });
+    Object.values(seqMap).forEach((group) => {
+      group.sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    const result = [];
+    let unseqIndex = 0;
+    const totalCount = mapped.length;
+    for (let pos = 1; pos <= totalCount && result.length < totalCount; pos++) {
+      if (seqMap[pos]) {
+        seqMap[pos].forEach((c) => result.push(c));
+      } else if (unseqIndex < withoutSeq.length) {
+        result.push(withoutSeq[unseqIndex]);
+        unseqIndex++;
+      }
+    }
+    // Append any remaining unsequenced categories
+    while (unseqIndex < withoutSeq.length) {
+      result.push(withoutSeq[unseqIndex]);
+      unseqIndex++;
+    }
+
+    // Debug: log final order
+    result.slice(0, 10).forEach((c, i) => {
+      console.log(`[Categories] Position ${i + 1}: ${c.name} (seq: ${c.sequence_no})`);
+    });
+
+    return result;
   } catch (error) {
     console.error("fetchCategoriesOdoo error:", error);
     throw error;

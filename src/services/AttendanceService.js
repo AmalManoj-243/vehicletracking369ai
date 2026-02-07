@@ -16,10 +16,9 @@ const getOdooAuthHeaders = async () => {
   };
 };
 
-// Format date for Odoo (YYYY-MM-DD HH:MM:SS) - must be in UTC
+// Format date for Odoo (YYYY-MM-DD HH:MM:SS) - Odoo expects UTC
 const formatDateForOdoo = (date) => {
   const d = new Date(date);
-  // Use UTC methods since Odoo stores datetimes in UTC
   const year = d.getUTCFullYear();
   const month = String(d.getUTCMonth() + 1).padStart(2, '0');
   const day = String(d.getUTCDate()).padStart(2, '0');
@@ -27,6 +26,18 @@ const formatDateForOdoo = (date) => {
   const minutes = String(d.getUTCMinutes()).padStart(2, '0');
   const seconds = String(d.getUTCSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// Convert Odoo UTC datetime string to local time display (HH:MM AM/PM)
+const odooUtcToLocalDisplay = (utcString) => {
+  if (!utcString) return null;
+  // Odoo returns "YYYY-MM-DD HH:MM:SS" in UTC — append Z to parse as UTC
+  const d = new Date(utcString.replace(' ', 'T') + 'Z');
+  return d.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 };
 
 // Get today's date string (YYYY-MM-DD)
@@ -373,6 +384,97 @@ export const debugListAllEmployees = async () => {
   }
 };
 
+// Find employee by device ID (custom field x_device_id on hr.employee)
+export const getEmployeeByDeviceId = async (deviceId) => {
+  console.log('[Attendance] Finding employee by device ID:', deviceId);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+
+    // Fetch all employees that have registered devices
+    const empResponse = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.employee',
+          method: 'search_read',
+          args: [[['device_ids', '!=', false]]],
+          kwargs: {
+            fields: ['id', 'name', 'user_id', 'device_ids'],
+          },
+        },
+      },
+      { headers }
+    );
+
+    const employees = empResponse.data?.result || [];
+    console.log('[Attendance] Employees with devices:', employees.length);
+
+    if (employees.length === 0) {
+      return { success: false, error: 'No employees with registered devices found' };
+    }
+
+    // Collect all device IDs to fetch in one call
+    const allDeviceIds = employees.flatMap((e) => e.device_ids || []);
+    if (allDeviceIds.length === 0) {
+      return { success: false, error: 'No device records found' };
+    }
+
+    // Fetch device records to find matching x_device_id
+    const deviceResponse = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.employee.device',
+          method: 'read',
+          args: [allDeviceIds],
+          kwargs: {
+            fields: ['id', 'x_device_id', 'employee_id'],
+          },
+        },
+      },
+      { headers }
+    );
+
+    const devices = deviceResponse.data?.result || [];
+    console.log('[Attendance] Device records fetched:', devices.length);
+
+    const matchedDevice = devices.find((d) => d.x_device_id === deviceId);
+
+    if (!matchedDevice) {
+      console.log('[Attendance] No device record matches:', deviceId);
+      return { success: false, error: 'No employee registered for this device' };
+    }
+
+    const employeeId = matchedDevice.employee_id?.[0];
+    const employee = employees.find((e) => e.id === employeeId);
+
+    if (employee) {
+      console.log('[Attendance] Found employee by device ID:', employee.name);
+      return {
+        success: true,
+        employee: {
+          id: employee.id,
+          name: employee.name,
+          userId: employee.user_id?.[0] || null,
+        },
+      };
+    }
+
+    return { success: false, error: 'Employee not found' };
+  } catch (error) {
+    console.error('[Attendance] Device ID lookup error:', error?.message);
+    return {
+      success: false,
+      error: error?.message || 'Failed to find employee by device',
+    };
+  }
+};
+
 // Find employee by Badge ID (checks both 'pin' and 'barcode' fields)
 export const verifyEmployeePin = async (userId, enteredBadgeId) => {
   const badgeId = enteredBadgeId?.trim();
@@ -544,7 +646,7 @@ export const checkInByEmployeeId = async (employeeId, employeeName) => {
       return {
         success: true,
         attendanceId: response.data.result,
-        checkInTime: checkInTime,
+        checkInTime: odooUtcToLocalDisplay(checkInTime),
         employeeName: employeeName,
       };
     }
@@ -591,7 +693,7 @@ export const checkOutToOdoo = async (attendanceId) => {
     if (response.data?.result) {
       return {
         success: true,
-        checkOutTime: checkOutTime,
+        checkOutTime: odooUtcToLocalDisplay(checkOutTime),
       };
     }
 
@@ -647,8 +749,8 @@ export const getTodayAttendance = async (userId) => {
         id: records[0].id,
         employeeId: records[0].employee_id?.[0],
         employeeName: records[0].employee_id?.[1] || employee.name,
-        checkIn: records[0].check_in,
-        checkOut: records[0].check_out,
+        checkIn: odooUtcToLocalDisplay(records[0].check_in),
+        checkOut: odooUtcToLocalDisplay(records[0].check_out),
       };
     }
 
@@ -698,8 +800,8 @@ export const getTodayAttendanceByEmployeeId = async (employeeId, employeeName) =
         id: records[0].id,
         employeeId: records[0].employee_id?.[0],
         employeeName: records[0].employee_id?.[1] || employeeName,
-        checkIn: records[0].check_in,
-        checkOut: records[0].check_out,
+        checkIn: odooUtcToLocalDisplay(records[0].check_in),
+        checkOut: odooUtcToLocalDisplay(records[0].check_out),
       };
     }
 
@@ -766,6 +868,7 @@ export default {
   getTodayAttendance,
   getTodayAttendanceByEmployeeId,
   getEmployeeIdFromUserId,
+  getEmployeeByDeviceId,
   verifyEmployeePin,
   verifyAttendanceLocation,
   getWorkplaceLocation,

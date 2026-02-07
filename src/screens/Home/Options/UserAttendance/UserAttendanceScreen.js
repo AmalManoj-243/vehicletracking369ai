@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions, Modal, Alert } from 'react-native';
 import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { RoundedScrollContainer } from '@components/containers';
@@ -7,26 +7,28 @@ import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { OverlayLoader } from '@components/Loader';
 import { showToastMessage } from '@components/Toast';
 import { useAuthStore } from '@stores/auth';
-import { checkInByEmployeeId, checkOutToOdoo, getTodayAttendanceByEmployeeId, verifyEmployeePin, verifyAttendanceLocation, debugListAllEmployees, uploadAttendancePhoto } from '@services/AttendanceService';
+import { checkInByEmployeeId, checkOutToOdoo, getTodayAttendanceByEmployeeId, getEmployeeByDeviceId, verifyAttendanceLocation, uploadAttendancePhoto } from '@services/AttendanceService';
 import { MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { Camera } from 'expo-camera';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as Application from 'expo-application';
 
 const { width } = Dimensions.get('window');
 
 const UserAttendanceScreen = ({ navigation }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading, setLoading] = useState(false);
-  const [pin, setPin] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [todayAttendance, setTodayAttendance] = useState(null);
   const [verifiedEmployee, setVerifiedEmployee] = useState(null);
-  const [locationStatus, setLocationStatus] = useState(null); // { verified, distance, workplaceName }
+  const [locationStatus, setLocationStatus] = useState(null);
+  const [deviceId, setDeviceId] = useState(null);
   const currentUser = useAuthStore(state => state.user);
 
   // Camera state
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraType, setCameraType] = useState('check_in'); // 'check_in' or 'check_out'
+  const [cameraType, setCameraType] = useState('check_in');
   const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(false);
   const cameraRef = useRef(null);
@@ -36,13 +38,26 @@ const UserAttendanceScreen = ({ navigation }) => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Debug: List all employees on mount to see field names
+  // Get device ID on mount
   useEffect(() => {
-    debugListAllEmployees();
+    const fetchDeviceId = async () => {
+      try {
+        let id;
+        if (Platform.OS === 'android') {
+          id = Application.getAndroidId();
+        } else {
+          id = await Application.getIosIdForVendorAsync();
+        }
+        console.log('[Attendance] Device ID:', id);
+        setDeviceId(id);
+      } catch (error) {
+        console.error('[Attendance] Failed to get device ID:', error);
+      }
+    };
+    fetchDeviceId();
   }, []);
 
   // Camera countdown and auto-capture
@@ -142,16 +157,45 @@ const UserAttendanceScreen = ({ navigation }) => {
     });
   };
 
-  const handlePinSubmit = async () => {
-    if (pin.trim().length === 0) {
-      showToastMessage('Please enter your Badge ID');
+  const handleFingerprintScan = async () => {
+    if (!deviceId) {
+      showToastMessage('Device ID not available. Please restart the app.');
       return;
     }
 
     setLoading(true);
     try {
-      // Find employee by PIN
-      const result = await verifyEmployeePin(null, pin);
+      // Check biometric hardware
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      if (!hasHardware) {
+        showToastMessage('Biometric hardware not available on this device');
+        setLoading(false);
+        return;
+      }
+
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!isEnrolled) {
+        showToastMessage('No fingerprint enrolled. Please set up in device settings.');
+        setLoading(false);
+        return;
+      }
+
+      // Authenticate with fingerprint
+      const authResult = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Scan fingerprint for attendance',
+        fallbackLabel: 'Use device PIN',
+        disableDeviceFallback: false,
+      });
+
+      if (!authResult.success) {
+        showToastMessage('Authentication failed');
+        setLoading(false);
+        return;
+      }
+
+      // Fingerprint success — now find employee by device ID
+      console.log('[Attendance] Fingerprint authenticated, looking up device ID:', deviceId);
+      const result = await getEmployeeByDeviceId(deviceId);
 
       if (result.success) {
         setIsVerified(true);
@@ -161,13 +205,11 @@ const UserAttendanceScreen = ({ navigation }) => {
         // Load today's attendance for this employee
         await loadTodayAttendanceForEmployee(result.employee.id, result.employee.name);
       } else {
-        showToastMessage(result.error || 'Employee not found');
-        setPin('');
+        showToastMessage(result.error || 'No employee found for this device');
       }
     } catch (error) {
-      console.error('Badge ID lookup error:', error);
-      showToastMessage('Failed to find employee');
-      setPin('');
+      console.error('Fingerprint auth error:', error);
+      showToastMessage('Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -175,16 +217,27 @@ const UserAttendanceScreen = ({ navigation }) => {
 
   const handleCheckIn = async () => {
     if (!verifiedEmployee?.id) {
-      showToastMessage('Please verify Badge ID first');
+      showToastMessage('Please scan fingerprint first');
       return;
     }
 
-    setLoading(true);
-    // Open camera for photo capture
-    const cameraOpened = await openCamera('check_in');
-    if (!cameraOpened) {
-      setLoading(false);
-    }
+    Alert.alert(
+      'Confirm Check In',
+      `Are you sure you want to check in at ${formatTimeOnly(new Date())}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            setLoading(true);
+            const cameraOpened = await openCamera('check_in');
+            if (!cameraOpened) {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const processCheckIn = async (photoBase64) => {
@@ -255,16 +308,46 @@ const UserAttendanceScreen = ({ navigation }) => {
     }
 
     if (!verifiedEmployee?.id) {
-      showToastMessage('Please verify Badge ID first');
+      showToastMessage('Please scan fingerprint first');
       return;
     }
 
-    setLoading(true);
-    // Open camera for photo capture
-    const cameraOpened = await openCamera('check_out');
-    if (!cameraOpened) {
-      setLoading(false);
-    }
+    Alert.alert(
+      'Confirm Check Out',
+      `Are you sure you want to check out at ${formatTimeOnly(new Date())}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          style: 'destructive',
+          onPress: async () => {
+            // Re-verify fingerprint after confirmation
+            try {
+              const authResult = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Scan fingerprint to check out',
+                fallbackLabel: 'Use device PIN',
+                disableDeviceFallback: false,
+              });
+
+              if (!authResult.success) {
+                showToastMessage('Authentication failed');
+                return;
+              }
+            } catch (error) {
+              console.error('Fingerprint re-auth error:', error);
+              showToastMessage('Authentication failed');
+              return;
+            }
+
+            setLoading(true);
+            const cameraOpened = await openCamera('check_out');
+            if (!cameraOpened) {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const processCheckOut = async (photoBase64) => {
@@ -375,41 +458,27 @@ const UserAttendanceScreen = ({ navigation }) => {
           </View>
 
           {!isVerified ? (
-            /* PIN Input Section */
+            /* Fingerprint Scan Section */
             <View style={styles.pinSection}>
               <View style={styles.pinHeader}>
-                <View style={styles.lockIconContainer}>
-                  <MaterialIcons name="lock-outline" size={32} color={COLORS.primaryThemeColor} />
+                <TouchableOpacity
+                  style={styles.fingerprintButton}
+                  onPress={handleFingerprintScan}
+                  disabled={loading}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="fingerprint" size={80} color={COLORS.primaryThemeColor} />
+                </TouchableOpacity>
+                <Text style={styles.pinTitle}>Scan Fingerprint</Text>
+                <Text style={styles.pinSubtitle}>Tap to verify your identity</Text>
+              </View>
+
+              {deviceId && (
+                <View style={styles.deviceIdContainer}>
+                  <Text style={styles.deviceIdLabel}>Device ID:</Text>
+                  <Text style={styles.deviceIdValue} numberOfLines={1}>{deviceId}</Text>
                 </View>
-                <Text style={styles.pinTitle}>Employee Verification</Text>
-                <Text style={styles.pinSubtitle}>Enter your Badge ID to mark attendance</Text>
-              </View>
-
-              <View style={styles.pinInputContainer}>
-                <TextInput
-                  style={styles.pinInput}
-                  value={pin}
-                  onChangeText={setPin}
-                  placeholder="Enter Badge ID"
-                  placeholderTextColor={COLORS.gray}
-                  keyboardType="default"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  maxLength={20}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.verifyButton,
-                  (pin.trim().length === 0 || loading) && styles.verifyButtonDisabled
-                ]}
-                onPress={handlePinSubmit}
-                disabled={pin.trim().length === 0 || loading}
-              >
-                <Feather name="check-circle" size={20} color={COLORS.white} style={{ marginRight: 8 }} />
-                <Text style={styles.verifyButtonText}>Verify</Text>
-              </TouchableOpacity>
+              )}
             </View>
           ) : (
             /* User Details & Submit Section */
@@ -729,35 +798,37 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     fontFamily: FONT_FAMILY.urbanistMedium,
   },
-  pinInputContainer: {
-    marginBottom: 20,
+  fingerprintButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F0F4FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 3,
+    borderColor: COLORS.primaryThemeColor,
+    borderStyle: 'dashed',
   },
-  pinInput: {
+  deviceIdContainer: {
     backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    padding: 18,
-    fontSize: 18,
-    textAlign: 'center',
-    fontFamily: FONT_FAMILY.urbanistBold,
-    borderWidth: 2,
-    borderColor: '#E8E8E8',
-  },
-  verifyButton: {
-    backgroundColor: COLORS.primaryThemeColor,
-    padding: 16,
-    borderRadius: 14,
+    borderRadius: 12,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 16,
   },
-  verifyButtonDisabled: {
-    backgroundColor: '#CCC',
+  deviceIdLabel: {
+    fontSize: 12,
+    color: COLORS.gray,
+    fontFamily: FONT_FAMILY.urbanistMedium,
+    marginRight: 6,
   },
-  verifyButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+  deviceIdValue: {
+    fontSize: 12,
+    color: COLORS.black,
     fontFamily: FONT_FAMILY.urbanistBold,
+    flex: 1,
   },
   detailsSection: {
     flex: 1,

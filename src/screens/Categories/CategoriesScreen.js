@@ -1,6 +1,6 @@
 // src/screens/Home/Options/CategoriesScreen.js
 
-//import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationHeader } from "@components/Header";
 import { useDataFetching } from '@hooks';

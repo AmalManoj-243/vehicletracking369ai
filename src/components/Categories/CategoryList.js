@@ -16,11 +16,13 @@ const CategoryList = ({ item, onPress }) => {
     }, []);
 
     const [imageLoading, setImageLoading] = useState(true);
-    const truncatedName =
-        item?.category_name?.length > 15 ? item?.category_name?.substring(0, 14) + '...' : item?.category_name;
-
     return (
         <TouchableOpacity onPress={onPress} style={styles.container}>
+            {item?.sequence_no !== null && item?.sequence_no !== undefined && (
+                <View style={styles.seqBadge}>
+                    <Text style={styles.seqText}>{item.sequence_no}</Text>
+                </View>
+            )}
             {imageLoading && <ActivityIndicator size="small" color={'black'} style={{ position: 'absolute', top: 30 }} />}
             <Image
                 source={item?.image_url ? { uri: item.image_url } : errorImage}
@@ -30,7 +32,7 @@ const CategoryList = ({ item, onPress }) => {
             />
             <View style={{ paddingTop: 50 }} />
             <View style={styles.textContainer}>
-                <Text style={styles.name}>{truncatedName}</Text>
+                <Text style={styles.name} numberOfLines={2}>{item?.category_name}</Text>
             </View>
         </TouchableOpacity>
     );
@@ -71,5 +73,23 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
         color: '#1316c5ff',
         fontFamily: FONT_FAMILY.urbanistBold
+    },
+    seqBadge: {
+        position: 'absolute',
+        top: 6,
+        left: 6,
+        backgroundColor: '#1316c5ff',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        zIndex: 1,
+    },
+    seqText: {
+        fontSize: 10,
+        color: '#fff',
+        fontFamily: FONT_FAMILY.urbanistBold,
     },
 });
