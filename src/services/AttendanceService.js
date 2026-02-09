@@ -861,6 +861,262 @@ export const uploadAttendancePhoto = async (attendanceId, base64Image, type = 'c
   }
 };
 
+// =============================================
+// WFH (Work From Home) FUNCTIONS
+// =============================================
+
+// Submit a WFH request (create + submit for approval)
+export const submitWfhRequest = async (userId, requestDate, reason) => {
+  console.log('[WFH] Submitting WFH request:', { userId, requestDate, reason });
+
+  try {
+    const headers = await getOdooAuthHeaders();
+
+    // Step 1: Create the WFH request
+    const createResponse = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'create',
+          args: [{
+            employee_user_id: userId,
+            request_date: requestDate,
+            reason: reason,
+          }],
+          kwargs: {},
+        },
+      },
+      { headers }
+    );
+
+    if (createResponse.data?.error) {
+      const errMsg = createResponse.data.error.data?.message || 'Failed to create WFH request';
+      console.error('[WFH] Create error:', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    const requestId = createResponse.data?.result;
+    if (!requestId) {
+      return { success: false, error: 'Failed to create WFH request' };
+    }
+
+    console.log('[WFH] Created request ID:', requestId);
+
+    // Step 2: Submit for approval (action_submit)
+    const submitResponse = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'action_submit',
+          args: [[requestId]],
+          kwargs: {},
+        },
+      },
+      { headers }
+    );
+
+    if (submitResponse.data?.error) {
+      const errMsg = submitResponse.data.error.data?.message || 'Failed to submit WFH request';
+      console.error('[WFH] Submit error:', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    console.log('[WFH] Request submitted for approval');
+    return { success: true, requestId };
+  } catch (error) {
+    console.error('[WFH] Submit WFH request error:', error?.message);
+    return { success: false, error: error?.message || 'Failed to submit WFH request' };
+  }
+};
+
+// Get today's approved/checked-in/checked-out WFH request for a user
+export const getTodayApprovedWfh = async (userId) => {
+  console.log('[WFH] Checking today WFH for user:', userId);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+    const today = getTodayDateString();
+
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'search_read',
+          args: [[
+            ['employee_user_id', '=', userId],
+            ['request_date', '=', today],
+            ['state', 'in', ['approved', 'checked_in', 'checked_out']],
+          ]],
+          kwargs: {
+            fields: ['id', 'request_date', 'reason', 'state'],
+            limit: 1,
+          },
+        },
+      },
+      { headers }
+    );
+
+    console.log('[WFH] getTodayApprovedWfh response:', JSON.stringify(response.data));
+
+    if (response.data?.error) {
+      console.log('[WFH] Search error:', response.data.error.data?.message);
+      return null;
+    }
+
+    const records = response.data?.result || [];
+    if (records.length > 0) {
+      const req = records[0];
+      console.log('[WFH] Found today WFH request:', JSON.stringify(req));
+      return {
+        id: req.id,
+        requestDate: req.request_date,
+        reason: req.reason,
+        state: req.state,
+        checkIn: null,
+        checkOut: null,
+      };
+    }
+
+    console.log('[WFH] No approved WFH request for today');
+    return null;
+  } catch (error) {
+    console.error('[WFH] Get today WFH error:', error?.message);
+    return null;
+  }
+};
+
+// WFH Check-in (calls action_checkin on the Odoo model)
+export const wfhCheckIn = async (requestId) => {
+  console.log('[WFH] Check-in for request:', requestId);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'action_checkin',
+          args: [[requestId]],
+          kwargs: {},
+        },
+      },
+      { headers }
+    );
+
+    if (response.data?.error) {
+      const errMsg = response.data.error.data?.message || 'WFH check-in failed';
+      console.error('[WFH] Check-in error:', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    const now = new Date();
+    console.log('[WFH] Check-in successful');
+    return {
+      success: true,
+      checkInTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+    };
+  } catch (error) {
+    console.error('[WFH] Check-in error:', error?.message);
+    return { success: false, error: error?.message || 'WFH check-in failed' };
+  }
+};
+
+// WFH Check-out (calls action_checkout on the Odoo model)
+export const wfhCheckOut = async (requestId) => {
+  console.log('[WFH] Check-out for request:', requestId);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'action_checkout',
+          args: [[requestId]],
+          kwargs: {},
+        },
+      },
+      { headers }
+    );
+
+    if (response.data?.error) {
+      const errMsg = response.data.error.data?.message || 'WFH check-out failed';
+      console.error('[WFH] Check-out error:', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    const now = new Date();
+    console.log('[WFH] Check-out successful');
+    return {
+      success: true,
+      checkOutTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+    };
+  } catch (error) {
+    console.error('[WFH] Check-out error:', error?.message);
+    return { success: false, error: error?.message || 'WFH check-out failed' };
+  }
+};
+
+// Get all WFH requests for a user (for history display)
+export const getMyWfhRequests = async (userId) => {
+  console.log('[WFH] Fetching WFH requests for user:', userId);
+
+  try {
+    const headers = await getOdooAuthHeaders();
+
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'hr.wfh.request',
+          method: 'search_read',
+          args: [[['employee_user_id', '=', userId]]],
+          kwargs: {
+            fields: ['id', 'request_date', 'reason', 'state'],
+            order: 'request_date desc',
+            limit: 20,
+          },
+        },
+      },
+      { headers }
+    );
+
+    if (response.data?.error) {
+      return [];
+    }
+
+    const records = response.data?.result || [];
+    return records.map((r) => ({
+      id: r.id,
+      requestDate: r.request_date,
+      reason: r.reason,
+      state: r.state,
+    }));
+  } catch (error) {
+    console.error('[WFH] Get requests error:', error?.message);
+    return [];
+  }
+};
+
 export default {
   checkInToOdoo,
   checkInByEmployeeId,
@@ -874,4 +1130,9 @@ export default {
   getWorkplaceLocation,
   debugListAllEmployees,
   uploadAttendancePhoto,
+  submitWfhRequest,
+  getTodayApprovedWfh,
+  wfhCheckIn,
+  wfhCheckOut,
+  getMyWfhRequests,
 };

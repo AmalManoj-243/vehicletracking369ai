@@ -714,46 +714,16 @@ export const fetchCategoriesOdoo = async ({ offset = 0, limit = 50, searchText =
         sequence_no: isNaN(seq) ? null : seq,
       };
     });
-    // Place categories at exact positions based on sequence_no
-    // e.g. sequence_no=3 goes in 3rd cell, sequence_no=7 goes in 7th cell
-    // Duplicate sequence numbers: both appear at that position (consecutive)
-    const withSeq = mapped.filter((c) => c.sequence_no !== null);
-    const withoutSeq = mapped.filter((c) => c.sequence_no === null);
-    withoutSeq.sort((a, b) => a.name.localeCompare(b.name));
-
-    // Group sequenced items by position, sort within each group by name
-    const seqMap = {};
-    withSeq.forEach((c) => {
-      if (!seqMap[c.sequence_no]) seqMap[c.sequence_no] = [];
-      seqMap[c.sequence_no].push(c);
+    // Sort: sequenced categories first (by sequence number), then unsequenced alphabetically
+    mapped.sort((a, b) => {
+      const aHas = a.sequence_no !== null;
+      const bHas = b.sequence_no !== null;
+      if (aHas && bHas) return a.sequence_no - b.sequence_no;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return a.name.localeCompare(b.name);
     });
-    Object.values(seqMap).forEach((group) => {
-      group.sort((a, b) => a.name.localeCompare(b.name));
-    });
-
-    const result = [];
-    let unseqIndex = 0;
-    const totalCount = mapped.length;
-    for (let pos = 1; pos <= totalCount && result.length < totalCount; pos++) {
-      if (seqMap[pos]) {
-        seqMap[pos].forEach((c) => result.push(c));
-      } else if (unseqIndex < withoutSeq.length) {
-        result.push(withoutSeq[unseqIndex]);
-        unseqIndex++;
-      }
-    }
-    // Append any remaining unsequenced categories
-    while (unseqIndex < withoutSeq.length) {
-      result.push(withoutSeq[unseqIndex]);
-      unseqIndex++;
-    }
-
-    // Debug: log final order
-    result.slice(0, 10).forEach((c, i) => {
-      console.log(`[Categories] Position ${i + 1}: ${c.name} (seq: ${c.sequence_no})`);
-    });
-
-    return result;
+    return mapped;
   } catch (error) {
     console.error("fetchCategoriesOdoo error:", error);
     throw error;
