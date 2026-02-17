@@ -9,8 +9,10 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
 import { formatDate } from '@utils/common/date';
 import { showToastMessage } from '@components/Toast';
-import { post } from '@api/services/utils';
 import { OverlayLoader } from '@components/Loader';
+import SignaturePad from '@components/SignaturePad';
+import usePaymentSignatureLocation from '@hooks/usePaymentSignatureLocation';
+import { createPaymentWithSignatureOdoo } from '@api/services/generalApi';
 
 const CashCollectionForm = ({ navigation, route }) => {
   const { date, collectionData } = route?.params || {};
@@ -18,6 +20,14 @@ const CashCollectionForm = ({ navigation, route }) => {
 
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const {
+    signatureBase64,
+    setSignatureBase64,
+    scrollEnabled,
+    setScrollEnabled,
+    captureLocation,
+  } = usePaymentSignatureLocation();
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -45,7 +55,6 @@ const CashCollectionForm = ({ navigation, route }) => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -78,21 +87,23 @@ const CashCollectionForm = ({ navigation, route }) => {
 
     setLoading(true);
     try {
-      // TODO: Replace with actual API endpoint
-      // const response = await post('/cashCollection', {
-      //   ...formData,
-      //   amount: parseFloat(formData.amount),
-      // });
+      const location = await captureLocation();
 
-      // Placeholder success
-      console.log('[CashCollection] Submitting:', formData);
+      await createPaymentWithSignatureOdoo({
+        amount: parseFloat(formData.amount),
+        paymentType: 'inbound',
+        ref: formData.invoice_number || formData.customer_name,
+        customerSignature: signatureBase64 || null,
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        locationName: location?.locationName || '',
+      });
 
       showToastMessage(
         isEditMode ? 'Cash collection updated successfully' : 'Cash collection saved successfully',
         'success'
       );
 
-      // Navigate back
       navigation.goBack();
     } catch (error) {
       console.error('Error saving cash collection:', error);
@@ -114,13 +125,13 @@ const CashCollectionForm = ({ navigation, route }) => {
         navigation={navigation}
       />
 
-      <RoundedScrollContainer>
+      <RoundedScrollContainer scrollEnabled={scrollEnabled}>
         <ScrollView
           style={styles.scrollView}
+          scrollEnabled={scrollEnabled}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
         >
-          {/* Customer Name */}
           <FormInput
             label="Customer Name *"
             placeholder="Enter customer name"
@@ -129,7 +140,6 @@ const CashCollectionForm = ({ navigation, route }) => {
             error={errors.customer_name}
           />
 
-          {/* Amount */}
           <FormInput
             label="Amount (AED) *"
             placeholder="Enter amount"
@@ -139,7 +149,6 @@ const CashCollectionForm = ({ navigation, route }) => {
             error={errors.amount}
           />
 
-          {/* Payment Method */}
           <FormInput
             label="Payment Method"
             placeholder="Cash, Card, Bank Transfer, etc."
@@ -147,7 +156,6 @@ const CashCollectionForm = ({ navigation, route }) => {
             onChangeText={(value) => handleInputChange('payment_method', value)}
           />
 
-          {/* Invoice Number */}
           <FormInput
             label="Invoice Number"
             placeholder="Enter invoice number (optional)"
@@ -155,7 +163,6 @@ const CashCollectionForm = ({ navigation, route }) => {
             onChangeText={(value) => handleInputChange('invoice_number', value)}
           />
 
-          {/* Date */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Date *</Text>
             <FormInput
@@ -167,7 +174,6 @@ const CashCollectionForm = ({ navigation, route }) => {
             />
           </View>
 
-          {/* Notes */}
           <FormInput
             label="Notes"
             placeholder="Enter any additional notes"
@@ -178,7 +184,13 @@ const CashCollectionForm = ({ navigation, route }) => {
             style={styles.textArea}
           />
 
-          {/* Submit Button */}
+          <SignaturePad
+            setUrl={() => {}}
+            setScrollEnabled={setScrollEnabled}
+            title="Customer Signature"
+            onSignatureBase64={setSignatureBase64}
+          />
+
           <LoadingButton
             title={isEditMode ? 'Update Collection' : 'Save Collection'}
             onPress={handleSubmit}
@@ -188,7 +200,6 @@ const CashCollectionForm = ({ navigation, route }) => {
         </ScrollView>
       </RoundedScrollContainer>
 
-      {/* Date Picker Modal */}
       <DateTimePickerModal
         isVisible={showDatePicker}
         mode="date"

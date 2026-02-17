@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, FlatList, Dimensions, Platform, Image } from 'react-native';
 import Modal from 'react-native-modal';
+import * as ImagePicker from 'expo-image-picker';
 import Text from '@components/Text';
 import { NavigationHeader } from '@components/Header';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
-import { uploadApi } from '@api/uploads';
 
 const ActionModal = ({ title, setImageUrl }) => {
     const [isActionVisible, setIsActionVisible] = useState(false)
@@ -35,22 +35,16 @@ const ActionModal = ({ title, setImageUrl }) => {
     };
 
     const handleImagePicked = async (pickerResult) => {
-        if (!pickerResult.cancelled) {
-            const imagePath = pickerResult.assets[0].uri;
-            console.log("🚀 ~ handleImagePicked ~ imagePath:", imagePath)
-            try {
-                if (imagePath) {
-                    const url = await uploadApi(imagePath);
-                    if (url) {
-                        setImageUrl(url);
-                    } else {
-                        console.error('Upload API response is empty or undefined.');
-                    }
-                } else {
-                    console.warn('Invalid')
-                }
-            } catch (error) {
-                console.error('Error occurred during image upload:', error);
+        if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+            const asset = pickerResult.assets[0];
+            // Use base64 data URI so it can be displayed in app and sent to Odoo
+            if (asset.base64) {
+                const mimeType = asset.mimeType || 'image/jpeg';
+                const dataUri = `data:${mimeType};base64,${asset.base64}`;
+                setImageUrl(dataUri);
+            } else if (asset.uri) {
+                // Fallback to local URI for display
+                setImageUrl(asset.uri);
             }
         }
     };

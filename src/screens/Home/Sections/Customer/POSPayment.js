@@ -4,10 +4,11 @@ import { SafeAreaView } from '@components/containers';
 import { COLORS } from '@constants/theme';
 import { NavigationHeader } from '@components/Header';
 import { Button } from '@components/common/Button';
-import { fetchPaymentJournalsOdoo, createAccountPaymentOdoo } from '@api/services/generalApi';
-import { createPosPaymentOdoo } from '@api/services/generalApi';
+import { fetchPaymentJournalsOdoo, createPaymentWithSignatureOdoo } from '@api/services/generalApi';
 import { useProductStore } from '@stores/product';
 import Toast from 'react-native-toast-message';
+import SignaturePad from '@components/SignaturePad';
+import usePaymentSignatureLocation from '@hooks/usePaymentSignatureLocation';
 
 const POSPayment = ({ navigation, route }) => {
     const [invoiceChecked, setInvoiceChecked] = useState(false);
@@ -27,6 +28,13 @@ const POSPayment = ({ navigation, route }) => {
   const [paying, setPaying] = useState(false);
   const { clearProducts } = useProductStore();
   const [inputAmount, setInputAmount] = useState('');
+  const {
+    signatureBase64,
+    setSignatureBase64,
+    scrollEnabled,
+    setScrollEnabled,
+    captureLocation,
+  } = usePaymentSignatureLocation();
 
   useEffect(() => {
     let mounted = true;
@@ -73,6 +81,28 @@ const POSPayment = ({ navigation, route }) => {
   ];
 
   const handlePay = async () => {
+    setPaying(true);
+    try {
+      const location = await captureLocation();
+      try {
+        await createPaymentWithSignatureOdoo({
+          partnerId: customer?.id || customer?._id || null,
+          amount: paidAmount || total,
+          paymentType: 'inbound',
+          ref: orderId ? `POS-${orderId}` : '',
+          customerSignature: signatureBase64 || null,
+          latitude: location?.latitude || null,
+          longitude: location?.longitude || null,
+          locationName: location?.locationName || '',
+        });
+      } catch (odooErr) {
+        console.warn('Odoo payment creation failed:', odooErr?.message);
+      }
+    } catch (e) {
+      console.warn('Location capture failed:', e?.message);
+    } finally {
+      setPaying(false);
+    }
     navigation.navigate('POSReceiptScreen', {
       orderId,
       products,
@@ -85,7 +115,7 @@ const POSPayment = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <NavigationHeader title="Payment" onBackPress={() => navigation.goBack()} />
-      <View style={{ flex: 1, padding: 0, backgroundColor: COLORS.white }}>
+      <ScrollView style={{ flex: 1, backgroundColor: COLORS.white }} scrollEnabled={scrollEnabled} contentContainerStyle={{ paddingBottom: 30 }}>
         {/* Large Amount Display */}
         <View style={{ alignItems: 'center', marginTop: 32, marginBottom: 12 }}>
           <Text style={{ fontSize: 60, fontWeight: 'bold', color: '#222' }}>{computeTotal().toFixed(3)} ج.ع.</Text>
@@ -247,11 +277,18 @@ const POSPayment = ({ navigation, route }) => {
               </View>
             </TouchableOpacity>
           </View>
-        <View style={{ alignItems: 'center', marginTop: 18 }}>
-          
-          <Button title="Validate" onPress={handlePay} style={{ width: '90%', paddingVertical: 16, borderRadius: 10 }} textStyle={{ fontSize: 20 }} />
+        <View style={{ marginHorizontal: 18, marginTop: 18 }}>
+          <SignaturePad
+            setUrl={() => {}}
+            setScrollEnabled={setScrollEnabled}
+            title="Customer Signature"
+            onSignatureBase64={setSignatureBase64}
+          />
         </View>
-      </View>
+        <View style={{ alignItems: 'center', marginTop: 18 }}>
+          <Button title="Validate" onPress={handlePay} loading={paying} style={{ width: '90%', paddingVertical: 16, borderRadius: 10 }} textStyle={{ fontSize: 20 }} />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

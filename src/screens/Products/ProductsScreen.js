@@ -1,9 +1,8 @@
 import React, { useEffect, useCallback } from 'react';
-import { View } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { NavigationHeader } from '@components/Header';
 import { ProductsList } from '@components/Product';
-// ⬇️ CHANGE: use Odoo version instead of old backend
-import { fetchProductsOdoo } from '@api/services/generalApi';
+import { fetchProductsOdoo, fetchProductByBarcodeOdoo } from '@api/services/generalApi';
 import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { formatData } from '@utils/formatters';
@@ -13,6 +12,9 @@ import styles from './styles';
 import { EmptyState } from '@components/common/empty';
 import useDataFetching from '@hooks/useDataFetching';
 import useDebouncedSearch from '@hooks/useDebouncedSearch';
+import { showToastMessage } from '@components/Toast';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS } from '@constants/theme';
 
 const ProductsScreen = ({ navigation, route }) => {
   const categoryId = route?.params?.id || '';
@@ -20,7 +22,6 @@ const ProductsScreen = ({ navigation, route }) => {
 
   const isFocused = useIsFocused();
 
-  // ⬇️ CHANGE: hook now uses fetchProductsOdoo
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchProductsOdoo);
 
   const { searchText, handleSearchTextChange } = useDebouncedSearch(
@@ -42,6 +43,19 @@ const ProductsScreen = ({ navigation, route }) => {
 
   const handleLoadMore = () => {
     fetchMoreData({ searchText, categoryId });
+  };
+
+  const handleScan = async (code) => {
+    try {
+      const products = await fetchProductByBarcodeOdoo(code);
+      if (products && products.length > 0) {
+        navigation.navigate('ProductDetail', { detail: products[0], fromCustomerDetails });
+      } else {
+        showToastMessage('No Products found for this Barcode');
+      }
+    } catch (error) {
+      showToastMessage(`Error fetching product: ${error.message}`);
+    }
   };
 
   const renderItem = ({ item }) => {
@@ -90,6 +104,11 @@ const ProductsScreen = ({ navigation, route }) => {
         placeholder="Search Products"
         onChangeText={handleSearchTextChange}
         value={searchText}
+        rightIcon={
+          <TouchableOpacity onPress={() => navigation.navigate('Scanner')} style={{ paddingRight: 8 }}>
+            <MaterialCommunityIcons name="barcode-scan" size={22} color={COLORS.primaryThemeColor} />
+          </TouchableOpacity>
+        }
       />
       <RoundedContainer>
         {renderProducts()}

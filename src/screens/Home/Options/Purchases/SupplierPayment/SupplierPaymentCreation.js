@@ -16,6 +16,9 @@ import { fetchVendorBillDetails } from '@api/details/detailApi';
 import { OverlayLoader } from '@components/Loader';
 import { Button } from '@components/common/Button';
 import { COLORS, FONT_FAMILY } from '@constants/theme';
+import SignaturePad from '@components/SignaturePad';
+import usePaymentSignatureLocation from '@hooks/usePaymentSignatureLocation';
+import { createPaymentWithSignatureOdoo } from '@api/services/generalApi';
 
 const SupplierPaymentCreation = ({ navigation, route }) => {
   const { id: vendorBillId } = route?.params || {};
@@ -27,6 +30,14 @@ const SupplierPaymentCreation = ({ navigation, route }) => {
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [errors, setErrors] = useState({});
+  const {
+    signatureBase64,
+    setSignatureBase64,
+    scrollEnabled,
+    setScrollEnabled,
+    captureLocation,
+  } = usePaymentSignatureLocation();
+
   const [formData, setFormData] = useState({
     amountDue: "",
     amountPaid: "",
@@ -226,6 +237,24 @@ const SupplierPaymentCreation = ({ navigation, route }) => {
       };
       console.log("🚀 ~ submit ~ supplierPaymentData:", JSON.stringify(supplierPaymentData, null, 2));
       try {
+        // Capture location and create payment in Odoo with signature
+        const location = await captureLocation();
+        try {
+          await createPaymentWithSignatureOdoo({
+            partnerId: null,
+            amount: paidAmountNum,
+            paymentType: 'outbound',
+            journalId: details.register_payments?.[0]?.journal_id || null,
+            ref: details.sequence_no || '',
+            customerSignature: signatureBase64 || null,
+            latitude: location?.latitude || null,
+            longitude: location?.longitude || null,
+            locationName: location?.locationName || '',
+          });
+        } catch (odooErr) {
+          console.warn('Odoo payment creation failed (continuing with old backend):', odooErr?.message);
+        }
+
         const response = await post("/createSupplierPayment", supplierPaymentData);
         console.log("API Response : ", response);
         if (response.success) {
@@ -297,7 +326,7 @@ const SupplierPaymentCreation = ({ navigation, route }) => {
         onBackPress={() => navigation.goBack()}
         logo={false}
       />
-      <RoundedScrollContainer>
+      <RoundedScrollContainer scrollEnabled={scrollEnabled}>
         <FormInput
           label="Vendor Bill"
           editable={false}
@@ -440,6 +469,12 @@ const SupplierPaymentCreation = ({ navigation, route }) => {
           onChangeText={(value) => handleFieldChange('reference', value)}
         />
         {renderBottomSheet()}
+        <SignaturePad
+          setUrl={() => {}}
+          setScrollEnabled={setScrollEnabled}
+          title="Customer Signature"
+          onSignatureBase64={setSignatureBase64}
+        />
         <Button
           title="Submit"
           onPress={handleSupplierPayment}

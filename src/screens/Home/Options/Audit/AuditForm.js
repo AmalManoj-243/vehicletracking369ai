@@ -16,6 +16,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { post } from '@api/services/utils'
 import Toast from 'react-native-toast-message'
 import { showToast } from '@utils/common'
+import { fetchInvoiceByIdOdoo, createAuditingOdoo } from '@api/services/generalApi'
 
 const AuditForm = ({ navigation }) => {
 
@@ -52,9 +53,36 @@ const AuditForm = ({ navigation }) => {
   };
 
   // Function to handle scanned data
-  const handleScan = async (data) => {  // VB 203 
-    console.log("Data : ", data) 
-    const billParts = data.split('-')      // VB-203
+  const handleScan = async (data) => {
+    console.log("Data : ", data)
+
+    // Odoo invoice QR detection (URL like /customer-invoices/1 or plain number)
+    const odooUrlMatch = data.match(/\/customer-invoices\/(\d+)/);
+    const isPlainId = /^\d+$/.test(data.trim());
+    if (odooUrlMatch || isPlainId) {
+      resetFormState();
+      const invoiceId = odooUrlMatch ? parseInt(odooUrlMatch[1], 10) : parseInt(data.trim(), 10);
+      try {
+        const invoice = await fetchInvoiceByIdOdoo(invoiceId);
+        if (invoice) {
+          setDisplayBillDetails({
+            displayName: invoice.partner_name || '',
+            documentNumber: invoice.name || '',
+            totalAmount: invoice.amount_total || 0,
+          });
+          Toast.show({ type: 'success', text1: 'Invoice Loaded', text2: invoice.name, position: 'bottom' });
+        } else {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No invoice found', position: 'bottom' });
+        }
+      } catch (error) {
+        console.error('Odoo invoice fetch error:', error);
+        Toast.show({ type: 'error', text1: 'Error', text2: error?.message || 'Failed to fetch invoice', position: 'bottom' });
+      }
+      return;
+    }
+
+    // UAE backend bill format: "Invoice-203", "Vendor Bill-45", etc.
+    const billParts = data.split('-')
     const billName = billParts[0]
     console.log("BillName : ", billName)
     const billSequence = billParts.slice(1).join('-')
@@ -702,9 +730,8 @@ const AuditForm = ({ navigation }) => {
       }
       setIsSubmiting(true);
       console.log("handle Auditing Data:", JSON.stringify(auditingData, null, 2));
-      // return auditingData;
-      const response = await post('/createAuditing', auditingData);
-      if (response.success === 'true') {
+      const result = await createAuditingOdoo(auditingData);
+      if (result) {
         Toast.show({
           type: 'success',
           text1: 'Success',
@@ -713,11 +740,10 @@ const AuditForm = ({ navigation }) => {
         });
         navigation.navigate('AuditScreen');
       } else {
-        console.error('Auditing creation failed:', response.message);
         Toast.show({
           type: 'error',
           text1: 'ERROR',
-          text2: response.message || 'Audit creation failed',
+          text2: 'Audit creation failed',
           position: 'bottom',
         });
       }
@@ -806,7 +832,7 @@ const AuditForm = ({ navigation }) => {
           <View style={styles.rowCotainer}>
             <Text style={styles.qrCodeText}>Update from QR Code </Text>
             <View style={styles.buttonContainer}>
-              <Button backgroundColor={COLORS.primaryThemeColor} title={'Scan'} onPress={() => navigation.navigate('Scanner', { onScan: handleScan, onClose: true })} />
+              <Button backgroundColor={COLORS.primaryThemeColor} title={'Scan'} onPress={() => navigation.navigate('InvoiceScannerScreen', { onScan: handleScan })} />
             </View>
           </View>
         </View>

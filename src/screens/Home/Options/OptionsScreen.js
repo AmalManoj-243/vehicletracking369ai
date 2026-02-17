@@ -7,7 +7,7 @@ import { formatData } from '@utils/formatters';
 import { EmptyItem } from '@components/common/empty';
 import { COLORS } from '@constants/theme';
 import { useLoader } from '@hooks';
-import { fetchProductDetailsByBarcode } from '@api/details/detailApi';
+import { fetchProductByBarcodeOdoo } from '@api/services/generalApi';
 import { showToastMessage } from '@components/Toast';
 import { OverlayLoader } from '@components/Loader';
 import { ConfirmationModal } from '@components/Modal';
@@ -31,15 +31,14 @@ const OptionsScreen = ({ navigation }) => {
   const handleScan = async (code) => {
     startLoading();
     try {
-      const productDetails = await fetchProductDetailsByBarcode(code);
-      if (productDetails.length > 0) {
-        const details = productDetails[0];
-        navigation.navigate('ProductDetail', { detail: details });
+      const products = await fetchProductByBarcodeOdoo(code);
+      if (products && products.length > 0) {
+        navigation.navigate('ProductDetail', { detail: products[0] });
       } else {
         showToastMessage('No Products found for this Barcode');
       }
     } catch (error) {
-      showToastMessage(`Error fetching inventory details ${error.message}`);
+      showToastMessage(`Error fetching product: ${error.message}`);
     } finally {
       stopLoading();
     }
@@ -47,12 +46,11 @@ const OptionsScreen = ({ navigation }) => {
 
   const baseOptions = [
     { title: 'Search Products', image: require('@assets/images/Home/options/search_product.png'), onPress: () => navigation.navigate('Products') },
-    { title: 'Scan Barcode', image: require('@assets/images/Home/options/scan_barcode.png'), onPress: () => navigation.navigate("Scanner", { onScan: handleScan }) },
+    { title: 'Scan Barcode', image: require('@assets/images/Home/options/scan_barcode.png'), onPress: () => navigation.navigate('Scanner') },
     { title: 'Product Enquiry', image: require('@assets/images/Home/options/product_enquiry.png'), onPress: () => navigation.navigate('PriceEnquiryScreen') },
     { title: 'Transaction Auditing', image: require('@assets/images/Home/options/transaction_auditing.png'), onPress: () => navigation.navigate('AuditScreen') },
     { title: 'CRM', image: require('@assets/images/Home/options/crm.png'), onPress: () => navigation.navigate('CRM') },
     { title: 'Purchases', image: require('@assets/images/Home/options/product_purchase_requisition.png'), onPress: () => navigation.navigate('PurchasesScreen') },
-    { title: 'Cash Collection', image: require('@assets/images/Home/options/payment.png'), onPress: () => navigation.navigate('CashCollectionScreen') },
     { title: 'Vehicle Tracking', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('VehicleTrackingScreen') },
     { title: 'Task Manager', image: require('@assets/images/Home/options/tasK_manager_1.png'), onPress: () => navigation.navigate('TaskManagerScreen') },
     { title: 'Visits Plan', image: require('@assets/images/Home/options/visits_plan.png'), onPress: () => navigation.navigate('VisitsPlanScreen') },

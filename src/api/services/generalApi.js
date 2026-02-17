@@ -432,7 +432,7 @@ export const createVehicleTrackingTripOdoo = async ({ payload, username = 'admin
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
-import ODOO_BASE_URL from '@api/config/odooConfig';
+import ODOO_BASE_URL, { DEFAULT_ODOO_DB, DEFAULT_USERNAME, DEFAULT_PASSWORD } from '@api/config/odooConfig';
 import VEHICLE_TRACKING_BASE_URL, { DEFAULT_VEHICLE_TRACKING_DB } from '@api/config/vehicleTrackingConfig';
 // Helper: Authenticate to vehicle tracking Odoo DB and return session cookie
 export const loginVehicleTrackingOdoo = async ({ username = 'admin', password = 'admin', db = DEFAULT_VEHICLE_TRACKING_DB } = {}) => {
@@ -600,6 +600,67 @@ export const fetchProductsOdoo = async ({ offset, limit, searchText, categoryId 
     });
   } catch (error) {
     console.error("fetchProductsOdoo error:", error);
+    throw error;
+  }
+};
+
+// Fetch product by barcode from Odoo
+export const fetchProductByBarcodeOdoo = async (barcode) => {
+  try {
+    const headers = await getOdooAuthHeaders();
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: "2.0",
+        method: "call",
+        params: {
+          model: "product.product",
+          method: "search_read",
+          args: [],
+          kwargs: {
+            domain: [["barcode", "=", barcode]],
+            fields: [
+              "id",
+              "name",
+              "list_price",
+              "default_code",
+              "barcode",
+              "uom_id",
+              "image_128",
+              "categ_id",
+            ],
+            limit: 1,
+          },
+        },
+      },
+      { headers }
+    );
+
+    if (response.data.error) {
+      throw new Error("Odoo JSON-RPC error");
+    }
+
+    const products = response.data.result || [];
+    return products.map((p) => {
+      const hasBase64 = p.image_128 && typeof p.image_128 === 'string' && p.image_128.length > 0;
+      const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+      const imageUrl = hasBase64
+        ? `data:image/png;base64,${p.image_128}`
+        : `${baseUrl}/web/image?model=product.product&id=${p.id}&field=image_128`;
+
+      return {
+        id: p.id,
+        product_name: p.name || "",
+        image_url: imageUrl,
+        price: p.list_price || 0,
+        code: p.default_code || "",
+        barcode: p.barcode || "",
+        category: p.categ_id ? p.categ_id[1] : "",
+        uom: p.uom_id ? { uom_id: p.uom_id[0], uom_name: p.uom_id[1] } : null,
+      };
+    });
+  } catch (error) {
+    console.error("fetchProductByBarcodeOdoo error:", error);
     throw error;
   }
 };
@@ -807,10 +868,10 @@ export const fetchProductDetailsOdoo = async (productId) => {
       inventory_ledgers,
       total_product_quantity: p.qty_available ?? p.virtual_available ?? 0,
       inventory_box_products_details: [],
-      product_code: p.default_code || null,
+      product_code: p.default_code || '',
       uom: p.uom_id ? { uom_id: p.uom_id[0], uom_name: p.uom_id[1] } : null,
       categ_id: p.categ_id || null,
-      product_description: p.description_sale || null,
+      product_description: p.description_sale || '',
     };
   } catch (error) {
     console.error('fetchProductDetailsOdoo error:', error);
@@ -840,6 +901,13 @@ export const fetchInventoryBoxRequest = async ({ offset, limit, searchText }) =>
 };
 
 export const fetchAuditing = async ({ offset, limit }) => {
+  // Try Odoo first, fall back to old backend
+  try {
+    const audits = await fetchAuditingOdoo({ offset, limit });
+    return audits;
+  } catch (e) {
+    console.warn('fetchAuditing: Odoo fetch failed, falling back to old API', e?.message);
+  }
   try {
     const queryParams = {
       offset,
@@ -849,6 +917,203 @@ export const fetchAuditing = async ({ offset, limit }) => {
     return response.data;
   } catch (error) {
     handleApiError(error);
+    throw error;
+  }
+};
+
+// Fetch auditing records from Odoo via JSON-RPC
+export const fetchAuditingOdoo = async ({ offset = 0, limit = 50 } = {}) => {
+  const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+  try {
+    // Authenticate
+    const loginResponse = await axios.post(
+      `${baseUrl}/web/session/authenticate`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          db: DEFAULT_ODOO_DB,
+          login: DEFAULT_USERNAME,
+          password: DEFAULT_PASSWORD,
+        },
+      },
+      { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+    if (loginResponse.data.error) {
+      throw new Error('Odoo authentication failed');
+    }
+    const setCookie = loginResponse.headers['set-cookie'] || loginResponse.headers['Set-Cookie'];
+    const headers = { 'Content-Type': 'application/json' };
+    if (setCookie) {
+      headers.Cookie = Array.isArray(setCookie) ? setCookie.join('; ') : String(setCookie);
+    }
+
+    const response = await axios.post(
+      `${baseUrl}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'transaction.auditing',
+          method: 'search_read',
+          args: [[]],
+          kwargs: {
+            fields: [
+              'id', 'sequence_no', 'date', 'customer_name', 'supplier_name',
+              'inv_sequence_no', 'amount', 'collection_type_name',
+              'warehouse_name', 'sales_person_name', 'chart_of_accounts_name',
+            ],
+            offset,
+            limit,
+            order: 'create_date desc',
+          },
+        },
+      },
+      { headers, withCredentials: true, timeout: 15000 }
+    );
+
+    if (response.data.error) {
+      throw new Error(response.data.error.data?.message || 'Odoo JSON-RPC error');
+    }
+
+    const records = response.data.result || [];
+    return records.map(r => ({
+      _id: r.id,
+      sequence_no: r.sequence_no || '',
+      date: r.date || '',
+      customer_name: r.customer_name || '',
+      supplier_name: r.supplier_name || '',
+      inv_sequence_no: r.inv_sequence_no || '',
+      amount: r.amount || 0,
+      collection_type_name: r.collection_type_name || '',
+      chart_of_accounts_name: r.chart_of_accounts_name || '',
+      warehouse_name: r.warehouse_name || '',
+      sales_person_name: r.sales_person_name || '',
+    }));
+  } catch (error) {
+    console.error('fetchAuditingOdoo error:', error?.message || error);
+    throw error;
+  }
+};
+
+// Create a Transaction Auditing record in Odoo via JSON-RPC
+export const createAuditingOdoo = async (auditingData) => {
+  const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+  try {
+    // Step 1: Authenticate
+    const loginResponse = await axios.post(
+      `${baseUrl}/web/session/authenticate`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          db: DEFAULT_ODOO_DB,
+          login: DEFAULT_USERNAME,
+          password: DEFAULT_PASSWORD,
+        },
+      },
+      { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+    if (loginResponse.data.error) {
+      throw new Error('Odoo authentication failed');
+    }
+    const setCookie = loginResponse.headers['set-cookie'] || loginResponse.headers['Set-Cookie'];
+    const headers = { 'Content-Type': 'application/json' };
+    if (setCookie) {
+      headers.Cookie = Array.isArray(setCookie) ? setCookie.join('; ') : String(setCookie);
+    }
+
+    // Step 2: Build vals from auditingData
+    const vals = {
+      date: auditingData.date || false,
+      amount: auditingData.amount || 0,
+      un_taxed_amount: auditingData.un_taxed_amount || 0,
+      advance_paid_amount: auditingData.advance_paid_amount || 0,
+      remarks: auditingData.remarks || false,
+      customer_id: auditingData.customer_id || false,
+      customer_name: auditingData.customer_name || false,
+      supplier_id: auditingData.supplier_id || false,
+      supplier_name: auditingData.supplier_name || false,
+      invoice_id: auditingData.invoice_id || false,
+      inv_sequence_no: auditingData.inv_sequence_no || false,
+      register_payment_id: auditingData.register_payment_id || false,
+      register_payment_sequence_no: auditingData.register_payment_sequence_no || false,
+      collection_type_id: auditingData.collection_type_id || false,
+      collection_type_name: auditingData.collection_type_name || false,
+      bussiness_type_id: auditingData.bussiness_type_id || false,
+      chq_no: auditingData.chq_no || false,
+      chq_date: auditingData.chq_date || false,
+      chq_type: auditingData.chq_type || false,
+      cheque_transaction_type: auditingData.cheque_transaction_type || false,
+      chart_of_accounts_id: auditingData.chart_of_accounts_id || false,
+      chart_of_accounts_name: auditingData.chart_of_accounts_name || false,
+      online_transaction_type: auditingData.online_transaction_type || false,
+      online_status: auditingData.online_status || false,
+      ledger_id: auditingData.ledger_id || false,
+      ledger_name: auditingData.ledger_name || false,
+      ledger_type: auditingData.ledger_type || false,
+      ledger_display_name: auditingData.ledger_display_name || false,
+      employee_ledger_id: auditingData.employee_ledger_id || false,
+      employee_ledger_name: auditingData.employee_ledger_name || false,
+      employee_ledger_display_name: auditingData.employee_ledger_display_name || false,
+      warehouse_id: auditingData.warehouse_id || false,
+      warehouse_name: auditingData.warehouse_name || false,
+      scanned_warehouse_id: auditingData.scanned_warehouse_id || false,
+      to_warehouse_id: auditingData.to_warehouse_id || false,
+      to_warehouse_name: auditingData.to_warehouse_name || false,
+      sales_person_id: auditingData.sales_person_id || false,
+      sales_person_name: auditingData.sales_person_name || false,
+      company_id_ref: auditingData.company_id || false,
+      company_name: auditingData.company_name || false,
+      service_amount: auditingData.service_amount || 0,
+      service_product_amount: auditingData.service_product_amount || 0,
+      service_product_cost: auditingData.service_product_cost || 0,
+      is_estimation: auditingData.is_estimation || false,
+    };
+
+    // Handle customer/vendor signature (base64 data URI → raw base64)
+    if (auditingData.customer_vendor_signature) {
+      const sigMatch = auditingData.customer_vendor_signature.match(/^data:image\/[^;]+;base64,(.+)$/);
+      vals.customer_vendor_signature = sigMatch ? sigMatch[1] : auditingData.customer_vendor_signature;
+    }
+
+    // Handle attachments
+    const attachments = auditingData.attachments || [];
+    if (attachments.length > 0) {
+      vals.attachment_ids = attachments.map((imgUri, idx) => {
+        const b64Match = imgUri.match(/^data:image\/[^;]+;base64,(.+)$/);
+        if (b64Match) {
+          return [0, 0, { attachment: b64Match[1], filename: `audit_image_${idx + 1}.jpg` }];
+        }
+        return [0, 0, { image_url: imgUri }];
+      });
+    }
+
+    // Step 3: Create record
+    const response = await axios.post(
+      `${baseUrl}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'transaction.auditing',
+          method: 'create',
+          args: [vals],
+          kwargs: {},
+        },
+      },
+      { headers, withCredentials: true, timeout: 15000 }
+    );
+
+    if (response.data.error) {
+      console.error('Odoo JSON-RPC error (create auditing):', response.data.error);
+      throw new Error(response.data.error.data?.message || 'Odoo JSON-RPC error');
+    }
+
+    console.log('[createAuditingOdoo] Created record ID:', response.data.result);
+    return response.data.result;
+  } catch (error) {
+    console.error('createAuditingOdoo error:', error?.message || error);
     throw error;
   }
 };
@@ -1474,6 +1739,280 @@ export const fetchVehiclesVehicleTracking = async ({ offset = 0, limit = 50, sea
       console.error('fetchVehiclesVehicleTracking response status:', error.response.status);
       try { console.error('fetchVehiclesVehicleTracking response data:', error.response.data); } catch (e) {}
     }
+    throw error;
+  }
+};
+
+// Fetch invoice (account.move) by ID from Odoo via JSON-RPC
+export const fetchInvoiceByIdOdoo = async (invoiceId) => {
+  try {
+    if (!invoiceId) return null;
+
+    const headers = await getOdooAuthHeaders();
+    const response = await axios.post(
+      `${ODOO_BASE_URL}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'account.move',
+          method: 'search_read',
+          args: [[['id', '=', Number(invoiceId)]]],
+          kwargs: {
+            fields: [
+              'id', 'name', 'partner_id', 'invoice_date', 'invoice_date_due',
+              'amount_total', 'amount_residual', 'amount_untaxed', 'amount_tax',
+              'state', 'payment_state', 'move_type', 'currency_id',
+              'invoice_line_ids', 'ref', 'narration',
+            ],
+            limit: 1,
+          },
+        },
+      },
+      { headers }
+    );
+
+    if (response.data.error) {
+      console.log('Odoo JSON-RPC error (invoice):', response.data.error);
+      throw new Error('Odoo JSON-RPC error');
+    }
+
+    const results = response.data.result || [];
+    const inv = results[0];
+    if (!inv) return null;
+
+    // Fetch invoice lines
+    let invoiceLines = [];
+    if (inv.invoice_line_ids && inv.invoice_line_ids.length > 0) {
+      const linesResponse = await axios.post(
+        `${ODOO_BASE_URL}/web/dataset/call_kw`,
+        {
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            model: 'account.move.line',
+            method: 'search_read',
+            args: [[['id', 'in', inv.invoice_line_ids]]],
+            kwargs: {
+              fields: ['id', 'name', 'product_id', 'quantity', 'price_unit', 'price_subtotal'],
+            },
+          },
+        },
+        { headers }
+      );
+
+      if (!linesResponse.data.error && linesResponse.data.result) {
+        invoiceLines = linesResponse.data.result.map(line => ({
+          id: line.id,
+          description: line.name || '',
+          product_name: Array.isArray(line.product_id) ? line.product_id[1] : '',
+          quantity: line.quantity || 0,
+          price_unit: line.price_unit || 0,
+          price_subtotal: line.price_subtotal || 0,
+        }));
+      }
+    }
+
+    return {
+      id: inv.id,
+      name: inv.name || '',
+      partner_name: Array.isArray(inv.partner_id) ? inv.partner_id[1] : '',
+      invoice_date: inv.invoice_date || '',
+      invoice_date_due: inv.invoice_date_due || '',
+      amount_total: inv.amount_total || 0,
+      amount_residual: inv.amount_residual || 0,
+      amount_untaxed: inv.amount_untaxed || 0,
+      amount_tax: inv.amount_tax || 0,
+      state: inv.state || '',
+      payment_state: inv.payment_state || '',
+      move_type: inv.move_type || '',
+      currency_name: Array.isArray(inv.currency_id) ? inv.currency_id[1] : '',
+      ref: inv.ref || '',
+      narration: inv.narration || '',
+      invoice_lines: invoiceLines,
+    };
+  } catch (error) {
+    console.error('fetchInvoiceByIdOdoo error:', error);
+    throw error;
+  }
+};
+
+// Create a Product Enquiry record in Odoo via JSON-RPC
+export const createProductEnquiryOdoo = async ({
+  date,
+  type,
+  customer_name,
+  customer_no,
+  sale_price,
+  product_name,
+  image_url,
+  attachments = [],
+}) => {
+  const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+  try {
+    // Step 1: Authenticate to Odoo
+    const loginResponse = await axios.post(
+      `${baseUrl}/web/session/authenticate`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          db: DEFAULT_ODOO_DB,
+          login: DEFAULT_USERNAME,
+          password: DEFAULT_PASSWORD,
+        },
+      },
+      { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+
+    if (loginResponse.data.error) {
+      throw new Error('Odoo authentication failed');
+    }
+
+    // Extract session cookie
+    const setCookie = loginResponse.headers['set-cookie'] || loginResponse.headers['Set-Cookie'];
+    const headers = { 'Content-Type': 'application/json' };
+    if (setCookie) {
+      headers.Cookie = Array.isArray(setCookie) ? setCookie.join('; ') : String(setCookie);
+    }
+
+    // Step 2: Create product.enquiry record
+    const vals = {
+      date: date || false,
+      type: type || 'product_enquiry',
+      customer_name: customer_name || false,
+      customer_no: customer_no || false,
+      sale_price: sale_price || 0,
+      product_name: product_name || false,
+      image_url: image_url || false,
+    };
+
+    // Handle image attachments — extract base64 from data URI for Odoo Binary field
+    if (attachments.length > 0) {
+      vals.attachment_ids = attachments.map((imgUri, idx) => {
+        const b64Match = imgUri.match(/^data:image\/([^;]+);base64,(.+)$/);
+        if (b64Match) {
+          const ext = b64Match[1] === 'jpeg' ? 'jpg' : b64Match[1];
+          return [0, 0, { attachment: b64Match[2], filename: `enquiry_image_${idx + 1}.${ext}` }];
+        }
+        return [0, 0, { image_url: imgUri }];
+      });
+    }
+
+    console.log('[createProductEnquiryOdoo] Sending vals:', JSON.stringify({
+      ...vals,
+      image_url: vals.image_url ? '(base64 data...)' : false,
+      attachment_ids: vals.attachment_ids ? `${vals.attachment_ids.length} attachments` : 'none',
+    }));
+
+    const response = await axios.post(
+      `${baseUrl}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'product.enquiry',
+          method: 'create',
+          args: [vals],
+          kwargs: {},
+        },
+      },
+      { headers, withCredentials: true, timeout: 30000 }
+    );
+
+    if (response.data.error) {
+      console.error('Odoo JSON-RPC error (create product enquiry):', response.data.error);
+      throw new Error(response.data.error.data?.message || 'Odoo JSON-RPC error');
+    }
+
+    console.log('[createProductEnquiryOdoo] Created record ID:', response.data.result);
+    return response.data.result;
+  } catch (error) {
+    console.error('createProductEnquiryOdoo error:', error?.message || error);
+    throw error;
+  }
+};
+
+// Create account.payment with customer signature and GPS location in Odoo
+export const createPaymentWithSignatureOdoo = async ({
+  partnerId,
+  amount,
+  paymentType = 'inbound',
+  journalId,
+  ref = '',
+  customerSignature = null,
+  latitude = null,
+  longitude = null,
+  locationName = '',
+}) => {
+  const baseUrl = (ODOO_BASE_URL || '').replace(/\/$/, '');
+  try {
+    // Step 1: Authenticate
+    const loginResponse = await axios.post(
+      `${baseUrl}/web/session/authenticate`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          db: DEFAULT_ODOO_DB,
+          login: DEFAULT_USERNAME,
+          password: DEFAULT_PASSWORD,
+        },
+      },
+      { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+    if (loginResponse.data.error) throw new Error('Odoo authentication failed');
+    const setCookie = loginResponse.headers['set-cookie'] || loginResponse.headers['Set-Cookie'];
+    const headers = { 'Content-Type': 'application/json' };
+    if (setCookie) {
+      headers.Cookie = Array.isArray(setCookie) ? setCookie.join('; ') : String(setCookie);
+    }
+
+    // Step 2: Build vals
+    const vals = {
+      amount: amount || 0,
+      payment_type: paymentType,
+    };
+    if (partnerId) vals.partner_id = partnerId;
+    if (journalId) vals.journal_id = journalId;
+    if (ref) vals.ref = ref;
+
+    // Handle signature (base64 data URI → raw base64)
+    if (customerSignature) {
+      const sigMatch = customerSignature.match(/^data:image\/[^;]+;base64,(.+)$/);
+      vals.customer_signature = sigMatch ? sigMatch[1] : customerSignature;
+    }
+
+    // Handle location
+    if (latitude !== null) vals.latitude = latitude;
+    if (longitude !== null) vals.longitude = longitude;
+    if (locationName) vals.location_name = locationName;
+
+    // Step 3: Create record
+    const response = await axios.post(
+      `${baseUrl}/web/dataset/call_kw`,
+      {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: 'account.payment',
+          method: 'create',
+          args: [vals],
+          kwargs: {},
+        },
+      },
+      { headers, withCredentials: true, timeout: 15000 }
+    );
+
+    if (response.data.error) {
+      console.error('Odoo JSON-RPC error (create payment):', response.data.error);
+      throw new Error(response.data.error.data?.message || 'Odoo JSON-RPC error');
+    }
+
+    console.log('[createPaymentWithSignatureOdoo] Created record ID:', response.data.result);
+    return response.data.result;
+  } catch (error) {
+    console.error('createPaymentWithSignatureOdoo error:', error?.message || error);
     throw error;
   }
 };

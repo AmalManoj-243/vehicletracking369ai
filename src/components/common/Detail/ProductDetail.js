@@ -22,7 +22,7 @@ const ProductDetail = ({ navigation, route }) => {
     // Debug log to show product details data for troubleshooting
     console.log('ProductDetail details:', details);
   }, [details]);
-  const [details, setDetails] = useState({});
+  const [details, setDetails] = useState(detail || {});
   const [loading, setLoading] = useState(false);
   const [getDetail, setGetDetail] = useState(null);
   const [isVisibleCustomListModal, setIsVisibleCustomListModal] = useState(false);
@@ -474,7 +474,7 @@ const ProductDetail = ({ navigation, route }) => {
                       Product Code:
                     </Text>
                     <Text style={{ width: '50%', fontFamily: FONT_FAMILY.urbanistSemiBold, fontSize: 18 }}>
-                      {details.product_code ?? details.code ?? details.default_code ?? 'N/A'}
+                      {details.product_code || details.code || details.default_code || 'N/A'}
                     </Text>
                   </View>
 
@@ -516,13 +516,13 @@ const ProductDetail = ({ navigation, route }) => {
               <Button title={'Add Products'} onPress={handleAddProduct} />
             )}
           </>
-        ) : (
+        ) : !loading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 18, color: COLORS.error, textAlign: 'center' }}>
               No product details available.
             </Text>
           </View>
-        )}
+        ) : null}
       </RoundedScrollContainer>
 
       {/* Fullscreen image modal */}

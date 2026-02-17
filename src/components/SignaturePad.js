@@ -17,11 +17,14 @@ export const CustomClearButton = ({ title, onPress }) => {
     );
 };
 
-const SignaturePad = ({ setUrl, setScrollEnabled, title, previousSignature = '' }) => {
+const SignaturePad = ({ setUrl, setScrollEnabled, title, previousSignature = '', onSignatureBase64 }) => {
     const [isSign, setSign] = useState(false);
     const ref = useRef();
 
     const handleOK = (signature) => {
+        if (onSignatureBase64) {
+            onSignatureBase64(signature);
+        }
         const path = FileSystem.cacheDirectory + `signature${Date.now()}.png`;
         FileSystem.writeAsStringAsync(
             path,
