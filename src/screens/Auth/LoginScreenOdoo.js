@@ -31,6 +31,8 @@ import * as Location from 'expo-location';
 
 import API_BASE_URL from "@api/config";
 import ODOO_DEFAULTS, { DEFAULT_ODOO_BASE_URL, DEFAULT_ODOO_DB, DEFAULT_USERNAME, DEFAULT_PASSWORD } from "@api/config/odooConfig";
+import { fetchCompanyCurrencyOdoo } from "@api/services/generalApi";
+import { useCurrencyStore } from "@stores/currency";
 
 LogBox.ignoreLogs(["new NativeEventEmitter"]);
 LogBox.ignoreAllLogs();
@@ -51,6 +53,7 @@ const isOdooUrl = (url = "") => {
 const LoginScreenOdoo = () => {
   const navigation = useNavigation();
   const setUser = useAuthStore((state) => state.login);
+  const setCurrencyFromOdoo = useCurrencyStore((state) => state.setCurrencyFromOdoo);
   const [checked, setChecked] = useState(false);
   const [autofillChecked, setAutofillChecked] = useState(false);
 
@@ -258,6 +261,11 @@ const LoginScreenOdoo = () => {
               console.warn('Unable to persist Odoo cookie header:', e?.message || e);
             }
             setUser(userData);
+            // Fetch company currency from Odoo and update store
+            try {
+              const companyCurrency = await fetchCompanyCurrencyOdoo();
+              if (companyCurrency) setCurrencyFromOdoo(companyCurrency);
+            } catch (e) { console.warn('Could not fetch company currency:', e?.message); }
             // Start location tracking for non-admin users only
             // Check is_admin field from Odoo response
             if (userData.uid && !userData.is_admin) {

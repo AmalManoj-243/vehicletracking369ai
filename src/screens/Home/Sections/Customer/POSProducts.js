@@ -18,7 +18,8 @@ import Toast from 'react-native-toast-message';
 import { Button } from '@components/common/Button';
 
 const POSProducts = ({ navigation, route }) => {
-  const { openingAmount } = route?.params || {};
+  const { openingAmount, sessionId, fromCustomerDetails } = route?.params || {};
+  const customerId = fromCustomerDetails?.id || fromCustomerDetails?._id || null;
   const categoryId = '';
   const isFocused = useIsFocused();
   const { data, loading, fetchData, fetchMoreData } = useDataFetching(fetchProductsOdoo);
@@ -30,10 +31,10 @@ const POSProducts = ({ navigation, route }) => {
 
   useFocusEffect(
     useCallback(() => {
-      // Ensure POS cart owner
-      setCurrentCustomer('pos_guest');
+      // Set cart owner based on context
+      setCurrentCustomer(customerId || 'pos_guest');
       fetchData({ searchText, categoryId });
-    }, [searchText, categoryId])
+    }, [searchText, categoryId, customerId])
   );
 
   useEffect(() => {
@@ -99,13 +100,21 @@ const POSProducts = ({ navigation, route }) => {
       <View style={{ padding: 12, backgroundColor: COLORS.white }}>
         <OverlayLoader visible={loading} />
         <View style={{ marginTop: 12 }}>
-          <Button
-            title="View Cart"
-            onPress={() => navigation.navigate('POSCartSummary', {
-              openingAmount,
-              clearCart: clearProducts
-            })}
-          />
+          {customerId ? (
+            <Button
+              title="Done"
+              onPress={() => navigation.goBack()}
+            />
+          ) : (
+            <Button
+              title="View Cart"
+              onPress={() => navigation.navigate('POSCartSummary', {
+                openingAmount,
+                sessionId,
+                clearCart: clearProducts
+              })}
+            />
+          )}
         </View>
       </View>
     </SafeAreaView>

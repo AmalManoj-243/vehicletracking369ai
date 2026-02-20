@@ -60,8 +60,10 @@ import { VendorBillDetails, VendorBillScreen } from "@screens/Home/Options/Purch
 import { AddVendorProducts, VendorBillFormTabs } from "@screens/Home/Options/Purchases/VendorBill/VendorBillFormTabs";
 import { SupplierPaymentCreation, SupplierPaymentScreen } from "@screens/Home/Options/Purchases/SupplierPayment";
 import POSReceiptScreen from '@screens/Home/Sections/Customer/POSReceiptScreen';
-
-
+import DirectInvoiceScreen from '@screens/Home/Sections/Customer/DirectInvoiceScreen';
+import { PaymentForm, RegisterPaymentScreen } from '@screens/Home/Options/Payment';
+import { SpareManagementScreen, SpareRequestListScreen, SpareRequestForm, SpareRequestDetails, SpareIssueListScreen, SpareIssueForm, SpareReturnListScreen, SpareReturnForm } from '@screens/Home/Options/SpareManagement';
+import { EasySalesForm, EasySalesListScreen, EasySalesDetailScreen } from '@screens/Home/Options/EasySales';
 
 
 
@@ -103,6 +105,76 @@ const StackNavigator = () => {
       <Stack.Screen
         name="POSReceiptScreen"
         component={POSReceiptScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="DirectInvoiceScreen"
+        component={DirectInvoiceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EasySalesListScreen"
+        component={EasySalesListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EasySalesDetailScreen"
+        component={EasySalesDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EasySalesForm"
+        component={EasySalesForm}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="RegisterPaymentScreen"
+        component={RegisterPaymentScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PaymentForm"
+        component={PaymentForm}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareManagementScreen"
+        component={SpareManagementScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareRequestForm"
+        component={SpareRequestForm}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareRequestListScreen"
+        component={SpareRequestListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareRequestDetails"
+        component={SpareRequestDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareIssueListScreen"
+        component={SpareIssueListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareIssueForm"
+        component={SpareIssueForm}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareReturnListScreen"
+        component={SpareReturnListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SpareReturnForm"
+        component={SpareReturnForm}
         options={{ headerShown: false }}
       />
       {/* Splash Screen */}

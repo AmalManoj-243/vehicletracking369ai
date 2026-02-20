@@ -8,12 +8,14 @@ import { useAuthStore } from '@stores/auth';
 import Constants from 'expo-constants'
 import { getConfig } from '@utils/config';
 import { useCurrencyStore } from '@stores/currency';
+import { fetchCompanyCurrencyOdoo } from '@api/services/generalApi';
 
 const SplashScreen = () => {
     const navigation = useNavigation();
     const [fontsLoaded, setFontsLoaded] = useState(false);
     const setLoggedInUser = useAuthStore(state => state.login);
-    const setCurrency = useCurrencyStore((state) => state.setCurrency); // Function to set currency in currency store
+    const setCurrency = useCurrencyStore((state) => state.setCurrency);
+    const setCurrencyFromOdoo = useCurrencyStore((state) => state.setCurrencyFromOdoo);
 
     useEffect(() => {
         // Get app name and config based on app name
@@ -47,6 +49,11 @@ const SplashScreen = () => {
             if (storedUserData) {
                 const userData = JSON.parse(storedUserData);
                 setLoggedInUser(userData);
+                // Fetch company currency from Odoo
+                try {
+                    const companyCurrency = await fetchCompanyCurrencyOdoo();
+                    if (companyCurrency) setCurrencyFromOdoo(companyCurrency);
+                } catch (e) { console.warn('Could not fetch company currency:', e?.message); }
                 // Reset the navigation stack to prevent going back to the splash screen
                 navigation.reset({
                     index: 0,

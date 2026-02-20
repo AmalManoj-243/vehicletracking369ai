@@ -4,13 +4,13 @@ import { SafeAreaView } from '@components/containers';
 import { NavigationHeader } from '@components/Header';
 import { Button } from '@components/common/Button';
 
-const POSOpenAmount = ({ navigation }) => {
+const POSOpenAmount = ({ navigation, route }) => {
+  const { sessionId } = route?.params || {};
   const [amount, setAmount] = useState('0.00');
 
   const handleOpen = () => {
     const parsed = parseFloat(amount) || 0;
-    // Navigate to POS products screen and pass openingAmount — user picks products first
-    navigation.navigate('POSProducts', { openingAmount: parsed });
+    navigation.navigate('POSProducts', { openingAmount: parsed, sessionId });
   };
 
   return (

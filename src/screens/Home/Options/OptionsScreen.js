@@ -51,13 +51,15 @@ const OptionsScreen = ({ navigation }) => {
     { title: 'Transaction Auditing', image: require('@assets/images/Home/options/transaction_auditing.png'), onPress: () => navigation.navigate('AuditScreen') },
     { title: 'CRM', image: require('@assets/images/Home/options/crm.png'), onPress: () => navigation.navigate('CRM') },
     { title: 'Purchases', image: require('@assets/images/Home/options/product_purchase_requisition.png'), onPress: () => navigation.navigate('PurchasesScreen') },
+    { title: 'Easy Sales', image: require('@assets/images/Home/options/buy.png'), onPress: () => navigation.navigate('EasySalesListScreen') },
+    { title: 'Register Payment', image: require('@assets/images/Home/options/transaction_auditing.png'), onPress: () => navigation.navigate('RegisterPaymentScreen') },
     { title: 'Vehicle Tracking', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('VehicleTrackingScreen') },
     { title: 'Task Manager', image: require('@assets/images/Home/options/tasK_manager_1.png'), onPress: () => navigation.navigate('TaskManagerScreen') },
     { title: 'Visits Plan', image: require('@assets/images/Home/options/visits_plan.png'), onPress: () => navigation.navigate('VisitsPlanScreen') },
     { title: 'Customer Visits', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('VisitScreen') },
     { title: 'Market Study', image: require('@assets/images/Home/options/market_study_1.png'), onPress: () => navigation.navigate('MarketStudyScreen') },
-    { title: 'Attendance', image: require('@assets/images/Home/options/attendance.png'), onPress: () => navigation.navigate('AttendanceScreen') },
     { title: 'User Attendance', image: require('@assets/images/Home/options/attendance.png'), onPress: () => navigation.navigate('UserAttendanceScreen') },
+    { title: 'Spare Management', image: require('@assets/images/Home/options/inventory_management.png'), onPress: () => navigation.navigate('SpareManagementScreen') },
     { title: 'Inventory Management', image: require('@assets/images/Home/options/inventory_management_1.png'), onPress: () => navigation.navigate('InventoryScreen') },
     { title: 'Box Inspection', image: require('@assets/images/Home/options/box_inspection.png'), onPress: () => setIsConfirmationModalVisible(true) },
   ];
@@ -65,14 +67,14 @@ const OptionsScreen = ({ navigation }) => {
   // Add Staff Tracking option for admin users, My Location for non-admin users
   const options = isAdmin
     ? [
-        ...baseOptions.slice(0, 7),
+        ...baseOptions.slice(0, 8),
         { title: 'Staff Tracking', image: require('@assets/images/Home/options/attendance.png'), onPress: () => navigation.navigate('StaffTrackingScreen') },
-        ...baseOptions.slice(7),
+        ...baseOptions.slice(8),
       ]
     : [
-        ...baseOptions.slice(0, 7),
+        ...baseOptions.slice(0, 8),
         { title: 'My Location', image: require('@assets/images/Home/options/customer_visit.png'), onPress: () => navigation.navigate('MyLocation') },
-        ...baseOptions.slice(7),
+        ...baseOptions.slice(8),
       ];
 
   const renderItem = ({ item }) => {

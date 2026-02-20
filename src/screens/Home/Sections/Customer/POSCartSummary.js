@@ -8,7 +8,7 @@ import { useProductStore } from '@stores/product';
 import { fetchCustomersOdoo } from '@api/services/generalApi';
 
 const POSCartSummary = ({ navigation, route }) => {
-  const { openingAmount } = route?.params || {};
+  const { openingAmount, sessionId } = route?.params || {};
   const { getCurrentCart, clearProducts, setCurrentCustomer, addProduct, removeProduct, loadCustomerCart } = useProductStore();
   const errorImage = require('@assets/images/error/error.png');
   const products = getCurrentCart();
@@ -48,7 +48,7 @@ const POSCartSummary = ({ navigation, route }) => {
   };
 
   const handleCheckout = () => {
-    navigation.navigate('POSPayment', { openingAmount, products });
+    navigation.navigate('POSPayment', { openingAmount, sessionId, products });
   };
 
   return (

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, TextInput, Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, TextInput, Image, Alert, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearCartFromStorage } from '@api/customer/cartApi';
 import { RoundedScrollContainer, SafeAreaView } from '@components/containers';
@@ -12,10 +12,8 @@ import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { EmptyState } from '@components/common/empty';
 import { COLORS } from '@constants/theme';
 import styles from './styles';
-import { format } from 'date-fns';
 import { useAuthStore } from '@stores/auth';
-import { post } from '@api/services/utils';
-import { fetchCustomerDetailsOdoo } from '@api/services/generalApi';
+import { createSaleOrderOdoo, confirmSaleOrderOdoo, createInvoiceFromQuotationOdoo } from '@api/services/generalApi';
 import Toast from 'react-native-toast-message';
 import { useCurrencyStore } from '@stores/currency';
 
@@ -31,7 +29,9 @@ const CustomerDetails = ({ navigation, route }) => {
     clearProducts 
   } = useProductStore();
   const currency = useCurrencyStore((state) => state.currency) || '';
-  
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isDirectInvoicing, setIsDirectInvoicing] = useState(false);
+
   // Set current customer and load their cart when component mounts
   useEffect(() => {
     if (details?.id || details?._id) {
@@ -157,148 +157,120 @@ const CustomerDetails = ({ navigation, route }) => {
   );
 
   const placeOrder = async () => {
+    if (products.length === 0) {
+      Toast.show({ type: 'error', text1: 'Cart Empty', text2: 'Add products before placing order', position: 'bottom' });
+      return;
+    }
+
+    const customerId = details?.id || details?._id || details?.customer_id || null;
+    if (!customerId) {
+      Toast.show({ type: 'error', text1: 'Missing Data', text2: 'Customer ID is required', position: 'bottom' });
+      return;
+    }
+
+    setIsPlacingOrder(true);
     try {
-      console.log('Place Order button clicked');
-      const date = format(new Date(), 'yyyy-MM-dd');
       const orderItems = products.map((product) => ({
-        // product identifiers: include both internal DB id and external/odoo id when available
         product_id: product.id,
-        product_internal_id: product._id || null,
-        product_odoo_id: (typeof product.id === 'number' || (typeof product.id === 'string' && /^[0-9]+$/.test(product.id))) ? product.id : null,
-        product_name: product.name || product.product_name || '',
-        product_code: product.product_code || product.code || null,
-        tax_type_id: "648d9b54ef9cd868dfbfa37b",
-        tax_value: 0.05,
-        uom_id: product?.uom?.uom_id || null,
-        uom: product?.uom?.uom_name || 'Pcs',
         qty: product.quantity,
-        discount_percentage: 0,
-        unit_price: product.price,
-        // some backends expect price_unit or product_uom_qty — include common aliases
         price_unit: product.price,
         product_uom_qty: product.quantity,
-        remarks: '',
-        total: product.price * product.quantity,
       }));
-      console.log('Order Items:', orderItems);
-      // Compute fallbacks for required fields
-      const customerId = details?.id || details?._id || details?.customer_id || null;
-      let addressVal = details?.address || details?.customer_address || details?.address_line || null;
-      // if address is missing, try fetch from Odoo
-      if (!addressVal && (details?.id || details?._id)) {
-        try {
-          const partnerId = details.id || details._id;
-          const fetched = await fetchCustomerDetailsOdoo(partnerId);
-          console.log('Fetched partner details from Odoo:', fetched);
-          if (fetched && fetched.address) {
-            addressVal = fetched.address;
-            console.log('Using fetched address for order:', addressVal);
-          }
-        } catch (err) {
-          console.warn('Could not fetch partner address:', err);
-        }
-      }
-      // Fallback: use customer name as address if still missing
-      if (!addressVal) {
-        addressVal = details?.name || null;
-        if (addressVal) console.log('Fallback: using customer name as address:', addressVal);
-      }
-      // Try to get warehouse from user, else from first product in cart
+
       let warehouseId = currentUser?.warehouse?.warehouse_id || currentUser?.warehouse?.id || null;
-      if (!warehouseId && products.length > 0 && products[0].inventory_ledgers && products[0].inventory_ledgers.length > 0) {
-        warehouseId = products[0].inventory_ledgers[0].warehouse_id || null;
-      }
 
-      // Validate required fields before sending
-      const missing = [];
-      if (!customerId) missing.push('customer_id');
-      if (!warehouseId) missing.push('warehouse_id');
-      if (!addressVal) missing.push('address');
+      console.log('[PlaceOrder] Creating sale order in Odoo, customerId:', customerId, 'items:', orderItems.length);
 
-      console.log('Computed customerId:', customerId, 'warehouseId:', warehouseId, 'address:', addressVal);
-      if (missing.length > 0) {
-        console.warn('Place Order aborted — missing fields:', missing);
-        Toast.show({
-          type: 'error',
-          text1: 'Missing required data',
-          text2: `Please provide: ${missing.join(', ')}`,
-          position: 'bottom',
-        });
+      // Step 1: Create sale order in Odoo
+      const odooOrderId = await createSaleOrderOdoo({
+        partnerId: customerId,
+        orderLines: orderItems,
+        warehouseId: warehouseId || undefined,
+      });
+
+      if (!odooOrderId) {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to create sale order in Odoo', position: 'bottom' });
         return;
       }
 
-      const placeOrderData = {
-        date: date,
-        quotation_status: "new",
-        address: addressVal,
-        remarks: null,
-        customer_id: customerId,
-        warehouse_id: warehouseId,
-        pipeline_id: null,
-        payment_terms_id: null,
-        delivery_method_id: null,
-        untaxed_total_amount: untaxedAmount,
-        total_amount: totalAmount,
-        crm_product_line_ids: orderItems,
-        sales_person_id: currentUser?.related_profile?._id ?? null,
-        sales_person_name: currentUser?.related_profile?.name ?? '',
-      }
-      console.log('Place Order Data:', placeOrderData);
-      try {
-        console.log('Posting to /createQuotation with payload:', JSON.stringify(placeOrderData));
-      } catch (e) {
-        // ignore
-      }
-
-      // Odoo expects product lines as [[0, 0, {...}]]
-      const odooProductLines = orderItems.map(item => [0, 0, item]);
-      placeOrderData.crm_product_line_ids = odooProductLines;
-
-      const jsonRpcPayload = {
-        jsonrpc: "2.0",
-        method: "createQuotation",
-        params: placeOrderData,
-        id: new Date().getTime(),
-      };
-      console.log('JSON-RPC Payload:', JSON.stringify(jsonRpcPayload));
-
-      const response = await post('/createQuotation', jsonRpcPayload);
-      console.log('CreateQuotation response:', response);
-      // Try to find the quotation ID from possible keys
-      const quotationId = response.quotation_id || response.id || response.result || response.quotationId;
-      if (response.success === 'true' && quotationId) {
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Quotation created successfully',
-          position: 'bottom',
-        });
-        // Clear current customer's cart
-        clearProducts();
-        const customerId = details?.id || details?._id;
-        if (customerId) {
-          await clearCartFromStorage(customerId);
-        }
-        // Navigate to DirectInvoiceScreen with the found quotation ID
-        navigation.navigate('DirectInvoiceScreen', { quotation_id: quotationId });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'ERROR',
-          text2: response.message || 'Quotation creation failed',
-          position: 'bottom',
-        });
-      }
+      console.log('[PlaceOrder] Sale order created:', odooOrderId);
+      clearProducts();
+      const custId = details?.id || details?._id;
+      if (custId) await clearCartFromStorage(custId);
+      Alert.alert('Order Created', `Sale Order created successfully.\nOrder ID: ${odooOrderId}`, [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (err) {
-      console.error('Place Order error:', err);
-      Toast.show({
-        type: 'error',
-        text1: 'ERROR',
-        text2: err?.message || 'Unexpected error in Place Order',
-        position: 'bottom',
-      });
+      console.error('[PlaceOrder] Error:', err?.message || err);
+      Toast.show({ type: 'error', text1: 'Error', text2: err?.message || 'Failed to create sale order', position: 'bottom' });
+    } finally {
+      setIsPlacingOrder(false);
     }
   }
+
+  const handleDirectInvoice = async () => {
+    if (products.length === 0) {
+      Toast.show({ type: 'error', text1: 'Cart Empty', text2: 'Add products before creating an invoice', position: 'bottom' });
+      return;
+    }
+
+    const customerId = details?.id || details?._id || details?.customer_id || null;
+    if (!customerId) {
+      Toast.show({ type: 'error', text1: 'Missing Data', text2: 'Customer ID is required', position: 'bottom' });
+      return;
+    }
+
+    setIsDirectInvoicing(true);
+    try {
+      const orderItems = products.map((product) => ({
+        product_id: product.id,
+        qty: product.quantity,
+        price_unit: product.price,
+        product_uom_qty: product.quantity,
+      }));
+
+      let warehouseId = currentUser?.warehouse?.warehouse_id || currentUser?.warehouse?.id || null;
+
+      console.log('[DirectInvoice] Creating sale order in Odoo, customerId:', customerId);
+
+      // Step 1: Create sale order in Odoo
+      const odooOrderId = await createSaleOrderOdoo({
+        partnerId: customerId,
+        orderLines: orderItems,
+        warehouseId: warehouseId || undefined,
+      });
+
+      if (!odooOrderId) {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to create sale order', position: 'bottom' });
+        return;
+      }
+      console.log('[DirectInvoice] Sale order created:', odooOrderId);
+
+      // Step 2: Confirm the sale order
+      await confirmSaleOrderOdoo(odooOrderId);
+      console.log('[DirectInvoice] Sale order confirmed:', odooOrderId);
+
+      // Step 3: Create invoice directly
+      const invoiceResult = await createInvoiceFromQuotationOdoo(odooOrderId);
+      console.log('[DirectInvoice] Invoice result:', invoiceResult);
+
+      if (invoiceResult && invoiceResult.result) {
+        clearProducts();
+        const custId = details?.id || details?._id;
+        if (custId) await clearCartFromStorage(custId);
+        Alert.alert('Invoice Created', 'Invoice created successfully.', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to create invoice', position: 'bottom' });
+      }
+    } catch (err) {
+      console.error('[DirectInvoice] Error:', err?.message || err);
+      Toast.show({ type: 'error', text1: 'Error', text2: err?.message || 'Failed to create direct invoice', position: 'bottom' });
+    } finally {
+      setIsDirectInvoicing(false);
+    }
+  };
 
   return (
     <SafeAreaView>
@@ -347,7 +319,10 @@ const CustomerDetails = ({ navigation, route }) => {
                     <Text style={styles.totalPriceLabel}>{totalAmount.toFixed(2)} {currency}</Text>
                   </View>
                 </View>
-                <Button backgroundColor={COLORS.primaryThemeColor} title={'Place Order'} onPress={placeOrder} />
+                <View style={{ gap: 10 }}>
+                  <Button backgroundColor={COLORS.primaryThemeColor} title={'Place Order'} onPress={placeOrder} loading={isPlacingOrder} />
+                  <Button backgroundColor={'#FF9800'} title={'Direct Invoice'} onPress={handleDirectInvoice} loading={isDirectInvoicing} />
+                </View>
               </View>
             )}
           </View>

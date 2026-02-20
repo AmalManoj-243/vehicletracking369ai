@@ -4,15 +4,20 @@ import { SafeAreaView } from '@components/containers';
 import { COLORS } from '@constants/theme';
 import { NavigationHeader } from '@components/Header';
 import { Button } from '@components/common/Button';
-import { fetchPaymentJournalsOdoo, createPaymentWithSignatureOdoo } from '@api/services/generalApi';
+import {
+  fetchPosPaymentMethodsOdoo,
+  createPosOrderOdoo,
+  createPosPaymentOdoo,
+  createPaymentWithSignatureOdoo,
+} from '@api/services/generalApi';
 import { useProductStore } from '@stores/product';
 import Toast from 'react-native-toast-message';
 import SignaturePad from '@components/SignaturePad';
 import usePaymentSignatureLocation from '@hooks/usePaymentSignatureLocation';
 
 const POSPayment = ({ navigation, route }) => {
-    const [invoiceChecked, setInvoiceChecked] = useState(false);
-  const { orderId, products = [], customer: initialCustomer } = route?.params || {};
+  const [invoiceChecked, setInvoiceChecked] = useState(false);
+  const { orderId: existingOrderId, products = [], customer: initialCustomer, sessionId } = route?.params || {};
   const [customer, setCustomer] = useState(initialCustomer);
   const openCustomerSelector = () => {
     navigation.navigate('CustomerScreen', {
@@ -22,9 +27,9 @@ const POSPayment = ({ navigation, route }) => {
       },
     });
   };
-  const [journals, setJournals] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [paymentMode, setPaymentMode] = useState('cash');
-  const [selectedJournal, setSelectedJournal] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [paying, setPaying] = useState(false);
   const { clearProducts } = useProductStore();
   const [inputAmount, setInputAmount] = useState('');
@@ -40,10 +45,15 @@ const POSPayment = ({ navigation, route }) => {
     let mounted = true;
     const load = async () => {
       try {
-        const list = await fetchPaymentJournalsOdoo();
-        if (mounted) setJournals(list);
+        const methods = await fetchPosPaymentMethodsOdoo();
+        if (mounted) {
+          setPaymentMethods(methods);
+          // Auto-select first cash method
+          const cashMethod = methods.find(m => m.type === 'cash') || methods[0];
+          if (cashMethod) setSelectedPaymentMethod(cashMethod);
+        }
       } catch (e) {
-        console.warn('Failed to load journals', e?.message || e);
+        console.warn('Failed to load payment methods', e?.message || e);
       }
     };
     load();
@@ -55,12 +65,26 @@ const POSPayment = ({ navigation, route }) => {
   const total = computeTotal();
   const remaining = total - paidAmount;
 
+  // Select payment method based on mode
+  const handleModeChange = (mode) => {
+    setPaymentMode(mode);
+    let method = null;
+    if (mode === 'cash') {
+      method = paymentMethods.find(m => m.type === 'cash');
+    } else if (mode === 'card') {
+      method = paymentMethods.find(m => m.type === 'bank');
+    } else {
+      method = paymentMethods.find(m => m.type === 'pay_later') || paymentMethods[0];
+    }
+    setSelectedPaymentMethod(method || paymentMethods[0] || null);
+  };
+
   const handleKeypad = (val) => {
     if (val === 'C') return setInputAmount('');
     if (val === '⌫') return setInputAmount(inputAmount.slice(0, -1));
-    if (val === '+10') return setInputAmount((parseFloat(inputAmount) || 0 + 10).toString());
-    if (val === '+20') return setInputAmount((parseFloat(inputAmount) || 0 + 20).toString());
-    if (val === '+50') return setInputAmount((parseFloat(inputAmount) || 0 + 50).toString());
+    if (val === '+10') return setInputAmount(((parseFloat(inputAmount) || 0) + 10).toString());
+    if (val === '+20') return setInputAmount(((parseFloat(inputAmount) || 0) + 20).toString());
+    if (val === '+50') return setInputAmount(((parseFloat(inputAmount) || 0) + 50).toString());
     if (val === '+/-') {
       if (inputAmount.startsWith('-')) setInputAmount(inputAmount.slice(1));
       else setInputAmount('-' + inputAmount);
@@ -82,32 +106,73 @@ const POSPayment = ({ navigation, route }) => {
 
   const handlePay = async () => {
     setPaying(true);
+    let createdOrderId = existingOrderId;
+    const payAmount = paidAmount || total;
+    const partnerId = customer?.id || customer?._id || null;
+
     try {
-      const location = await captureLocation();
+      // Step 1: Create POS order in Odoo (if session available)
+      if (sessionId && !existingOrderId) {
+        try {
+          const lines = products.map(p => ({
+            product_id: p.id,
+            qty: p.quantity || p.qty || 1,
+            price: p.price || 0,
+            name: p.name || '',
+          }));
+          const orderResp = await createPosOrderOdoo({ sessionId, partnerId, lines });
+          if (orderResp && orderResp.result) {
+            createdOrderId = orderResp.result;
+            console.log('POS Order created:', createdOrderId);
+          }
+        } catch (orderErr) {
+          console.warn('POS order creation failed (continuing with payment):', orderErr?.message);
+        }
+      }
+
+      // Step 2: Create POS payment (if order was created)
+      if (createdOrderId && selectedPaymentMethod) {
+        try {
+          await createPosPaymentOdoo({
+            orderId: createdOrderId,
+            amount: payAmount,
+            paymentMethodId: selectedPaymentMethod.id,
+          });
+          console.log('POS Payment created for order:', createdOrderId);
+        } catch (payErr) {
+          console.warn('POS payment creation failed:', payErr?.message);
+        }
+      }
+
+      // Step 3: Create account.payment with signature and location
       try {
+        const location = await captureLocation();
         await createPaymentWithSignatureOdoo({
-          partnerId: customer?.id || customer?._id || null,
-          amount: paidAmount || total,
+          partnerId,
+          amount: payAmount,
           paymentType: 'inbound',
-          ref: orderId ? `POS-${orderId}` : '',
+          ref: createdOrderId ? `POS-${createdOrderId}` : '',
           customerSignature: signatureBase64 || null,
           latitude: location?.latitude || null,
           longitude: location?.longitude || null,
           locationName: location?.locationName || '',
         });
-      } catch (odooErr) {
-        console.warn('Odoo payment creation failed:', odooErr?.message);
+      } catch (sigErr) {
+        console.warn('Signature payment creation failed:', sigErr?.message);
       }
+
     } catch (e) {
-      console.warn('Location capture failed:', e?.message);
+      console.warn('Payment flow error:', e?.message);
     } finally {
       setPaying(false);
     }
+
     navigation.navigate('POSReceiptScreen', {
-      orderId,
+      orderId: createdOrderId,
       products,
       customer,
-      amount: paidAmount,
+      amount: payAmount,
+      paymentMode,
       invoiceChecked,
     });
   };
@@ -123,15 +188,15 @@ const POSPayment = ({ navigation, route }) => {
 
         {/* Payment Mode Cards */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 18 }}>
-          <TouchableOpacity onPress={() => { setPaymentMode('cash'); setSelectedJournal(null); }} style={[styles.modeCard, paymentMode === 'cash' && styles.modeCardSelected]}>
+          <TouchableOpacity onPress={() => handleModeChange('cash')} style={[styles.modeCard, paymentMode === 'cash' && styles.modeCardSelected]}>
             <Text style={styles.modeCardIcon}>💵</Text>
             <Text style={[styles.modeCardText, paymentMode === 'cash' && styles.modeCardTextSelected]}>Cash</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => { setPaymentMode('card'); setSelectedJournal(null); }} style={[styles.modeCard, paymentMode === 'card' && styles.modeCardSelected]}>
+          <TouchableOpacity onPress={() => handleModeChange('card')} style={[styles.modeCard, paymentMode === 'card' && styles.modeCardSelected]}>
             <Text style={styles.modeCardIcon}>💳</Text>
             <Text style={[styles.modeCardText, paymentMode === 'card' && styles.modeCardTextSelected]}>Card</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => { setPaymentMode('account'); setSelectedJournal(null); }} style={[styles.modeCard, paymentMode === 'account' && styles.modeCardSelected]}>
+          <TouchableOpacity onPress={() => handleModeChange('account')} style={[styles.modeCard, paymentMode === 'account' && styles.modeCardSelected]}>
             <Text style={styles.modeCardIcon}>🏦</Text>
             <Text style={[styles.modeCardText, paymentMode === 'account' && styles.modeCardTextSelected]}>Customer Account</Text>
           </TouchableOpacity>

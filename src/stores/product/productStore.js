@@ -84,6 +84,22 @@ const useProductStore = create((set, get) => ({
     }
   })),
   
+  // Set discount for a specific product in current cart
+  setProductDiscount: (productId, discount) => set((state) => {
+    const { currentCustomerId } = state;
+    if (!currentCustomerId) return state;
+    const currentCart = state.cartItems[currentCustomerId] || [];
+    return {
+      ...state,
+      cartItems: {
+        ...state.cartItems,
+        [currentCustomerId]: currentCart.map(p =>
+          p.id === productId ? { ...p, discount: discount } : p
+        )
+      }
+    };
+  }),
+
   // Clear all carts
   clearAllCarts: () => set({ cartItems: {}, currentCustomerId: null }),
 }));
